@@ -12,24 +12,24 @@ export interface Database {
       stores: {
         Row: {
           id: string
-          name: string
-          code: string
+          store_code: string
+          store_name: string
           is_active: boolean
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
-          name: string
-          code: string
+          store_code: string
+          store_name: string
           is_active?: boolean
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
-          name?: string
-          code?: string
+          store_code?: string
+          store_name?: string
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -50,7 +50,7 @@ export interface Database {
           id?: string
           store_id: string
           name: string
-          role: string
+          role?: string
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -71,9 +71,12 @@ export interface Database {
           id: string
           store_id: string
           target_month: string
-          sales_target: number
-          customer_target: number
-          working_days: number
+          target_sales: number | null
+          target_unit_price: number | null
+          target_visits: number | null
+          target_productivity: number | null
+          target_repeat_rate: number | null
+          memo: string | null
           created_at: string
           updated_at: string
         }
@@ -81,9 +84,12 @@ export interface Database {
           id?: string
           store_id: string
           target_month: string
-          sales_target: number
-          customer_target: number
-          working_days: number
+          target_sales?: number | null
+          target_unit_price?: number | null
+          target_visits?: number | null
+          target_productivity?: number | null
+          target_repeat_rate?: number | null
+          memo?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -91,9 +97,12 @@ export interface Database {
           id?: string
           store_id?: string
           target_month?: string
-          sales_target?: number
-          customer_target?: number
-          working_days?: number
+          target_sales?: number | null
+          target_unit_price?: number | null
+          target_visits?: number | null
+          target_productivity?: number | null
+          target_repeat_rate?: number | null
+          memo?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -104,8 +113,14 @@ export interface Database {
           id: string
           store_id: string
           record_date: string
-          sales_amount: number
-          customer_count: number
+          sales: number | null
+          visits: number | null
+          unit_price: number | null
+          repeat_rate: number | null
+          new_customers: number | null
+          existing_customers: number | null
+          working_hours: number | null
+          review_count: number | null
           notes: string | null
           created_at: string
           updated_at: string
@@ -114,8 +129,14 @@ export interface Database {
           id?: string
           store_id: string
           record_date: string
-          sales_amount: number
-          customer_count: number
+          sales?: number | null
+          visits?: number | null
+          unit_price?: number | null
+          repeat_rate?: number | null
+          new_customers?: number | null
+          existing_customers?: number | null
+          working_hours?: number | null
+          review_count?: number | null
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -124,8 +145,14 @@ export interface Database {
           id?: string
           store_id?: string
           record_date?: string
-          sales_amount?: number
-          customer_count?: number
+          sales?: number | null
+          visits?: number | null
+          unit_price?: number | null
+          repeat_rate?: number | null
+          new_customers?: number | null
+          existing_customers?: number | null
+          working_hours?: number | null
+          review_count?: number | null
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -136,32 +163,65 @@ export interface Database {
         Row: {
           id: string
           store_id: string
-          diagnosed_at: string
-          target_month: string
-          score: number
-          summary: string
-          details: Json
+          daily_record_id: string | null
+          config_id: string | null
+          diagnosis_status: string
+          summary: string | null
+          issues: Json | null
+          recommended_actions: Json | null
           created_at: string
         }
         Insert: {
           id?: string
           store_id: string
-          diagnosed_at?: string
-          target_month: string
-          score: number
-          summary: string
-          details: Json
+          daily_record_id?: string | null
+          config_id?: string | null
+          diagnosis_status: string
+          summary?: string | null
+          issues?: Json | null
+          recommended_actions?: Json | null
           created_at?: string
         }
         Update: {
           id?: string
           store_id?: string
-          diagnosed_at?: string
-          target_month?: string
-          score?: number
-          summary?: string
-          details?: Json
+          daily_record_id?: string | null
+          config_id?: string | null
+          diagnosis_status?: string
+          summary?: string | null
+          issues?: Json | null
+          recommended_actions?: Json | null
           created_at?: string
+        }
+        Relationships: []
+      }
+      action_logs: {
+        Row: {
+          id: string
+          staff_id: string
+          week_date: string
+          action_text: string | null
+          is_executed: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          staff_id: string
+          week_date: string
+          action_text?: string | null
+          is_executed?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          staff_id?: string
+          week_date?: string
+          action_text?: string | null
+          is_executed?: boolean | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -171,6 +231,10 @@ export interface Database {
     Enums: Record<string, never>
   }
 }
+
+export type ActionLog = Database['public']['Tables']['action_logs']['Row']
+export type ActionLogInsert = Database['public']['Tables']['action_logs']['Insert']
+export type ActionLogUpdate = Database['public']['Tables']['action_logs']['Update']
 
 export type Store = Database['public']['Tables']['stores']['Row']
 export type StoreInsert = Database['public']['Tables']['stores']['Insert']

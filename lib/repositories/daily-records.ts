@@ -78,6 +78,23 @@ export async function updateDailyRecord(
   return { data: data ?? null, error: error?.message ?? null }
 }
 
+export async function getRecentDailyRecords(
+  storeId: string,
+  limit: number
+): Promise<RepositoryListResult<DailyRecord>> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('daily_records')
+    .select('*')
+    .eq('store_id', storeId)
+    .order('record_date', { ascending: false })
+    .limit(limit)
+  const sorted = (data ?? []).sort(
+    (a, b) => new Date(a.record_date).getTime() - new Date(b.record_date).getTime()
+  )
+  return { data: sorted, error: error?.message ?? null }
+}
+
 export type MonthlyAggregation = {
   total_sales: number
   total_customers: number
@@ -109,8 +126,8 @@ export async function aggregateMonthlyRecords(
     }
   }
 
-  const total_sales = records.reduce((sum, r) => sum + r.sales_amount, 0)
-  const total_customers = records.reduce((sum, r) => sum + r.customer_count, 0)
+  const total_sales = records.reduce((sum, r) => sum + (r.sales ?? 0), 0)
+  const total_customers = records.reduce((sum, r) => sum + (r.visits ?? 0), 0)
   const record_count = records.length
 
   return {

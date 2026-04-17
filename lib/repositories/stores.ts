@@ -13,7 +13,7 @@ export async function getActiveStores(): Promise<RepositoryListResult<Store>> {
     .from('stores')
     .select('*')
     .eq('is_active', true)
-    .order('name')
+    .order('store_name')
   return { data: data ?? [], error: error?.message ?? null }
 }
 
@@ -22,7 +22,7 @@ export async function getAllStores(): Promise<RepositoryListResult<Store>> {
   const { data, error } = await supabase
     .from('stores')
     .select('*')
-    .order('name')
+    .order('store_name')
   return { data: data ?? [], error: error?.message ?? null }
 }
 
@@ -41,7 +41,7 @@ export async function getStoreByCode(code: string): Promise<RepositoryResult<Sto
   const { data, error } = await supabase
     .from('stores')
     .select('*')
-    .eq('code', code)
+    .eq('store_code', code)
     .single()
   return { data: data ?? null, error: error?.message ?? null }
 }
