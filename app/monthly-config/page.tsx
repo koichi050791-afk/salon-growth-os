@@ -2,6 +2,7 @@ import { getActiveStores } from '@/lib/repositories/stores'
 import { getMonthlyConfigsByStore } from '@/lib/repositories/monthly-configs'
 import MonthlyConfigClient from './MonthlyConfigClient'
 import { AuthGuard } from '@/lib/components/AuthGuard'
+import Navigation from '@/lib/components/Navigation'
 
 export default async function MonthlyConfigPage({
   searchParams,
@@ -18,19 +19,20 @@ export default async function MonthlyConfigPage({
 
   return (
     <AuthGuard>
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-5xl mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">月次基準値</h1>
-          <p className="text-sm text-gray-500 mb-8">店舗ごとの月次目標値を管理します</p>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <MonthlyConfigClient
-              stores={stores}
-              selectedStoreId={storeId ?? ''}
-              configs={configs}
-            />
+      <div className="min-h-screen bg-slate-950 pb-20">
+        <Navigation />
+        <div className="max-w-lg mx-auto px-4 py-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-white">月次基準値</h1>
+            <p className="text-slate-400 text-sm mt-0.5">店舗ごとの月次目標値を管理します</p>
           </div>
+          <MonthlyConfigClient
+            stores={stores}
+            selectedStoreId={storeId ?? ''}
+            configs={configs}
+          />
         </div>
-      </main>
+      </div>
     </AuthGuard>
   )
 }

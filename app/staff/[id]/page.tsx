@@ -26,11 +26,10 @@ function trendStatus(current: number, med: number): TrendStatus {
 }
 
 const STATUS_BADGE: Record<TrendStatus, string> = {
-  good:    'bg-green-900/50 text-green-400',
+  good:    'bg-amber-900/50 text-amber-400',
   warning: 'bg-yellow-900/50 text-yellow-400',
   danger:  'bg-red-900/50 text-red-400',
 }
-
 const STATUS_LABEL: Record<TrendStatus, string> = {
   good: '好調', warning: '普通', danger: '要注意',
 }
@@ -48,10 +47,14 @@ function fmt(val: number | null, suffix = '', digits = 0): string {
   return val.toLocaleString('ja-JP', { maximumFractionDigits: digits }) + suffix
 }
 
-function getMondayISO(date: Date): string {
+function fmtYen(val: number | null): string {
+  if (val === null) return '—'
+  return '¥' + val.toLocaleString('ja-JP')
+}
+
+function getSundayISO(date: Date): string {
   const d = new Date(date)
-  const day = d.getUTCDay()
-  d.setUTCDate(d.getUTCDate() + (day === 0 ? -6 : 1 - day))
+  d.setUTCDate(d.getUTCDate() - d.getUTCDay())
   return d.toISOString().slice(0, 10)
 }
 
@@ -60,13 +63,14 @@ type MetricDef = {
   label: string
   suffix: string
   digits?: number
+  isYen?: boolean
   compute: (r: DailyRecord) => number | null
 }
 
 const METRIC_DEFS: MetricDef[] = [
-  { key: 'sales',        label: '売上',      suffix: '円', compute: (r) => r.sales },
+  { key: 'sales',        label: '売上',      suffix: '円', isYen: true, compute: (r) => r.sales },
   { key: 'visits',       label: '客数',      suffix: '人', compute: (r) => r.visits },
-  { key: 'unit_price',   label: '客単価',    suffix: '円', compute: (r) => r.visits && r.visits > 0 && r.sales !== null ? Math.round(r.sales / r.visits) : null },
+  { key: 'unit_price',   label: '客単価',    suffix: '円', isYen: true, compute: (r) => r.visits && r.visits > 0 && r.sales !== null ? Math.round(r.sales / r.visits) : null },
   { key: 'repeat_rate',  label: '次回予約率', suffix: '%', digits: 1, compute: (r) => r.repeat_rate },
   { key: 'review_count', label: '口コミ数',  suffix: '件', compute: (r) => r.review_count },
 ]
@@ -81,7 +85,6 @@ export default async function StaffDetailPage({
   const { data: staff } = await getStaffById(id)
   if (!staff) notFound()
 
-  // staffロールは自分のページ以外にアクセス不可
   const profile = await getServerProfile()
   if (profile?.role === 'staff' && profile.staff_id && profile.staff_id !== id) {
     redirect(`/staff/${profile.staff_id}`)
@@ -89,7 +92,7 @@ export default async function StaffDetailPage({
 
   const { data: records } = await getRecentDailyRecords(staff.store_id, 4)
 
-  const currentWeek = getMondayISO(new Date())
+  const currentWeek = getSundayISO(new Date())
   const { data: actionLog } = await getActionLog(staff.id, currentWeek)
 
   const latest = records.length > 0 ? records[records.length - 1] : null
@@ -126,46 +129,46 @@ export default async function StaffDetailPage({
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-950 pb-20">
+      <div className="min-h-screen bg-slate-950 pb-20">
         <Navigation />
-        <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="max-w-lg mx-auto px-4 py-6">
           {/* ヘッダー */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-white">{staff.name}</h1>
-            <p className="text-gray-400 text-sm mt-0.5">個人の改善状況</p>
+            <p className="text-slate-400 text-sm mt-0.5">個人の改善状況</p>
           </div>
 
           {/* 今週やること */}
           {todayAction ? (
-            <div className="bg-blue-900/30 border border-blue-800 rounded-2xl p-5 mb-6">
-              <p className="text-blue-400 font-bold text-sm mb-3">🎯 今週やること</p>
-              <p className="text-white text-lg font-semibold leading-snug mb-2">{todayAction}</p>
-              <p className="text-gray-400 text-sm">※ 今週はこの1つに集中してください</p>
+            <div className="bg-gradient-to-r from-blue-900/40 to-blue-800/40 border border-blue-700/50 rounded-2xl p-5 mb-4">
+              <p className="text-slate-400 text-xs mb-2">🎯 今週やること</p>
+              <p className="text-amber-300 text-lg font-bold leading-snug mb-2">{todayAction}</p>
+              <p className="text-slate-400 text-sm">※ 今週はこの1つに集中してください</p>
             </div>
           ) : latest ? (
-            <div className="bg-green-900/20 border border-green-800 rounded-2xl p-5 mb-6">
-              <p className="text-green-400 font-bold text-sm mb-1">✨ 今週は好調です</p>
-              <p className="text-gray-400 text-sm">このペースを維持しましょう</p>
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-amber-600/40 rounded-2xl p-5 mb-4">
+              <p className="text-amber-400 font-bold text-sm mb-1">✨ 今週は好調です</p>
+              <p className="text-slate-400 text-sm">このペースを維持しましょう</p>
             </div>
           ) : null}
 
           {/* 今週の状態 */}
           {latest && (
-            <div className="mb-6">
-              <h2 className="text-gray-400 text-sm font-medium mb-3 uppercase tracking-wide">今週の状態</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="mb-4">
+              <h2 className="text-slate-400 text-sm font-medium mb-3 uppercase tracking-wide">今週の状態</h2>
+              <div className="grid grid-cols-2 gap-3">
                 {metricStatuses.map(({ def, currentValue, status }) => (
-                  <div key={def.key} className="bg-gray-900 rounded-2xl border border-gray-800 p-4">
-                    <p className="text-gray-400 text-xs mb-2">{def.label}</p>
-                    <p className="text-white text-xl font-bold mb-2">
-                      {fmt(currentValue, def.suffix, def.digits)}
+                  <div key={def.key} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-4">
+                    <p className="text-slate-400 text-xs mb-2">{def.label}</p>
+                    <p className="text-white text-2xl font-bold tracking-tight mb-2">
+                      {def.isYen ? fmtYen(currentValue) : fmt(currentValue, def.suffix, def.digits)}
                     </p>
                     {status ? (
                       <span className={`inline-block text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_BADGE[status]}`}>
                         {STATUS_LABEL[status]}
                       </span>
                     ) : (
-                      <span className="inline-block text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-500">
+                      <span className="inline-block text-xs px-2.5 py-1 rounded-full bg-slate-700/50 text-slate-400">
                         データ不足
                       </span>
                     )}
@@ -176,42 +179,42 @@ export default async function StaffDetailPage({
           )}
 
           {/* 直近4週の推移 */}
-          <div className="mb-6">
-            <h2 className="text-gray-400 text-sm font-medium mb-3 uppercase tracking-wide">直近4週の推移</h2>
+          <div className="mb-4">
+            <h2 className="text-slate-400 text-sm font-medium mb-3 uppercase tracking-wide">直近4週の推移</h2>
             {records.length === 0 ? (
-              <div className="bg-gray-900 rounded-2xl border border-gray-800 py-8 text-center text-gray-500 text-sm">
+              <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl py-8 text-center text-slate-500 text-sm">
                 記録がありません。週次入力から実績を登録してください。
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-2xl border border-gray-800">
+              <div className="overflow-x-auto rounded-2xl border border-slate-700/50">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-gray-900">
+                  <thead className="bg-slate-800/80">
                     <tr>
                       {['週', '売上', '客数', '客単価', '次回予約率', '口コミ'].map((h) => (
-                        <th key={h} className="px-3 py-3 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
+                        <th key={h} className="px-3 py-3 text-left text-xs font-medium text-slate-500 whitespace-nowrap">
                           {h}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800">
+                  <tbody className="divide-y divide-slate-700/50">
                     {[...records].reverse().map((r) => {
-                      const unitPrice = r.visits && r.visits > 0 && r.sales !== null
+                      const up = r.visits && r.visits > 0 && r.sales !== null
                         ? Math.round(r.sales / r.visits) : null
                       const isLatest = r.id === latest?.id
                       return (
-                        <tr key={r.id} className={isLatest ? 'bg-blue-900/20' : 'hover:bg-gray-900/50 transition-colors'}>
+                        <tr key={r.id} className={isLatest ? 'bg-blue-900/20' : 'bg-slate-900/50'}>
                           <td className="px-3 py-3 font-medium whitespace-nowrap">
-                            <span className={isLatest ? 'text-blue-400' : 'text-gray-300'}>{r.record_date}</span>
+                            <span className={isLatest ? 'text-blue-400' : 'text-slate-300'}>{r.record_date}</span>
                             {isLatest && <span className="ml-1 text-xs text-blue-500">今週</span>}
                           </td>
-                          <td className="px-3 py-3 text-gray-300 whitespace-nowrap">{fmt(r.sales, '円')}</td>
-                          <td className="px-3 py-3 text-gray-300 whitespace-nowrap">{fmt(r.visits, '人')}</td>
-                          <td className="px-3 py-3 text-gray-300 whitespace-nowrap">{fmt(unitPrice, '円')}</td>
-                          <td className="px-3 py-3 text-gray-300 whitespace-nowrap">
+                          <td className="px-3 py-3 text-slate-300 whitespace-nowrap">{fmt(r.sales, '円')}</td>
+                          <td className="px-3 py-3 text-slate-300 whitespace-nowrap">{fmt(r.visits, '人')}</td>
+                          <td className="px-3 py-3 text-slate-300 whitespace-nowrap">{fmt(up, '円')}</td>
+                          <td className="px-3 py-3 text-slate-300 whitespace-nowrap">
                             {r.repeat_rate !== null ? `${r.repeat_rate}%` : '—'}
                           </td>
-                          <td className="px-3 py-3 text-gray-300 whitespace-nowrap">{fmt(r.review_count, '件')}</td>
+                          <td className="px-3 py-3 text-slate-300 whitespace-nowrap">{fmt(r.review_count, '件')}</td>
                         </tr>
                       )
                     })}
