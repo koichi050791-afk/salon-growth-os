@@ -1,65 +1,77 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { upsertDailyRecord } from '@/lib/repositories/daily-records'
+import { getActiveStaffByStore } from '@/lib/repositories/staff'
+import { getWeeklyStoreInput, upsertWeeklyStoreInput } from '@/lib/repositories/weekly-store-inputs'
+import { getWeeklyStaffInputs, upsertWeeklyStaffInputs } from '@/lib/repositories/weekly-staff-inputs'
+import type { Staff, WeeklyStoreInput, WeeklyStaffInput } from '@/lib/types/db'
 
-export type SaveWeeklyState = {
-  message: string
-  success: boolean
+// ──────────────────────────────────────────────
+// データ取得（店舗・週選択時に呼ぶ）
+// ──────────────────────────────────────────────
+export type WeeklyDataResult = {
+  staff: Staff[]
+  storeInput: WeeklyStoreInput | null
+  staffInputs: WeeklyStaffInput[]
+  error: string | null
 }
 
-function toNumber(val: FormDataEntryValue | null): number | null {
-  if (val === null || val === '') return null
-  const n = Number(val)
-  return isNaN(n) ? null : n
+export async function fetchWeeklyData(
+  storeId: string,
+  weekStart: string
+): Promise<WeeklyDataResult> {
+  try {
+    const [staffResult, storeInput, staffInputsResult] = await Promise.all([
+      getActiveStaffByStore(storeId),
+      getWeeklyStoreInput(storeId, weekStart),
+      getWeeklyStaffInputs(storeId, weekStart),
+    ])
+    return {
+      staff: staffResult.data,
+      storeInput: storeInput ?? null,
+      staffInputs: staffInputsResult.data,
+      error: null,
+    }
+  } catch (e) {
+    return { staff: [], storeInput: null, staffInputs: [], error: String(e) }
+  }
 }
 
-function getMondayOfWeek(dateStr: string): string {
-  const d = new Date(dateStr)
-  const day = d.getUTCDay()
-  const diff = (day === 0 ? -6 : 1 - day)
-  d.setUTCDate(d.getUTCDate() + diff)
-  return d.toISOString().slice(0, 10)
+// ──────────────────────────────────────────────
+// 一括保存
+// ──────────────────────────────────────────────
+export type StoreInputPayload = {
+  store_id: string
+  week_start: string
+  sales: number | null
+  visits: number | null
+  next_visit_count: number | null
+  new_customers: number | null
+  repeat_customers: number | null
+  availability_score: number | null
+  memo: string | null
 }
 
-export async function saveWeeklyRecord(
-  prevState: SaveWeeklyState,
-  formData: FormData
-): Promise<SaveWeeklyState> {
-  const storeId = formData.get('store_id') as string
-  const weekDate = formData.get('week_date') as string
+export type StaffInputPayload = {
+  store_id: string
+  staff_id: string
+  week_start: string
+  sales: number | null
+  visits: number | null
+}
 
-  if (!storeId || !weekDate) {
-    return { message: '店舗と対象週は必須です', success: false }
+export async function saveWeeklyInputs(
+  storePayload: StoreInputPayload,
+  staffPayloads: StaffInputPayload[]
+): Promise<{ error: string | null }> {
+  try {
+    await upsertWeeklyStoreInput(storePayload)
+    if (staffPayloads.length > 0) {
+      await upsertWeeklyStaffInputs(staffPayloads)
+    }
+    revalidatePath('/dashboard')
+    return { error: null }
+  } catch (e) {
+    return { error: String(e) }
   }
-
-  const sales = toNumber(formData.get('sales'))
-  const visits = toNumber(formData.get('visits'))
-  const repeatRate = toNumber(formData.get('repeat_rate'))
-  const reviewCount = toNumber(formData.get('review_count'))
-
-  if (sales === null || visits === null) {
-    return { message: '売上と客数は必須です', success: false }
-  }
-
-  const unitPrice = visits > 0 ? Math.round(sales / visits) : null
-  const recordDate = getMondayOfWeek(weekDate)
-
-  const { error } = await upsertDailyRecord({
-    store_id: storeId,
-    record_date: recordDate,
-    sales,
-    visits,
-    unit_price: unitPrice,
-    repeat_rate: repeatRate,
-    review_count: reviewCount,
-  })
-
-  if (error) {
-    return { message: `保存に失敗しました: ${error}`, success: false }
-  }
-
-  revalidatePath('/dashboard')
-  revalidatePath('/weekly-input')
-  return { message: `保存しました（週: ${recordDate}）`, success: true }
 }

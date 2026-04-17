@@ -1,7 +1,7 @@
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import Navigation from '@/lib/components/Navigation'
 import { getActiveStores } from '@/lib/repositories/stores'
-import WeeklyInputClient from './WeeklyInputClient'
+import WeeklyInputForm from './WeeklyInputForm'
 
 export default async function WeeklyInputPage({
   searchParams,
@@ -21,9 +21,7 @@ export default async function WeeklyInputPage({
             <p className="text-gray-400 text-sm mt-0.5">週ごとの実績を記録します</p>
           </div>
 
-          <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
-            <WeeklyInputClient stores={stores} selectedStoreId={storeId ?? ''} />
-          </div>
+          <WeeklyInputForm stores={stores} initialStoreId={storeId ?? ''} />
         </div>
       </div>
     </AuthGuard>
