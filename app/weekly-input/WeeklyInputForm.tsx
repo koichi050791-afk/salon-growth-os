@@ -8,12 +8,11 @@ import type { Store } from '@/lib/types/db'
 // ──────────────────────────────────────────────
 // ヘルパー
 // ──────────────────────────────────────────────
-function getMondayISO(): string {
+function getSundayISO(): string {
   const today = new Date()
-  const day = today.getDay()
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1))
-  return monday.toISOString().slice(0, 10)
+  const sunday = new Date(today)
+  sunday.setDate(today.getDate() - today.getDay())
+  return sunday.toISOString().slice(0, 10)
 }
 
 function toInt(s: string): number | null {
@@ -73,7 +72,7 @@ export default function WeeklyInputForm({
 }) {
   const router = useRouter()
   const [storeId, setStoreId] = useState(initialStoreId)
-  const [weekStart, setWeekStart] = useState(getMondayISO())
+  const [weekStart, setWeekStart] = useState(getSundayISO())
   const [storeForm, setStoreForm] = useState<StoreForm>(EMPTY_STORE_FORM)
   const [staffRows, setStaffRows] = useState<StaffRow[]>([])
   const [fetching, setFetching] = useState(false)
@@ -192,7 +191,7 @@ export default function WeeklyInputForm({
           </select>
         </div>
         <div>
-          <label className={LABEL_CLASS}>対象週（月曜日）</label>
+          <label className={LABEL_CLASS}>対象週（日曜日）</label>
           <input
             type="date"
             value={weekStart}

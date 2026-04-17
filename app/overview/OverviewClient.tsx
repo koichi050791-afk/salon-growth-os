@@ -8,12 +8,11 @@ import type { OverviewData, StoreOverview } from './actions'
 // ──────────────────────────────────────────────
 // ヘルパー
 // ──────────────────────────────────────────────
-function getMondayISO(): string {
+function getSundayISO(): string {
   const today = new Date()
-  const day = today.getDay()
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1))
-  return monday.toISOString().slice(0, 10)
+  const sunday = new Date(today)
+  sunday.setDate(today.getDate() - today.getDay())
+  return sunday.toISOString().slice(0, 10)
 }
 
 function formatWeekLabel(weekStart: string): string {
@@ -148,7 +147,7 @@ const LABEL_CLASS = 'block text-sm text-gray-400 mb-1.5'
 // ──────────────────────────────────────────────
 export default function OverviewClient() {
   const router = useRouter()
-  const [weekStart, setWeekStart] = useState(getMondayISO())
+  const [weekStart, setWeekStart] = useState(getSundayISO())
   const [data, setData] = useState<OverviewData | null>(null)
   const [fetching, setFetching] = useState(false)
 
@@ -168,10 +167,6 @@ export default function OverviewClient() {
   // 危険店舗（売上目標比70%未満）
   const dangerStores = derivedList.filter(({ d }) => d.salesStatus === 'danger')
 
-  // 全店合計
-  const totalSales = derivedList.reduce((sum, { d }) => sum + (d.sales ?? 0), 0)
-  const totalVisits = derivedList.reduce((sum, { d }) => sum + (d.visits ?? 0), 0)
-  const avgUnitPrice = totalVisits > 0 ? Math.round(totalSales / totalVisits) : null
   const inputtedCount = derivedList.filter(({ d }) => d.sales !== null).length
   const totalCount = derivedList.length
 
@@ -179,7 +174,7 @@ export default function OverviewClient() {
     <div>
       {/* 週選択 */}
       <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4 mb-4">
-        <label className={LABEL_CLASS}>対象週（月曜日）</label>
+        <label className={LABEL_CLASS}>対象週（日曜日）</label>
         <input
           type="date"
           value={weekStart}
@@ -224,37 +219,14 @@ export default function OverviewClient() {
             </div>
           )}
 
-          {/* セクション3：全店合計（先に配置） */}
-          <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5 mb-4">
-            <h2 className="text-white text-lg font-bold mb-4">🏢 全店合計</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-gray-500 text-xs mb-1">全店売上合計</p>
-                <p className="text-white text-2xl font-bold">{fmt(totalSales, '円')}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-1">全店客数合計</p>
-                <p className="text-white text-2xl font-bold">{fmt(totalVisits, '人')}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-1">全店平均客単価</p>
-                <p className="text-white text-2xl font-bold">{fmt(avgUnitPrice, '円')}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs mb-1">入力済み</p>
-                <p className="text-white text-2xl font-bold">
-                  {inputtedCount}
-                  <span className="text-gray-500 text-base font-normal"> / {totalCount}店舗</span>
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* セクション2：全店一覧 */}
           <div>
-            <h2 className="text-white text-lg font-bold mb-3">
-              📊 全店比較（{formatWeekLabel(weekStart)}）
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-white text-lg font-bold">
+                📊 全店比較（{formatWeekLabel(weekStart)}）
+              </h2>
+              <span className="text-gray-400 text-sm">入力済み：{inputtedCount} / {totalCount}店舗</span>
+            </div>
             {derivedList.map(({ s, d }) => (
               <div
                 key={s.store.id}

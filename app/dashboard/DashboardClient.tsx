@@ -9,12 +9,11 @@ import type { DashboardData } from './actions'
 // ──────────────────────────────────────────────
 // ヘルパー
 // ──────────────────────────────────────────────
-function getMondayISO(): string {
+function getSundayISO(): string {
   const today = new Date()
-  const day = today.getDay()
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1))
-  return monday.toISOString().slice(0, 10)
+  const sunday = new Date(today)
+  sunday.setDate(today.getDate() - today.getDay())
+  return sunday.toISOString().slice(0, 10)
 }
 
 type BadgeStatus = 'good' | 'warning' | 'danger' | 'none'
@@ -128,7 +127,7 @@ export default function DashboardClient({
 }) {
   const router = useRouter()
   const [storeId, setStoreId] = useState(initialStoreId)
-  const [weekStart, setWeekStart] = useState(getMondayISO())
+  const [weekStart, setWeekStart] = useState(getSundayISO())
   const [data, setData] = useState<DashboardData | null>(null)
   const [fetching, setFetching] = useState(false)
 
@@ -256,7 +255,7 @@ export default function DashboardClient({
           </select>
         </div>
         <div>
-          <label className={LABEL_CLASS}>対象週（月曜日）</label>
+          <label className={LABEL_CLASS}>対象週（日曜日）</label>
           <input
             type="date"
             value={weekStart}
