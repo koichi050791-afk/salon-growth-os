@@ -5,9 +5,10 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'ダッシュボード' },
-  { href: '/weekly-input', label: '週次入力' },
-  { href: '/staff', label: 'スタッフ' },
+  { href: '/dashboard',     icon: '🏠', label: 'ホーム' },
+  { href: '/weekly-input',  icon: '➕', label: '入力' },
+  { href: '/staff',         icon: '👤', label: 'スタッフ' },
+  { href: '/monthly-config', icon: '⚙️', label: '設定' },
 ]
 
 export default function Navigation() {
@@ -24,31 +25,29 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-10">
-      <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-12">
-        <div className="flex items-center overflow-x-auto gap-1 flex-shrink-0 min-w-0">
-          <span className="text-sm font-bold text-gray-900 whitespace-nowrap mr-3 flex-shrink-0">
-            Salon Growth OS
-          </span>
-          {NAV_ITEMS.map((item) => (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900 border-t border-gray-800">
+      <div className="flex items-stretch">
+        {NAV_ITEMS.map((item) => {
+          const isActive = pathname.startsWith(item.href)
+          return (
             <Link
               key={item.href}
               href={item.href}
-              className={`text-sm px-3 py-1.5 rounded-md whitespace-nowrap flex-shrink-0 transition-colors ${
-                pathname.startsWith(item.href)
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              className={`flex-1 flex flex-col items-center justify-center py-3 min-h-[56px] transition-colors ${
+                isActive ? 'text-blue-400' : 'text-gray-500'
               }`}
             >
-              {item.label}
+              <span className="text-xl leading-none mb-1">{item.icon}</span>
+              <span className="text-xs">{item.label}</span>
             </Link>
-          ))}
-        </div>
+          )
+        })}
         <button
           onClick={handleSignOut}
-          className="ml-3 flex-shrink-0 text-sm text-gray-500 hover:text-gray-800 transition-colors whitespace-nowrap"
+          className="flex-1 flex flex-col items-center justify-center py-3 min-h-[56px] text-gray-500 hover:text-gray-300 transition-colors"
         >
-          ログアウト
+          <span className="text-xl leading-none mb-1">🚪</span>
+          <span className="text-xs">ログアウト</span>
         </button>
       </div>
     </nav>

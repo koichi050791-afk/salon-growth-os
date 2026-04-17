@@ -7,9 +7,6 @@ import { getActionLog } from '@/lib/repositories/action-logs'
 import type { DailyRecord } from '@/lib/types/db'
 import ActionLogClient from './ActionLogClient'
 
-// ──────────────────────────────────────────────
-// 危険度判定
-// ──────────────────────────────────────────────
 type TrendStatus = 'good' | 'warning' | 'danger'
 
 function median(values: number[]): number | null {
@@ -28,20 +25,15 @@ function trendStatus(current: number, med: number): TrendStatus {
 }
 
 const STATUS_BADGE: Record<TrendStatus, string> = {
-  good: 'bg-green-100 text-green-800 border border-green-200',
-  warning: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-  danger: 'bg-red-100 text-red-800 border border-red-200',
+  good:    'bg-green-900/50 text-green-400',
+  warning: 'bg-yellow-900/50 text-yellow-400',
+  danger:  'bg-red-900/50 text-red-400',
 }
 
 const STATUS_LABEL: Record<TrendStatus, string> = {
-  good: '好調',
-  warning: '普通',
-  danger: '要注意',
+  good: '好調', warning: '普通', danger: '要注意',
 }
 
-// ──────────────────────────────────────────────
-// アクション対応表
-// ──────────────────────────────────────────────
 const ACTION_MAP: Record<string, string> = {
   unit_price:   'カラー前にケア提案を1回必ず入れる',
   repeat_rate:  '施術中に次回来店時期を必ず口頭で伝える',
@@ -50,9 +42,6 @@ const ACTION_MAP: Record<string, string> = {
   visits:       '仕上がり直後に口コミ案内をその場で送る',
 }
 
-// ──────────────────────────────────────────────
-// ヘルパー
-// ──────────────────────────────────────────────
 function fmt(val: number | null, suffix = '', digits = 0): string {
   if (val === null) return '—'
   return val.toLocaleString('ja-JP', { maximumFractionDigits: digits }) + suffix
@@ -81,9 +70,6 @@ const METRIC_DEFS: MetricDef[] = [
   { key: 'review_count', label: '口コミ数',  suffix: '件', compute: (r) => r.review_count },
 ]
 
-// ──────────────────────────────────────────────
-// ページ
-// ──────────────────────────────────────────────
 export default async function StaffDetailPage({
   params,
 }: {
@@ -102,7 +88,12 @@ export default async function StaffDetailPage({
   const latest = records.length > 0 ? records[records.length - 1] : null
   const previous = records.length > 1 ? records.slice(0, -1) : []
 
-  type MetricStatus = { def: MetricDef; currentValue: number | null; status: TrendStatus | null; changeRate: number | null }
+  type MetricStatus = {
+    def: MetricDef
+    currentValue: number | null
+    status: TrendStatus | null
+    changeRate: number | null
+  }
 
   const metricStatuses: MetricStatus[] = METRIC_DEFS.map((def) => {
     const currentValue = latest ? def.compute(latest) : null
@@ -128,43 +119,46 @@ export default async function StaffDetailPage({
 
   return (
     <AuthGuard>
-      <Navigation />
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 md:py-8">
+      <div className="min-h-screen bg-gray-950 pb-20">
+        <Navigation />
+        <div className="max-w-2xl mx-auto px-4 py-6">
           {/* ヘッダー */}
           <div className="mb-6">
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900">{staff.name}</h1>
-            <p className="text-sm text-gray-500 mt-0.5">個人の改善状況</p>
+            <h1 className="text-2xl font-bold text-white">{staff.name}</h1>
+            <p className="text-gray-400 text-sm mt-0.5">個人の改善状況</p>
           </div>
 
           {/* 今週やること */}
-          {todayAction && (
-            <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 md:p-5">
-              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
-                今週やること
-              </p>
-              <p className="text-sm md:text-base font-bold text-blue-900 mb-1">{todayAction}</p>
-              <p className="text-xs text-blue-500">※ 今週はこの1つに集中してください</p>
+          {todayAction ? (
+            <div className="bg-blue-900/30 border border-blue-800 rounded-2xl p-5 mb-6">
+              <p className="text-blue-400 font-bold text-sm mb-3">🎯 今週やること</p>
+              <p className="text-white text-lg font-semibold leading-snug mb-2">{todayAction}</p>
+              <p className="text-gray-400 text-sm">※ 今週はこの1つに集中してください</p>
             </div>
-          )}
+          ) : latest ? (
+            <div className="bg-green-900/20 border border-green-800 rounded-2xl p-5 mb-6">
+              <p className="text-green-400 font-bold text-sm mb-1">✨ 今週は好調です</p>
+              <p className="text-gray-400 text-sm">このペースを維持しましょう</p>
+            </div>
+          ) : null}
 
           {/* 今週の状態 */}
           {latest && (
-            <div className="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm p-4 md:p-5">
-              <h2 className="text-sm font-semibold text-gray-700 mb-4">今週の状態</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            <div className="mb-6">
+              <h2 className="text-gray-400 text-sm font-medium mb-3 uppercase tracking-wide">今週の状態</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {metricStatuses.map(({ def, currentValue, status }) => (
-                  <div key={def.key} className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">{def.label}</p>
-                    <p className="text-sm font-semibold text-gray-900 mb-1">
+                  <div key={def.key} className="bg-gray-900 rounded-2xl border border-gray-800 p-4">
+                    <p className="text-gray-400 text-xs mb-2">{def.label}</p>
+                    <p className="text-white text-xl font-bold mb-2">
                       {fmt(currentValue, def.suffix, def.digits)}
                     </p>
                     {status ? (
-                      <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium border ${STATUS_BADGE[status]}`}>
+                      <span className={`inline-block text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_BADGE[status]}`}>
                         {STATUS_LABEL[status]}
                       </span>
                     ) : (
-                      <span className="inline-block text-xs px-2 py-0.5 rounded-full text-gray-400 border border-gray-200">
+                      <span className="inline-block text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-500">
                         データ不足
                       </span>
                     )}
@@ -176,41 +170,41 @@ export default async function StaffDetailPage({
 
           {/* 直近4週の推移 */}
           <div className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">直近4週の推移</h2>
+            <h2 className="text-gray-400 text-sm font-medium mb-3 uppercase tracking-wide">直近4週の推移</h2>
             {records.length === 0 ? (
-              <div className="bg-white rounded-lg border border-gray-200 py-8 text-center text-sm text-gray-500">
+              <div className="bg-gray-900 rounded-2xl border border-gray-800 py-8 text-center text-gray-500 text-sm">
                 記録がありません。週次入力から実績を登録してください。
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-gray-50">
+              <div className="overflow-x-auto rounded-2xl border border-gray-800">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-900">
                     <tr>
-                      {['週', '売上', '客数', '客単価', '次回予約率', '口コミ数'].map((h) => (
+                      {['週', '売上', '客数', '客単価', '次回予約率', '口コミ'].map((h) => (
                         <th key={h} className="px-3 py-3 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
                           {h}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="divide-y divide-gray-800">
                     {[...records].reverse().map((r) => {
                       const unitPrice = r.visits && r.visits > 0 && r.sales !== null
                         ? Math.round(r.sales / r.visits) : null
                       const isLatest = r.id === latest?.id
                       return (
-                        <tr key={r.id} className={isLatest ? 'bg-blue-50' : 'hover:bg-gray-50 transition-colors'}>
-                          <td className="px-3 py-3 font-medium text-gray-900 whitespace-nowrap">
-                            {r.record_date}
-                            {isLatest && <span className="ml-1 text-xs text-blue-600">（今週）</span>}
+                        <tr key={r.id} className={isLatest ? 'bg-blue-900/20' : 'hover:bg-gray-900/50 transition-colors'}>
+                          <td className="px-3 py-3 font-medium whitespace-nowrap">
+                            <span className={isLatest ? 'text-blue-400' : 'text-gray-300'}>{r.record_date}</span>
+                            {isLatest && <span className="ml-1 text-xs text-blue-500">今週</span>}
                           </td>
-                          <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{fmt(r.sales, '円')}</td>
-                          <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{fmt(r.visits, '人')}</td>
-                          <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{fmt(unitPrice, '円')}</td>
-                          <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
+                          <td className="px-3 py-3 text-gray-300 whitespace-nowrap">{fmt(r.sales, '円')}</td>
+                          <td className="px-3 py-3 text-gray-300 whitespace-nowrap">{fmt(r.visits, '人')}</td>
+                          <td className="px-3 py-3 text-gray-300 whitespace-nowrap">{fmt(unitPrice, '円')}</td>
+                          <td className="px-3 py-3 text-gray-300 whitespace-nowrap">
                             {r.repeat_rate !== null ? `${r.repeat_rate}%` : '—'}
                           </td>
-                          <td className="px-3 py-3 text-gray-700 whitespace-nowrap">{fmt(r.review_count, '件')}</td>
+                          <td className="px-3 py-3 text-gray-300 whitespace-nowrap">{fmt(r.review_count, '件')}</td>
                         </tr>
                       )
                     })}
@@ -228,7 +222,7 @@ export default async function StaffDetailPage({
             currentStatus={actionLog?.is_executed ?? null}
           />
         </div>
-      </main>
+      </div>
     </AuthGuard>
   )
 }

@@ -19,7 +19,7 @@ export default function StoreSelect({ stores, selectedStoreId, basePath = '/dash
         const val = e.target.value
         router.push(val ? `${basePath}?storeId=${val}` : basePath)
       }}
-      className="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+      className="block w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
     >
       <option value="">-- 店舗を選択してください --</option>
       {stores.map((store) => (
