@@ -72,24 +72,27 @@ export interface Database {
       profiles: {
         Row: {
           id: string
-          role: string
-          staff_id: string | null
+          role: 'owner' | 'manager' | 'viewer'
           store_id: string | null
+          display_name: string | null
           created_at: string
+          updated_at: string
         }
         Insert: {
           id: string
-          role?: string
-          staff_id?: string | null
+          role?: 'owner' | 'manager' | 'viewer'
           store_id?: string | null
+          display_name?: string | null
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
-          role?: string
-          staff_id?: string | null
+          role?: 'owner' | 'manager' | 'viewer'
           store_id?: string | null
+          display_name?: string | null
           created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }

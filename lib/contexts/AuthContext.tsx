@@ -7,15 +7,17 @@ import { createClient } from '@/lib/supabase/client'
 const supabase = createClient()
 
 export type UserProfile = {
-  role: 'admin' | 'staff'
-  staffId: string | null
+  role: 'owner' | 'manager' | 'viewer'
   storeId: string | null
+  displayName: string | null
 }
 
 interface AuthContextType {
   user: User | null
   profile: UserProfile | null
   loading: boolean
+  isOwner: boolean
+  isManager: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
 }
@@ -25,16 +27,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 async function fetchProfile(userId: string): Promise<UserProfile | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('role, staff_id, store_id')
+    .select('role, store_id, display_name')
     .eq('id', userId)
     .single()
 
   if (error || !data) return null
 
   return {
-    role: (data.role === 'admin' ? 'admin' : 'staff') as 'admin' | 'staff',
-    staffId: data.staff_id ?? null,
+    role: data.role as 'owner' | 'manager' | 'viewer',
     storeId: data.store_id ?? null,
+    displayName: data.display_name ?? null,
   }
 }
 
@@ -79,8 +81,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null)
   }
 
+  const isOwner = profile?.role === 'owner'
+  const isManager = profile?.role === 'manager'
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, isOwner, isManager, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   )

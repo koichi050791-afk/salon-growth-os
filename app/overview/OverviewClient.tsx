@@ -20,6 +20,12 @@ function formatWeekLabel(weekStart: string): string {
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日週`
 }
 
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return '未入力'
+  const d = new Date(iso)
+  return `${d.getMonth() + 1}月${d.getDate()}日`
+}
+
 type BadgeStatus = 'good' | 'warning' | 'danger' | 'none'
 
 function getStatus(val: number | null, target: number | null): BadgeStatus {
@@ -31,47 +37,52 @@ function getStatus(val: number | null, target: number | null): BadgeStatus {
 }
 
 const BADGE_CLASS: Record<BadgeStatus, string> = {
-  good:    'bg-green-900/50 text-green-400',
+  good:    'bg-amber-900/50 text-amber-400',
   warning: 'bg-yellow-900/50 text-yellow-400',
   danger:  'bg-red-900/50 text-red-400',
-  none:    'bg-gray-800 text-gray-500',
+  none:    'bg-slate-700/50 text-slate-400',
 }
 const BADGE_LABEL: Record<BadgeStatus, string> = {
   good: '達成', warning: '注意', danger: '危険', none: '未入力',
 }
-
-const CARD_CLASS: Record<BadgeStatus, string> = {
-  good:    'bg-green-900/20 border border-green-800',
-  warning: 'bg-yellow-900/20 border border-yellow-800',
-  danger:  'bg-red-900/20 border border-red-800',
-  none:    'bg-gray-900 border border-gray-800',
+const CARD_BORDER: Record<BadgeStatus, string> = {
+  good:    'border-amber-600/40',
+  warning: 'border-yellow-700/40',
+  danger:  'border-red-900/60',
+  none:    'border-slate-700/50',
 }
 
-function fmt(val: number | null, suffix = ''): string {
+function fmtYen(val: number | null): string {
+  if (val === null) return '—'
+  return '¥' + val.toLocaleString('ja-JP')
+}
+function fmtNum(val: number | null, suffix = ''): string {
   if (val === null) return '—'
   return val.toLocaleString('ja-JP') + suffix
 }
-
 function fmtPct(val: number | null, target: number | null): string {
   if (val === null || target === null || target === 0) return '—'
   return ((val / target) * 100).toFixed(1) + '%'
 }
 
-function diffPctStr(current: number | null, prev: number | null): string | null {
+function diffPctVal(current: number | null, prev: number | null): number | null {
   if (current === null || prev === null || prev === 0) return null
-  const p = ((current - prev) / prev) * 100
-  const sign = p >= 0 ? '+' : ''
-  return `前週比 ${sign}${p.toFixed(1)}%`
-}
-
-function diffPctPositive(current: number | null, prev: number | null): boolean {
-  if (current === null || prev === null || prev === 0) return true
-  return current >= prev
+  return ((current - prev) / prev) * 100
 }
 
 // ──────────────────────────────────────────────
-// 派生値を計算
+// 派生値
 // ──────────────────────────────────────────────
+type CauseType = 'achieved' | 'visits' | 'unit_price' | 'both' | 'no_data'
+
+const CAUSE_ACTION: Record<CauseType, string | null> = {
+  achieved:   '今週の取り組みを来週も継続する',
+  visits:     '仕上がり直後に口コミ案内をその場で送る',
+  unit_price: 'カラー前にケア提案を1回必ず入れる',
+  both:       '施術中に次回来店時期を必ず口頭で伝える',
+  no_data:    null,
+}
+
 type Derived = {
   sales: number | null
   visits: number | null
@@ -81,12 +92,13 @@ type Derived = {
   weeklyTargetVisits: number | null
   weeklyTargetUnitPrice: number | null
   salesStatus: BadgeStatus
-  visitsStatus: BadgeStatus
-  unitPriceStatus: BadgeStatus
   salesPct: string
-  diff: string | null
-  diffUp: boolean
-  cause: 'achieved' | 'visits' | 'unit_price' | 'both' | 'no_data'
+  salesDiff: number | null
+  visitsDiff: number | null
+  unitPriceDiff: number | null
+  cause: CauseType
+  action: string | null
+  lastInputDate: string
 }
 
 function derive(s: StoreOverview): Derived {
@@ -95,22 +107,20 @@ function derive(s: StoreOverview): Derived {
   const unitPrice =
     sales !== null && visits !== null && visits > 0 ? Math.round(sales / visits) : null
   const prevSales = s.lastWeek?.sales ?? null
+  const prevVisits = s.lastWeek?.visits ?? null
+  const prevUnitPrice =
+    prevSales !== null && (s.lastWeek?.visits ?? 0) > 0
+      ? Math.round(prevSales / s.lastWeek!.visits!) : null
 
-  const weeklyTargetSales =
-    s.config?.target_sales != null ? Math.round(s.config.target_sales / 4) : null
-  const weeklyTargetVisits =
-    s.config?.target_visits != null ? Math.round(s.config.target_visits / 4) : null
+  const weeklyTargetSales = s.config?.target_sales != null ? Math.round(s.config.target_sales / 4) : null
+  const weeklyTargetVisits = s.config?.target_visits != null ? Math.round(s.config.target_visits / 4) : null
   const weeklyTargetUnitPrice = s.config?.target_unit_price ?? null
 
   const salesStatus = getStatus(sales, weeklyTargetSales)
   const visitsStatus = getStatus(visits, weeklyTargetVisits)
   const unitPriceStatus = getStatus(unitPrice, weeklyTargetUnitPrice)
 
-  const salesPct = fmtPct(sales, weeklyTargetSales)
-  const diff = diffPctStr(sales, prevSales)
-  const diffUp = diffPctPositive(sales, prevSales)
-
-  let cause: Derived['cause'] = 'no_data'
+  let cause: CauseType = 'no_data'
   if (sales !== null) {
     if (salesStatus === 'good') {
       cause = 'achieved'
@@ -124,23 +134,34 @@ function derive(s: StoreOverview): Derived {
     }
   }
 
+  const lastInputDate = fmtDate(s.thisWeek?.updated_at ?? s.thisWeek?.created_at)
+
   return {
     sales, visits, unitPrice, prevSales,
     weeklyTargetSales, weeklyTargetVisits, weeklyTargetUnitPrice,
-    salesStatus, visitsStatus, unitPriceStatus,
-    salesPct, diff, diffUp, cause,
+    salesStatus,
+    salesPct: fmtPct(sales, weeklyTargetSales),
+    salesDiff: diffPctVal(sales, prevSales),
+    visitsDiff: diffPctVal(visits, prevVisits),
+    unitPriceDiff: diffPctVal(unitPrice, prevUnitPrice),
+    cause,
+    action: CAUSE_ACTION[cause],
+    lastInputDate,
   }
 }
 
-const CAUSE_LABEL: Record<string, string> = {
-  visits:     '原因：客数不足',
-  unit_price: '原因：客単価不足',
-  both:       '原因：客数・客単価の両方が不足',
+function DiffBadge({ val }: { val: number | null }) {
+  if (val === null) return <span className="text-slate-500 text-xs">-</span>
+  return (
+    <span className={`text-xs ${val >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+      {val >= 0 ? '↑' : '↓'} {val >= 0 ? '+' : ''}{val.toFixed(1)}%
+    </span>
+  )
 }
 
 const INPUT_CLASS =
-  'w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-blue-500'
-const LABEL_CLASS = 'block text-sm text-gray-400 mb-1.5'
+  'w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-blue-500'
+const LABEL_CLASS = 'block text-sm text-slate-400 mb-1.5'
 
 // ──────────────────────────────────────────────
 // メインコンポーネント
@@ -163,28 +184,21 @@ export default function OverviewClient() {
   }, [weekStart, loadData])
 
   const derivedList = (data?.stores ?? []).map((s) => ({ s, d: derive(s) }))
-
-  // 危険店舗（売上目標比70%未満）
   const dangerStores = derivedList.filter(({ d }) => d.salesStatus === 'danger')
-
   const inputtedCount = derivedList.filter(({ d }) => d.sales !== null).length
   const totalCount = derivedList.length
 
   return (
     <div>
       {/* 週選択 */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4 mb-4">
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-4 mb-4">
         <label className={LABEL_CLASS}>対象週（日曜日）</label>
-        <input
-          type="date"
-          value={weekStart}
-          onChange={(e) => setWeekStart(e.target.value)}
-          className={INPUT_CLASS}
-        />
+        <input type="date" value={weekStart}
+          onChange={(e) => setWeekStart(e.target.value)} className={INPUT_CLASS} />
       </div>
 
       {fetching && (
-        <div className="text-center text-gray-500 py-10 text-sm">データを読み込み中...</div>
+        <div className="text-center text-slate-500 py-10 text-sm">データを読み込み中...</div>
       )}
 
       {!fetching && data && (
@@ -194,23 +208,20 @@ export default function OverviewClient() {
             <div className="mb-4">
               <h2 className="text-white text-lg font-bold mb-3">🚨 要対応店舗</h2>
               {dangerStores.map(({ s, d }) => (
-                <div
-                  key={s.store.id}
-                  className="bg-red-900/30 border border-red-800 rounded-2xl p-4 mb-3"
-                >
+                <div key={s.store.id} className="bg-gradient-to-br from-red-950 to-slate-900 border border-red-900/60 rounded-2xl p-4 mb-3">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-white text-lg font-bold">{s.store.store_name}</p>
                     <span className="text-xs bg-red-900/50 text-red-400 px-2 py-0.5 rounded-full">危険</span>
                   </div>
-                  <p className="text-red-400 text-sm mb-1">
-                    売上 目標比 {d.salesPct}
-                  </p>
-                  {d.cause !== 'no_data' && d.cause !== 'achieved' && (
-                    <p className="text-red-300 text-sm mb-3">{CAUSE_LABEL[d.cause]}</p>
+                  <p className="text-red-400 text-sm mb-1">売上 目標比 {d.salesPct}</p>
+                  {d.action && d.cause !== 'no_data' && d.cause !== 'achieved' && (
+                    <p className="text-red-300 text-sm mb-3">
+                      {d.cause === 'visits' ? '原因：客数不足' : d.cause === 'unit_price' ? '原因：客単価不足' : '原因：客数・客単価の両方が不足'}
+                    </p>
                   )}
                   <button
                     onClick={() => router.push(`/dashboard?storeId=${s.store.id}`)}
-                    className="text-sm text-blue-400 border border-blue-800 rounded-lg px-3 py-1.5 hover:border-blue-600 transition-colors"
+                    className="text-sm text-blue-400 border border-blue-800 rounded-lg px-3 py-1.5 hover:border-blue-600 transition active:scale-[0.98]"
                   >
                     → 詳細を見る
                   </button>
@@ -225,57 +236,62 @@ export default function OverviewClient() {
               <h2 className="text-white text-lg font-bold">
                 📊 全店比較（{formatWeekLabel(weekStart)}）
               </h2>
-              <span className="text-gray-400 text-sm">入力済み：{inputtedCount} / {totalCount}店舗</span>
+              <span className="text-slate-400 text-sm">入力済み：{inputtedCount} / {totalCount}店舗</span>
             </div>
+
             {derivedList.map(({ s, d }) => (
               <div
                 key={s.store.id}
-                className={`rounded-2xl p-5 mb-3 ${CARD_CLASS[d.salesStatus]}`}
+                className={`bg-gradient-to-br from-slate-800 to-slate-900 border ${CARD_BORDER[d.salesStatus]} rounded-2xl p-5 mb-4`}
               >
                 {/* ヘッダー */}
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-white font-bold text-base">{s.store.store_name}</p>
+                <div className="flex items-start justify-between mb-1">
+                  <p className="text-white text-xl font-bold">{s.store.store_name}</p>
                   <span className={`text-xs px-3 py-1 rounded-full font-medium ${BADGE_CLASS[d.salesStatus]}`}>
                     {BADGE_LABEL[d.salesStatus]}
                   </span>
                 </div>
 
+                <div className="flex items-center gap-4 mb-4">
+                  <p className="text-slate-500 text-xs">
+                    最終入力 <span className="text-white text-sm">{d.lastInputDate}</span>
+                  </p>
+                  {d.action && (
+                    <p className="text-slate-500 text-xs">
+                      今週やること <span className="text-amber-300 font-bold text-xs">{d.action}</span>
+                    </p>
+                  )}
+                </div>
+
                 {d.sales === null ? (
-                  <p className="text-gray-500 text-sm">今週のデータ未入力</p>
+                  <p className="text-slate-500 text-sm">今週のデータ未入力</p>
                 ) : (
-                  <>
-                    <div className="grid grid-cols-3 gap-3 mb-2">
-                      <div>
-                        <p className="text-gray-500 text-xs mb-0.5">週売上</p>
-                        <p className="text-white font-medium text-sm">{fmt(d.sales, '円')}</p>
-                        <p className="text-gray-600 text-xs">
-                          目標: {fmt(d.weeklyTargetSales, '円')}
-                        </p>
-                        <p className={`text-xs ${d.salesStatus === 'danger' ? 'text-red-400' : d.salesStatus === 'warning' ? 'text-yellow-400' : 'text-green-400'}`}>
-                          {d.salesPct}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-xs mb-0.5">週客数</p>
-                        <p className="text-white font-medium text-sm">{fmt(d.visits, '人')}</p>
-                        <p className="text-gray-600 text-xs">
-                          目標: {fmt(d.weeklyTargetVisits, '人')}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-xs mb-0.5">客単価</p>
-                        <p className="text-white font-medium text-sm">{fmt(d.unitPrice, '円')}</p>
-                        <p className="text-gray-600 text-xs">
-                          目標: {fmt(d.weeklyTargetUnitPrice, '円')}
-                        </p>
-                      </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                      <p className="text-slate-400 text-xs mb-1">週売上</p>
+                      <p className="text-white text-2xl font-bold tracking-tight">{fmtYen(d.sales)}</p>
+                      <DiffBadge val={d.salesDiff} />
+                      {d.weeklyTargetSales !== null && (
+                        <p className="text-slate-600 text-xs mt-0.5">目標 {fmtYen(d.weeklyTargetSales)}</p>
+                      )}
                     </div>
-                    {d.diff && (
-                      <p className={`text-xs ${d.diffUp ? 'text-green-400' : 'text-red-400'}`}>
-                        {d.diff}
-                      </p>
-                    )}
-                  </>
+                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                      <p className="text-slate-400 text-xs mb-1">客単価</p>
+                      <p className="text-white text-2xl font-bold tracking-tight">{fmtYen(d.unitPrice)}</p>
+                      <DiffBadge val={d.unitPriceDiff} />
+                      {d.weeklyTargetUnitPrice !== null && (
+                        <p className="text-slate-600 text-xs mt-0.5">目標 {fmtYen(d.weeklyTargetUnitPrice)}</p>
+                      )}
+                    </div>
+                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                      <p className="text-slate-400 text-xs mb-1">週客数</p>
+                      <p className="text-white text-2xl font-bold tracking-tight">{fmtNum(d.visits, '人')}</p>
+                      <DiffBadge val={d.visitsDiff} />
+                      {d.weeklyTargetVisits !== null && (
+                        <p className="text-slate-600 text-xs mt-0.5">目標 {fmtNum(d.weeklyTargetVisits, '人')}</p>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             ))}

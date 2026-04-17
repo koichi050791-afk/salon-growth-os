@@ -15,14 +15,18 @@ function getSundayISO(): string {
   return sunday.toISOString().slice(0, 10)
 }
 
-function fmt(val: number | null, suffix = ''): string {
+function fmtYen(val: number | null): string {
+  if (val === null) return '—'
+  return '¥' + val.toLocaleString('ja-JP')
+}
+function fmtNum(val: number | null, suffix = ''): string {
   if (val === null) return '—'
   return val.toLocaleString('ja-JP') + suffix
 }
 
 const INPUT_CLASS =
-  'w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-blue-500'
-const LABEL_CLASS = 'block text-sm text-gray-400 mb-1.5'
+  'w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-blue-500'
+const LABEL_CLASS = 'block text-sm text-slate-400 mb-1.5'
 
 // ──────────────────────────────────────────────
 // 型
@@ -41,9 +45,17 @@ type StaffCard = {
 // ──────────────────────────────────────────────
 // メインコンポーネント
 // ──────────────────────────────────────────────
-export default function StaffListClient({ stores }: { stores: Store[] }) {
+export default function StaffListClient({
+  stores,
+  initialStoreId = '',
+  hideStoreSelect = false,
+}: {
+  stores: Store[]
+  initialStoreId?: string
+  hideStoreSelect?: boolean
+}) {
   const router = useRouter()
-  const [storeId, setStoreId] = useState('')
+  const [storeId, setStoreId] = useState(initialStoreId)
   const [weekStart, setWeekStart] = useState(getSundayISO())
   const [cards, setCards] = useState<StaffCard[]>([])
   const [fetching, setFetching] = useState(false)
@@ -91,48 +103,48 @@ export default function StaffListClient({ stores }: { stores: Store[] }) {
   return (
     <div>
       {/* 店舗・週選択 */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4 mb-4 space-y-3">
-        <div>
-          <label className={LABEL_CLASS}>店舗</label>
-          <select value={storeId} onChange={handleStoreChange} className={INPUT_CLASS}>
-            <option value="">-- 店舗を選択 --</option>
-            {stores.map((s) => (
-              <option key={s.id} value={s.id}>{s.store_name}</option>
-            ))}
-          </select>
-        </div>
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-5 mb-4 space-y-3">
+        {!hideStoreSelect ? (
+          <div>
+            <label className={LABEL_CLASS}>店舗</label>
+            <select value={storeId} onChange={handleStoreChange} className={INPUT_CLASS}>
+              <option value="">-- 店舗を選択 --</option>
+              {stores.map((s) => (
+                <option key={s.id} value={s.id}>{s.store_name}</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div>
+            <p className="text-slate-500 text-xs mb-0.5">店舗</p>
+            <p className="text-white font-bold">{stores[0]?.store_name ?? ''}</p>
+          </div>
+        )}
         <div>
           <label className={LABEL_CLASS}>対象週（日曜日）</label>
-          <input
-            type="date"
-            value={weekStart}
-            onChange={(e) => setWeekStart(e.target.value)}
-            className={INPUT_CLASS}
-          />
+          <input type="date" value={weekStart}
+            onChange={(e) => setWeekStart(e.target.value)} className={INPUT_CLASS} />
         </div>
       </div>
 
       {fetching && (
-        <div className="text-center text-gray-500 py-10 text-sm">データを読み込み中...</div>
+        <div className="text-center text-slate-500 py-10 text-sm">データを読み込み中...</div>
       )}
 
       {!fetching && storeId && (
         <>
           {cards.length === 0 ? (
-            <div className="bg-gray-900 rounded-2xl border border-gray-800 py-10 text-center text-gray-500 text-sm">
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl py-10 text-center text-slate-500 text-sm">
               スタッフが登録されていません
             </div>
           ) : (
             cards.map((c) => (
               <div
                 key={c.id}
-                className={`rounded-2xl p-5 mb-3 ${
-                  c.isAlert
-                    ? 'bg-red-900/20 border border-red-800'
-                    : 'bg-gray-900 border border-gray-800'
+                className={`bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 mb-3 border ${
+                  c.isAlert ? 'border-red-900/60' : 'border-slate-700/50'
                 }`}
               >
-                {/* ヘッダー */}
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-white text-lg font-bold">{c.name}</p>
                   {c.isAlert && (
@@ -143,29 +155,29 @@ export default function StaffListClient({ stores }: { stores: Store[] }) {
                 </div>
 
                 {c.sales === null && c.visits === null ? (
-                  <p className="text-gray-500 text-sm">今週のデータ未入力</p>
+                  <p className="text-slate-500 text-sm">今週のデータ未入力</p>
                 ) : (
                   <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <p className="text-gray-500 text-xs mb-0.5">週売上</p>
-                      <p className="text-white font-medium">{fmt(c.sales, '円')}</p>
+                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                      <p className="text-slate-400 text-xs mb-1">週売上</p>
+                      <p className="text-white text-2xl font-bold tracking-tight">{fmtYen(c.sales)}</p>
                       {c.salesDiff !== null ? (
                         <p className={`text-xs mt-0.5 ${c.salesDiff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                           {c.salesDiff >= 0 ? '↑' : '↓'} {c.salesDiff >= 0 ? '+' : ''}{c.salesDiff.toFixed(1)}%
                         </p>
                       ) : c.prevSales === null ? (
-                        <p className="text-gray-500 text-xs mt-0.5">初回</p>
+                        <p className="text-slate-500 text-xs mt-0.5">初回</p>
                       ) : (
-                        <p className="text-gray-500 text-xs mt-0.5">-</p>
+                        <p className="text-slate-500 text-xs mt-0.5">-</p>
                       )}
                     </div>
-                    <div>
-                      <p className="text-gray-500 text-xs mb-0.5">週客数</p>
-                      <p className="text-white font-medium">{fmt(c.visits, '人')}</p>
+                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                      <p className="text-slate-400 text-xs mb-1">週客数</p>
+                      <p className="text-white text-2xl font-bold tracking-tight">{fmtNum(c.visits, '人')}</p>
                     </div>
-                    <div>
-                      <p className="text-gray-500 text-xs mb-0.5">客単価</p>
-                      <p className="text-white font-medium">{fmt(c.unitPrice, '円')}</p>
+                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                      <p className="text-slate-400 text-xs mb-1">客単価</p>
+                      <p className="text-white text-2xl font-bold tracking-tight">{fmtYen(c.unitPrice)}</p>
                     </div>
                   </div>
                 )}
@@ -176,7 +188,7 @@ export default function StaffListClient({ stores }: { stores: Store[] }) {
       )}
 
       {!storeId && !fetching && (
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 py-12 text-center text-gray-500 text-sm">
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl py-12 text-center text-slate-500 text-sm">
           店舗を選択してください
         </div>
       )}

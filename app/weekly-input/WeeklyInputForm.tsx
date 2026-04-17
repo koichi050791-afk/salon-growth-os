@@ -25,7 +25,7 @@ function unitPrice(sales: string, visits: string): string {
   const s = toInt(sales)
   const v = toInt(visits)
   if (s === null || v === null || v === 0) return '—'
-  return Math.round(s / v).toLocaleString('ja-JP') + ' 円'
+  return '¥' + Math.round(s / v).toLocaleString('ja-JP')
 }
 
 // ──────────────────────────────────────────────
@@ -57,8 +57,8 @@ const EMPTY_STORE_FORM: StoreForm = {
 const AVAIL_LABELS = ['1 少ない', '2', '3 普通', '4', '5 多い']
 
 const INPUT_CLASS =
-  'w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-blue-500 placeholder:text-gray-600'
-const LABEL_CLASS = 'block text-sm text-gray-400 mb-1.5'
+  'w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-blue-500 placeholder:text-slate-600'
+const LABEL_CLASS = 'block text-sm text-slate-400 mb-1.5'
 
 // ──────────────────────────────────────────────
 // コンポーネント
@@ -66,9 +66,11 @@ const LABEL_CLASS = 'block text-sm text-gray-400 mb-1.5'
 export default function WeeklyInputForm({
   stores,
   initialStoreId,
+  hideStoreSelect = false,
 }: {
   stores: Store[]
   initialStoreId: string
+  hideStoreSelect?: boolean
 }) {
   const router = useRouter()
   const [storeId, setStoreId] = useState(initialStoreId)
@@ -78,13 +80,11 @@ export default function WeeklyInputForm({
   const [fetching, setFetching] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
 
-  // 店舗・週変更時にデータ取得
   const loadData = useCallback(async (sid: string, week: string) => {
     if (!sid) return
     setFetching(true)
     const result = await fetchWeeklyData(sid, week)
 
-    // 店舗フォームをセット
     if (result.storeInput) {
       const d = result.storeInput
       setStoreForm({
@@ -100,7 +100,6 @@ export default function WeeklyInputForm({
       setStoreForm(EMPTY_STORE_FORM)
     }
 
-    // スタッフ行をセット
     setStaffRows(
       result.staff.map((s) => {
         const existing = result.staffInputs.find((i) => i.staff_id === s.id)
@@ -156,11 +155,11 @@ export default function WeeklyInputForm({
     const staffPayloads = staffRows
       .filter((r) => r.sales !== '' || r.visits !== '')
       .map((r) => ({
-        store_id:  storeId,
-        staff_id:  r.staff_id,
+        store_id:   storeId,
+        staff_id:   r.staff_id,
         week_start: weekStart,
-        sales:     toInt(r.sales),
-        visits:    toInt(r.visits),
+        sales:      toInt(r.sales),
+        visits:     toInt(r.visits),
       }))
 
     const { error } = await saveWeeklyInputs(storePayload, staffPayloads)
@@ -176,40 +175,38 @@ export default function WeeklyInputForm({
   return (
     <div>
       {/* 店舗・週選択 */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4 mb-4 space-y-3">
-        <div>
-          <label className={LABEL_CLASS}>店舗</label>
-          <select
-            value={storeId}
-            onChange={handleStoreChange}
-            className={INPUT_CLASS}
-          >
-            <option value="">-- 店舗を選択 --</option>
-            {stores.map((s) => (
-              <option key={s.id} value={s.id}>{s.store_name}</option>
-            ))}
-          </select>
-        </div>
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-5 mb-4 space-y-3">
+        {!hideStoreSelect ? (
+          <div>
+            <label className={LABEL_CLASS}>店舗</label>
+            <select value={storeId} onChange={handleStoreChange} className={INPUT_CLASS}>
+              <option value="">-- 店舗を選択 --</option>
+              {stores.map((s) => (
+                <option key={s.id} value={s.id}>{s.store_name}</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div>
+            <p className="text-slate-500 text-xs mb-0.5">店舗</p>
+            <p className="text-white font-bold">{stores[0]?.store_name ?? ''}</p>
+          </div>
+        )}
         <div>
           <label className={LABEL_CLASS}>対象週（日曜日）</label>
-          <input
-            type="date"
-            value={weekStart}
-            onChange={(e) => setWeekStart(e.target.value)}
-            className={INPUT_CLASS}
-          />
+          <input type="date" value={weekStart}
+            onChange={(e) => setWeekStart(e.target.value)} className={INPUT_CLASS} />
         </div>
       </div>
 
-      {/* ローディング */}
       {fetching && (
-        <div className="text-center text-gray-500 py-8 text-sm">データを読み込み中...</div>
+        <div className="text-center text-slate-500 py-8 text-sm">データを読み込み中...</div>
       )}
 
       {!fetching && storeId && (
         <>
           {/* 店舗全体セクション */}
-          <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5 mb-4">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-5 mb-4">
             <h2 className="text-white text-lg font-bold mb-4">🏪 店舗全体</h2>
             <div className="space-y-4">
               <div>
@@ -228,11 +225,11 @@ export default function WeeklyInputForm({
 
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
-                  <label className="text-sm text-gray-400">客単価</label>
-                  <span className="text-xs bg-blue-900/50 text-blue-400 px-2 py-0.5 rounded-full">自動算出</span>
+                  <label className="text-sm text-slate-400">客単価</label>
+                  <span className="text-xs bg-slate-700/50 text-slate-400 px-2 py-0.5 rounded-full">自動算出</span>
                 </div>
-                <div className="bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3">
-                  <span className="text-blue-400 text-lg font-bold">
+                <div className="bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3">
+                  <span className="text-amber-300 text-lg font-bold">
                     {unitPrice(storeForm.sales, storeForm.visits)}
                   </span>
                 </div>
@@ -270,10 +267,10 @@ export default function WeeklyInputForm({
                         key={val}
                         type="button"
                         onClick={() => updateStoreForm('availability_score', active ? null : val)}
-                        className={`py-3 text-sm font-medium rounded-lg transition-colors ${
+                        className={`py-3 text-sm font-medium rounded-lg transition active:scale-[0.98] ${
                           active
                             ? 'bg-blue-600 text-white'
-                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                            : 'bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:border-slate-500'
                         }`}
                       >
                         {label}
@@ -301,38 +298,28 @@ export default function WeeklyInputForm({
             <div className="mb-4">
               <h2 className="text-white text-lg font-bold mb-3">👤 スタッフ別</h2>
               {staffRows.map((row, idx) => (
-                <div key={row.staff_id} className="bg-gray-900 rounded-2xl border border-gray-800 p-4 mb-3">
+                <div key={row.staff_id} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-4 mb-3">
                   <p className="text-white font-bold mb-3">{row.name}</p>
                   <div className="space-y-3">
                     <div>
                       <label className={LABEL_CLASS}>週売上（円）</label>
-                      <input
-                        type="number"
-                        value={row.sales}
+                      <input type="number" value={row.sales}
                         onChange={(e) => updateStaffRow(idx, 'sales', e.target.value)}
-                        placeholder="例: 80000"
-                        className={INPUT_CLASS}
-                        min="0"
-                      />
+                        placeholder="例: 80000" className={INPUT_CLASS} min="0" />
                     </div>
                     <div>
                       <label className={LABEL_CLASS}>週客数（人）</label>
-                      <input
-                        type="number"
-                        value={row.visits}
+                      <input type="number" value={row.visits}
                         onChange={(e) => updateStaffRow(idx, 'visits', e.target.value)}
-                        placeholder="例: 10"
-                        className={INPUT_CLASS}
-                        min="0"
-                      />
+                        placeholder="例: 10" className={INPUT_CLASS} min="0" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1.5">
-                        <label className="text-sm text-gray-400">客単価</label>
-                        <span className="text-xs bg-blue-900/50 text-blue-400 px-2 py-0.5 rounded-full">自動算出</span>
+                        <label className="text-sm text-slate-400">客単価</label>
+                        <span className="text-xs bg-slate-700/50 text-slate-400 px-2 py-0.5 rounded-full">自動算出</span>
                       </div>
-                      <div className="bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3">
-                        <span className="text-blue-400 text-base font-bold">
+                      <div className="bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3">
+                        <span className="text-amber-300 text-base font-bold">
                           {unitPrice(row.sales, row.visits)}
                         </span>
                       </div>
@@ -347,10 +334,10 @@ export default function WeeklyInputForm({
           <button
             onClick={handleSave}
             disabled={saveState === 'saving'}
-            className={`w-full rounded-xl py-5 text-xl font-bold transition-colors disabled:opacity-60 ${
+            className={`w-full rounded-xl py-5 text-xl font-bold transition hover:opacity-90 active:scale-[0.98] disabled:opacity-60 ${
               saveState === 'success' ? 'bg-green-600'
               : saveState === 'error' ? 'bg-red-600'
-              : 'bg-blue-600 hover:bg-blue-500'
+              : 'bg-gradient-to-r from-blue-600 to-blue-500'
             }`}
           >
             {saveState === 'saving'  ? '保存中...'
@@ -362,7 +349,7 @@ export default function WeeklyInputForm({
       )}
 
       {!storeId && !fetching && (
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 py-12 text-center text-gray-500 text-sm">
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl py-12 text-center text-slate-500 text-sm">
           店舗を選択してください
         </div>
       )}

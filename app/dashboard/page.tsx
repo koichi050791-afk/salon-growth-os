@@ -11,25 +11,43 @@ export default async function DashboardPage({
   searchParams: Promise<{ storeId?: string }>
 }) {
   const { storeId } = await searchParams
-
   const profile = await getServerProfile()
-  if (profile?.role === 'staff' && profile.staff_id) {
-    redirect(`/staff/${profile.staff_id}`)
-  }
 
-  const { data: stores } = await getActiveStores()
+  // manager は自店舗のみ
+  const isOwner = profile?.role === 'owner'
+  const isManager = profile?.role === 'manager'
+  const managedStoreId = isManager ? (profile?.store_id ?? null) : null
+
+  // viewer はダッシュボードをそのまま表示（RLSがデータを制限）
+
+  const { data: allStores } = await getActiveStores()
+
+  // owner は全店舗、manager は自店舗のみ
+  const stores = isOwner
+    ? allStores
+    : isManager && managedStoreId
+      ? allStores.filter((s) => s.id === managedStoreId)
+      : allStores
+
+  const initialStoreId = isManager && managedStoreId
+    ? managedStoreId
+    : (storeId ?? '')
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-950 pb-20">
+      <div className="min-h-screen bg-slate-950 pb-20">
         <Navigation />
         <div className="max-w-lg mx-auto px-4 py-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-white">ダッシュボード</h1>
-            <p className="text-gray-400 text-sm mt-0.5">週次KPIと原因分解</p>
+            <p className="text-slate-400 text-sm mt-0.5">週次KPIと原因分解</p>
           </div>
 
-          <DashboardClient stores={stores} initialStoreId={storeId ?? ''} />
+          <DashboardClient
+            stores={stores}
+            initialStoreId={initialStoreId}
+            hideStoreSelect={isManager}
+          />
         </div>
       </div>
     </AuthGuard>

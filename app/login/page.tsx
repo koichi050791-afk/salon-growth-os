@@ -20,21 +20,18 @@ export default function LoginPage() {
     try {
       await signIn(email, password)
 
-      // ログイン後にprofileを直接取得してリダイレクト先を決定
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role, staff_id')
+          .select('role, store_id')
           .eq('id', user.id)
           .single()
 
-        if (profile?.role === 'admin' || !profile) {
-          router.push('/dashboard')
-        } else if (profile.staff_id) {
-          router.push(`/staff/${profile.staff_id}`)
+        if (profile?.role === 'manager' && profile.store_id) {
+          router.push(`/dashboard?storeId=${profile.store_id}`)
         } else {
           router.push('/dashboard')
         }
@@ -43,40 +40,40 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError('メールアドレスまたはパスワードが正しくありません')
-      console.error(err)
+      console.error('Login error:', err)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-gray-900 rounded-2xl p-8 border border-gray-800 space-y-8">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border border-slate-700/50 space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white">Salon Growth OS</h1>
-          <p className="text-gray-400 mt-2 text-sm">美容室経営改善ツール</p>
+          <p className="text-slate-400 mt-2 text-sm">美容室経営改善ツール</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-2">メールアドレス</label>
+            <label className="block text-sm text-slate-400 mb-2">メールアドレス</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-4 text-base focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-gray-600"
+              className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl px-4 py-4 text-base focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
               placeholder="example@email.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-2">パスワード</label>
+            <label className="block text-sm text-slate-400 mb-2">パスワード</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-4 text-base focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-gray-600"
+              className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl px-4 py-4 text-base focus:outline-none focus:border-blue-500 placeholder:text-slate-600"
               placeholder="••••••••"
               required
             />
@@ -91,7 +88,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-4 text-lg font-bold disabled:opacity-50 transition-colors mt-2"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl py-4 text-lg font-bold disabled:opacity-50 hover:opacity-90 transition active:scale-[0.98] mt-2"
           >
             {loading ? 'ログイン中...' : 'ログイン'}
           </button>

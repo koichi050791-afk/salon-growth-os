@@ -16,6 +16,12 @@ function getSundayISO(): string {
   return sunday.toISOString().slice(0, 10)
 }
 
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return '未入力'
+  const d = new Date(iso)
+  return `${d.getMonth() + 1}月${d.getDate()}日`
+}
+
 type BadgeStatus = 'good' | 'warning' | 'danger' | 'none'
 
 function getStatus(val: number | null, target: number | null): BadgeStatus {
@@ -27,90 +33,66 @@ function getStatus(val: number | null, target: number | null): BadgeStatus {
 }
 
 const BADGE_CLASS: Record<BadgeStatus, string> = {
-  good:    'bg-green-900/50 text-green-400',
+  good:    'bg-amber-900/50 text-amber-400',
   warning: 'bg-yellow-900/50 text-yellow-400',
   danger:  'bg-red-900/50 text-red-400',
-  none:    'bg-gray-800 text-gray-500',
+  none:    'bg-slate-700/50 text-slate-400',
 }
 const BADGE_LABEL: Record<BadgeStatus, string> = {
   good: '達成', warning: '注意', danger: '危険', none: 'データなし',
 }
+const CARD_BORDER: Record<BadgeStatus, string> = {
+  good:    'border-amber-600/40',
+  warning: 'border-yellow-700/40',
+  danger:  'border-red-900/60',
+  none:    'border-slate-700/50',
+}
 
-function fmt(val: number | null, suffix = ''): string {
+function fmtYen(val: number | null): string {
+  if (val === null) return '—'
+  return '¥' + val.toLocaleString('ja-JP')
+}
+function fmtNum(val: number | null, suffix = ''): string {
   if (val === null) return '—'
   return val.toLocaleString('ja-JP') + suffix
 }
 
-function diffPctStr(current: number | null, prev: number | null): string | null {
+function diffPctStr(current: number | null, prev: number | null): { text: string; up: boolean } | null {
   if (current === null || prev === null || prev === 0) return null
   const p = ((current - prev) / prev) * 100
   const sign = p >= 0 ? '+' : ''
-  return `前週比 ${sign}${p.toFixed(1)}%`
-}
-
-function diffPctPositive(current: number | null, prev: number | null): boolean | null {
-  if (current === null || prev === null || prev === 0) return null
-  return current >= prev
-}
-
-function gapStr(val: number | null, target: number | null, suffix = '円'): string | null {
-  if (val === null || target === null) return null
-  const gap = target - val
-  if (gap <= 0) return null
-  return `目標まで ▲${gap.toLocaleString('ja-JP')}${suffix}`
+  return { text: `${sign}${p.toFixed(1)}%`, up: p >= 0 }
 }
 
 const INPUT_CLASS =
-  'w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-blue-500'
-const LABEL_CLASS = 'block text-sm text-gray-400 mb-1.5'
+  'w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl px-4 py-3 text-base focus:outline-none focus:border-blue-500 placeholder:text-slate-600'
+const LABEL_CLASS = 'block text-sm text-slate-400 mb-1.5'
 
 // ──────────────────────────────────────────────
-// サマリーカード
+// 内部カード（数値表示）
 // ──────────────────────────────────────────────
-function MetricCard({
+function MetricInner({
   label,
   value,
-  suffix,
+  diff,
   target,
-  prevValue,
 }: {
   label: string
-  value: number | null
-  suffix: string
-  target: number | null
-  prevValue: number | null
+  value: string
+  diff: { text: string; up: boolean } | null
+  target: string | null
 }) {
-  const status = getStatus(value, target)
-  const gap = gapStr(value, target, suffix)
-  const diff = diffPctStr(value, prevValue)
-  const diffUp = diffPctPositive(value, prevValue)
-
   return (
-    <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-gray-400 text-sm">{label}</span>
-        <span className={`text-xs px-3 py-1 rounded-full font-medium ${BADGE_CLASS[status]}`}>
-          {BADGE_LABEL[status]}
-        </span>
-      </div>
-
-      <p className="text-white text-3xl font-bold mb-2">{fmt(value, suffix)}</p>
-
-      <div className="space-y-1">
-        {status === 'good' ? (
-          <p className="text-green-400 text-sm font-medium">目標達成 ✅</p>
-        ) : gap ? (
-          <p className="text-red-400 text-sm">{gap}</p>
-        ) : null}
-
-        {diff && (
-          <p className={`text-sm ${diffUp ? 'text-green-400' : 'text-red-400'}`}>{diff}</p>
-        )}
-
-        {target !== null && (
-          <p className="text-gray-600 text-xs">目標: {fmt(target, suffix)}</p>
-        )}
-      </div>
+    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+      <p className="text-slate-400 text-xs mb-1">{label}</p>
+      <p className="text-white text-2xl font-bold tracking-tight">{value}</p>
+      {diff && (
+        <p className={`text-xs mt-1 ${diff.up ? 'text-green-400' : 'text-red-400'}`}>
+          {diff.up ? '↑' : '↓'} {diff.text}
+        </p>
+      )}
+      {!diff && <p className="text-xs mt-1 text-slate-500">-</p>}
+      {target && <p className="text-xs text-slate-600 mt-0.5">目標 {target}</p>}
     </div>
   )
 }
@@ -121,9 +103,11 @@ function MetricCard({
 export default function DashboardClient({
   stores,
   initialStoreId,
+  hideStoreSelect = false,
 }: {
   stores: Store[]
   initialStoreId: string
+  hideStoreSelect?: boolean
 }) {
   const router = useRouter()
   const [storeId, setStoreId] = useState(initialStoreId)
@@ -164,17 +148,18 @@ export default function DashboardClient({
   const prevSales = data?.lastWeek?.sales ?? null
   const prevVisits = data?.lastWeek?.visits ?? null
   const prevUnitPrice =
-    prevSales !== null && prevVisits !== null && prevVisits > 0
-      ? Math.round(prevSales / prevVisits)
+    prevSales !== null && (data?.lastWeek?.visits ?? 0) > 0
+      ? Math.round(prevSales / data!.lastWeek!.visits!)
       : null
 
   const salesStatus = getStatus(sales, weeklyTargetSales)
   const visitsStatus = getStatus(visits, weeklyTargetVisits)
   const unitPriceStatus = getStatus(unitPrice, weeklyTargetUnitPrice)
 
+  const lastInput = data?.thisWeek?.updated_at ?? data?.thisWeek?.created_at ?? null
+
   // ── 原因分解 ──
   type CauseType = 'achieved' | 'visits' | 'unit_price' | 'both' | 'no_data'
-
   function getCause(): CauseType {
     if (sales === null) return 'no_data'
     if (salesStatus === 'good') return 'achieved'
@@ -185,128 +170,114 @@ export default function DashboardClient({
     if (!unitOk) return 'unit_price'
     return 'both'
   }
-
   const cause = getCause()
 
   const CAUSE_CONFIG = {
-    achieved: {
-      color: 'text-green-400',
-      title: '✅ 今週は目標達成です',
-      desc: '今週の取り組みを継続しましょう。',
-      action: '今週の取り組みを来週も継続する',
-    },
-    visits: {
-      color: 'text-red-400',
-      title: '原因：客数不足',
-      desc: '客数を増やす施策を優先してください。',
-      action: '仕上がり直後に口コミ案内をその場で送る',
-    },
-    unit_price: {
-      color: 'text-yellow-400',
-      title: '原因：客単価不足',
-      desc: '客単価を上げる施策を優先してください。',
-      action: 'カラー前にケア提案を1回必ず入れる',
-    },
-    both: {
-      color: 'text-red-400',
-      title: '原因：客数・客単価の両方が不足',
-      desc: 'どちらも改善が必要です。',
-      action: '施術中に次回来店時期を必ず口頭で伝える',
-    },
-    no_data: null,
+    achieved:   { color: 'text-amber-400', title: '✅ 今週は目標達成です',              desc: '今週の取り組みを継続しましょう。',           action: '今週の取り組みを来週も継続する' },
+    visits:     { color: 'text-red-400',   title: '原因：客数不足',                   desc: '客数を増やす施策を優先してください。',         action: '仕上がり直後に口コミ案内をその場で送る' },
+    unit_price: { color: 'text-yellow-400',title: '原因：客単価不足',                  desc: '客単価を上げる施策を優先してください。',       action: 'カラー前にケア提案を1回必ず入れる' },
+    both:       { color: 'text-red-400',   title: '原因：客数・客単価の両方が不足',      desc: 'どちらも改善が必要です。',                   action: '施術中に次回来店時期を必ず口頭で伝える' },
+    no_data:    null,
   }
-
   const causeConfig = CAUSE_CONFIG[cause]
 
   // ── スタッフ一覧 ──
   const staffCards = (data?.staffList ?? []).map((s) => {
     const thisInput = data?.thisWeekStaff.find((i) => i.staff_id === s.id) ?? null
     const lastInput = data?.lastWeekStaff.find((i) => i.staff_id === s.id) ?? null
-
     const staffSales = thisInput?.sales ?? null
     const staffVisits = thisInput?.visits ?? null
     const staffUnit =
       staffSales !== null && staffVisits !== null && staffVisits > 0
-        ? Math.round(staffSales / staffVisits)
-        : null
+        ? Math.round(staffSales / staffVisits) : null
     const prevStaffSales = lastInput?.sales ?? null
-
     const salesDiff =
       staffSales !== null && prevStaffSales !== null && prevStaffSales > 0
-        ? ((staffSales - prevStaffSales) / prevStaffSales) * 100
-        : null
-
+        ? ((staffSales - prevStaffSales) / prevStaffSales) * 100 : null
     const isAlert = salesDiff !== null && salesDiff <= -20
-
-    return { s, staffSales, staffVisits, staffUnit, salesDiff, isAlert }
+    return { s, staffSales, staffVisits, staffUnit, salesDiff, prevStaffSales, isAlert }
   })
 
   return (
     <div>
       {/* 店舗・週選択 */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4 mb-4 space-y-3">
-        <div>
-          <label className={LABEL_CLASS}>店舗</label>
-          <select value={storeId} onChange={handleStoreChange} className={INPUT_CLASS}>
-            <option value="">-- 店舗を選択 --</option>
-            {stores.map((s) => (
-              <option key={s.id} value={s.id}>{s.store_name}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className={LABEL_CLASS}>対象週（日曜日）</label>
-          <input
-            type="date"
-            value={weekStart}
-            onChange={(e) => setWeekStart(e.target.value)}
-            className={INPUT_CLASS}
-          />
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-5 mb-4">
+        <div className="space-y-3">
+          {!hideStoreSelect && (
+            <div>
+              <label className={LABEL_CLASS}>店舗</label>
+              <select value={storeId} onChange={handleStoreChange} className={INPUT_CLASS}>
+                <option value="">-- 店舗を選択 --</option>
+                {stores.map((s) => (
+                  <option key={s.id} value={s.id}>{s.store_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {hideStoreSelect && storeId && (
+            <div>
+              <p className="text-slate-500 text-xs mb-0.5">店舗</p>
+              <p className="text-white font-bold">{stores[0]?.store_name ?? ''}</p>
+            </div>
+          )}
+          <div>
+            <label className={LABEL_CLASS}>対象週（日曜日）</label>
+            <input type="date" value={weekStart}
+              onChange={(e) => setWeekStart(e.target.value)} className={INPUT_CLASS} />
+          </div>
         </div>
       </div>
 
       {fetching && (
-        <div className="text-center text-gray-500 py-10 text-sm">データを読み込み中...</div>
+        <div className="text-center text-slate-500 py-10 text-sm">データを読み込み中...</div>
       )}
 
       {!fetching && storeId && data && (
         <>
           {/* セクション1：今週のサマリー */}
-          <div className="mb-4">
-            <h2 className="text-white text-lg font-bold mb-3">📈 今週のサマリー</h2>
-            <div className="space-y-3">
-              <MetricCard
+          <div className={`bg-gradient-to-br from-slate-800 to-slate-900 border ${CARD_BORDER[salesStatus]} rounded-2xl p-5 mb-4`}>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-white text-lg font-bold">📈 今週のサマリー</h2>
+                {lastInput && (
+                  <p className="text-slate-500 text-xs mt-0.5">
+                    最終入力 <span className="text-white text-sm">{fmtDate(lastInput)}</span>
+                  </p>
+                )}
+              </div>
+              <span className={`text-xs px-3 py-1 rounded-full font-medium ${BADGE_CLASS[salesStatus]}`}>
+                {BADGE_LABEL[salesStatus]}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <MetricInner
                 label="週売上"
-                value={sales}
-                suffix="円"
-                target={weeklyTargetSales}
-                prevValue={prevSales}
+                value={fmtYen(sales)}
+                diff={diffPctStr(sales, prevSales)}
+                target={weeklyTargetSales !== null ? fmtYen(weeklyTargetSales) : null}
               />
-              <MetricCard
+              <MetricInner
                 label="週客数"
-                value={visits}
-                suffix="人"
-                target={weeklyTargetVisits}
-                prevValue={prevVisits}
+                value={fmtNum(visits, '人')}
+                diff={diffPctStr(visits, prevVisits)}
+                target={weeklyTargetVisits !== null ? fmtNum(weeklyTargetVisits, '人') : null}
               />
-              <MetricCard
+              <MetricInner
                 label="客単価"
-                value={unitPrice}
-                suffix="円"
-                target={weeklyTargetUnitPrice}
-                prevValue={prevUnitPrice}
+                value={fmtYen(unitPrice)}
+                diff={diffPctStr(unitPrice, prevUnitPrice)}
+                target={weeklyTargetUnitPrice !== null ? fmtYen(weeklyTargetUnitPrice) : null}
               />
             </div>
           </div>
 
           {/* セクション2：原因分解 */}
           {causeConfig && (
-            <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5 mb-4">
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-5 mb-4">
               <h2 className="text-white text-lg font-bold mb-3">📊 原因分解</h2>
-              <p className={`text-xl font-bold mb-1 ${causeConfig.color}`}>
-                {causeConfig.title}
-              </p>
-              <p className="text-gray-400 text-sm">{causeConfig.desc}</p>
+              <p className={`text-xl font-bold mb-1 ${causeConfig.color}`}>{causeConfig.title}</p>
+              <p className="text-slate-400 text-sm">{causeConfig.desc}</p>
             </div>
           )}
 
@@ -314,13 +285,11 @@ export default function DashboardClient({
           {staffCards.length > 0 && (
             <div className="mb-4">
               <h2 className="text-white text-lg font-bold mb-3">👤 スタッフ別</h2>
-              {staffCards.map(({ s, staffSales, staffVisits, staffUnit, salesDiff, isAlert }) => (
+              {staffCards.map(({ s, staffSales, staffVisits, staffUnit, salesDiff, prevStaffSales, isAlert }) => (
                 <div
                   key={s.id}
-                  className={`rounded-2xl p-4 mb-3 border ${
-                    isAlert
-                      ? 'bg-red-900/30 border-red-800'
-                      : 'bg-gray-900 border-gray-800'
+                  className={`bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 mb-3 border ${
+                    isAlert ? 'border-red-900/60' : 'border-slate-700/50'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-3">
@@ -331,30 +300,30 @@ export default function DashboardClient({
                       </span>
                     )}
                   </div>
-
                   {staffSales === null && staffVisits === null ? (
-                    <p className="text-gray-500 text-sm">今週のデータがありません</p>
+                    <p className="text-slate-500 text-sm">今週のデータがありません</p>
                   ) : (
                     <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <p className="text-gray-500 text-xs mb-0.5">週売上</p>
-                        <p className="text-white font-medium text-sm">{fmt(staffSales, '円')}</p>
-                        {salesDiff !== null && (
+                      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                        <p className="text-slate-400 text-xs mb-1">週売上</p>
+                        <p className="text-white font-bold">{fmtYen(staffSales)}</p>
+                        {salesDiff !== null ? (
                           <p className={`text-xs mt-0.5 ${salesDiff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                             {salesDiff >= 0 ? '↑' : '↓'} {salesDiff >= 0 ? '+' : ''}{salesDiff.toFixed(1)}%
                           </p>
-                        )}
-                        {salesDiff === null && (
-                          <p className="text-gray-500 text-xs mt-0.5">-</p>
+                        ) : prevStaffSales === null ? (
+                          <p className="text-slate-500 text-xs mt-0.5">初回</p>
+                        ) : (
+                          <p className="text-slate-500 text-xs mt-0.5">-</p>
                         )}
                       </div>
-                      <div>
-                        <p className="text-gray-500 text-xs mb-0.5">週客数</p>
-                        <p className="text-white font-medium text-sm">{fmt(staffVisits, '人')}</p>
+                      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                        <p className="text-slate-400 text-xs mb-1">週客数</p>
+                        <p className="text-white font-bold">{fmtNum(staffVisits, '人')}</p>
                       </div>
-                      <div>
-                        <p className="text-gray-500 text-xs mb-0.5">客単価</p>
-                        <p className="text-white font-medium text-sm">{fmt(staffUnit, '円')}</p>
+                      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                        <p className="text-slate-400 text-xs mb-1">客単価</p>
+                        <p className="text-white font-bold">{fmtYen(staffUnit)}</p>
                       </div>
                     </div>
                   )}
@@ -365,17 +334,17 @@ export default function DashboardClient({
 
           {/* セクション4：今週やること */}
           {causeConfig && (
-            <div className="bg-blue-900/30 border border-blue-800 rounded-2xl p-5 mb-4">
+            <div className="bg-gradient-to-r from-blue-900/40 to-blue-800/40 border border-blue-700/50 rounded-2xl p-5 mb-4">
               <h2 className="text-white text-lg font-bold mb-3">🎯 今週やること</h2>
-              <p className="text-white text-lg font-bold mb-2">{causeConfig.action}</p>
-              <p className="text-gray-400 text-sm">※ 今週はこの1つに集中してください</p>
+              <p className="text-amber-300 text-lg font-bold mb-2">{causeConfig.action}</p>
+              <p className="text-slate-400 text-sm">※ 今週はこの1つに集中してください</p>
             </div>
           )}
         </>
       )}
 
       {!storeId && !fetching && (
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 py-12 text-center text-gray-500 text-sm">
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl py-12 text-center text-slate-500 text-sm">
           店舗を選択してください
         </div>
       )}

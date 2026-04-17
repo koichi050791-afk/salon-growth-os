@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { getActiveStaffByStore } from '@/lib/repositories/staff'
 import { getWeeklyStoreInput, upsertWeeklyStoreInput } from '@/lib/repositories/weekly-store-inputs'
 import { getWeeklyStaffInputs, upsertWeeklyStaffInputs } from '@/lib/repositories/weekly-staff-inputs'
+import { logAudit } from '@/lib/repositories/audit-logs'
 import type { Staff, WeeklyStoreInput, WeeklyStaffInput } from '@/lib/types/db'
 
 // ──────────────────────────────────────────────
@@ -69,9 +70,14 @@ export async function saveWeeklyInputs(
     if (staffPayloads.length > 0) {
       await upsertWeeklyStaffInputs(staffPayloads)
     }
+    await logAudit({ action: 'upsert', table_name: 'weekly_store_inputs', new_data: storePayload })
+    if (staffPayloads.length > 0) {
+      await logAudit({ action: 'upsert', table_name: 'weekly_staff_inputs', new_data: staffPayloads })
+    }
     revalidatePath('/dashboard')
     return { error: null }
   } catch (e) {
-    return { error: String(e) }
+    console.error('saveWeeklyInputs error:', e)
+    return { error: 'エラーが発生しました' }
   }
 }

@@ -86,8 +86,9 @@ export default async function StaffDetailPage({
   if (!staff) notFound()
 
   const profile = await getServerProfile()
-  if (profile?.role === 'staff' && profile.staff_id && profile.staff_id !== id) {
-    redirect(`/staff/${profile.staff_id}`)
+  // manager は自店舗スタッフのみ閲覧可
+  if (profile?.role === 'manager' && profile.store_id && staff.store_id !== profile.store_id) {
+    redirect(`/dashboard?storeId=${profile.store_id}`)
   }
 
   const { data: records } = await getRecentDailyRecords(staff.store_id, 4)
