@@ -1,9 +1,10 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import Navigation from '@/lib/components/Navigation'
 import { getStaffById } from '@/lib/repositories/staff'
 import { getRecentDailyRecords } from '@/lib/repositories/daily-records'
 import { getActionLog } from '@/lib/repositories/action-logs'
+import { getServerProfile } from '@/lib/repositories/profiles'
 import type { DailyRecord } from '@/lib/types/db'
 import ActionLogClient from './ActionLogClient'
 
@@ -79,6 +80,12 @@ export default async function StaffDetailPage({
 
   const { data: staff } = await getStaffById(id)
   if (!staff) notFound()
+
+  // staffロールは自分のページ以外にアクセス不可
+  const profile = await getServerProfile()
+  if (profile?.role === 'staff' && profile.staff_id && profile.staff_id !== id) {
+    redirect(`/staff/${profile.staff_id}`)
+  }
 
   const { data: records } = await getRecentDailyRecords(staff.store_id, 4)
 

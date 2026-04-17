@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -18,7 +19,28 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await signIn(email, password)
-      router.push('/dashboard')
+
+      // ログイン後にprofileを直接取得してリダイレクト先を決定
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, staff_id')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.role === 'admin' || !profile) {
+          router.push('/dashboard')
+        } else if (profile.staff_id) {
+          router.push(`/staff/${profile.staff_id}`)
+        } else {
+          router.push('/dashboard')
+        }
+      } else {
+        router.push('/dashboard')
+      }
     } catch (err) {
       setError('メールアドレスまたはパスワードが正しくありません')
       console.error(err)
@@ -37,9 +59,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
-              メールアドレス
-            </label>
+            <label className="block text-sm text-gray-400 mb-2">メールアドレス</label>
             <input
               type="email"
               value={email}
@@ -51,9 +71,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
-              パスワード
-            </label>
+            <label className="block text-sm text-gray-400 mb-2">パスワード</label>
             <input
               type="password"
               value={password}

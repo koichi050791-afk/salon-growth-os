@@ -43,6 +43,7 @@ export interface Database {
           name: string
           role: string
           is_active: boolean
+          auth_user_id: string | null
           created_at: string
           updated_at: string
         }
@@ -52,6 +53,7 @@ export interface Database {
           name: string
           role?: string
           is_active?: boolean
+          auth_user_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -61,8 +63,33 @@ export interface Database {
           name?: string
           role?: string
           is_active?: boolean
+          auth_user_id?: string | null
           created_at?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          id: string
+          role: string
+          staff_id: string | null
+          store_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id: string
+          role?: string
+          staff_id?: string | null
+          store_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          role?: string
+          staff_id?: string | null
+          store_id?: string | null
+          created_at?: string
         }
         Relationships: []
       }
@@ -235,6 +262,9 @@ export interface Database {
 export type ActionLog = Database['public']['Tables']['action_logs']['Row']
 export type ActionLogInsert = Database['public']['Tables']['action_logs']['Insert']
 export type ActionLogUpdate = Database['public']['Tables']['action_logs']['Update']
+
+export type Profile = Database['public']['Tables']['profiles']['Row']
+export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
 
 export type Store = Database['public']['Tables']['stores']['Row']
 export type StoreInsert = Database['public']['Tables']['stores']['Insert']

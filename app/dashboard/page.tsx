@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import Navigation from '@/lib/components/Navigation'
 import { getActiveStores } from '@/lib/repositories/stores'
@@ -7,6 +8,7 @@ import {
   getDailyRecordsByMonth,
   aggregateMonthlyRecords,
 } from '@/lib/repositories/daily-records'
+import { getServerProfile } from '@/lib/repositories/profiles'
 import type { MonthlyConfig, DailyRecord } from '@/lib/types/db'
 import StoreSelect from './StoreSelect'
 
@@ -93,6 +95,13 @@ export default async function DashboardPage({
 }) {
   const { storeId } = await searchParams
   const currentMonth = new Date().toISOString().slice(0, 7)
+
+  // staffロールは自分の個人画面にリダイレクト
+  const profile = await getServerProfile()
+  if (profile?.role === 'staff' && profile.staff_id) {
+    redirect(`/staff/${profile.staff_id}`)
+  }
+
   const { data: stores } = await getActiveStores()
 
   let config: MonthlyConfig | null = null
