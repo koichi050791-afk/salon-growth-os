@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { fetchWeeklyData, saveWeeklyInputs } from './actions'
-import type { Store, WeeklyStoreInput, MonthlyConfig } from '@/lib/types/db'
+import { fetchWeeklyData, saveWeeklyInputs, savePrevActionResult } from './actions'
+import type { Store, WeeklyStoreInput, MonthlyConfig, ImprovementAction } from '@/lib/types/db'
 
 // ──────────────────────────────────────────────
 // ヘルパー
@@ -64,7 +64,7 @@ function runDiagnosis(
       }
     }
   } else if (config?.target_sales != null && sales !== null) {
-    const ratio = sales / (config.target_sales / 4)
+    const ratio = sales / (config.target_sales / 4.3)
     if (ratio < 0.7) return { status: 'danger', issue: '売上が目標の70%未満', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する' }
     if (ratio < 0.9) return { status: 'warning', issue: '売上が目標の70〜90%', action: 'カラー前にケア提案を1回必ず入れる' }
   }
@@ -108,6 +108,12 @@ const INPUT_CLASS =
   'w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-4 text-lg focus:outline-none focus:border-[#D4AF37]/50 placeholder:text-[#8B94A7]/50'
 const LABEL_CLASS = 'block text-sm text-[#8B94A7] mb-1'
 
+const RESULT_LABEL: Record<string, string> = {
+  improved: '✅ 改善した',
+  unchanged: '➡️ 変化なし',
+  worsened: '⬇️ 悪化した',
+}
+
 // ──────────────────────────────────────────────
 // コンポーネント
 // ──────────────────────────────────────────────
@@ -128,14 +134,23 @@ export default function WeeklyInputForm({
   const [staffRows, setStaffRows] = useState<StaffRow[]>([])
   const [lastWeekInput, setLastWeekInput] = useState<WeeklyStoreInput | null>(null)
   const [config, setConfig] = useState<MonthlyConfig | null>(null)
+  const [prevAction, setPrevAction] = useState<ImprovementAction | null>(null)
   const [fetching, setFetching] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
   const [diagnosis, setDiagnosis] = useState<DiagnosisResult | null>(null)
+
+  // 前週アクション検証フォーム
+  const [prevResultStatus, setPrevResultStatus] = useState<'improved' | 'unchanged' | 'worsened'>('improved')
+  const [prevResultNote, setPrevResultNote] = useState('')
+  const [prevNextDecision, setPrevNextDecision] = useState<'continue' | 'switch'>('continue')
+  const [prevSaving, setPrevSaving] = useState(false)
+  const [prevSaved, setPrevSaved] = useState(false)
 
   const loadData = useCallback(async (sid: string, week: string) => {
     if (!sid) return
     setFetching(true)
     setDiagnosis(null)
+    setPrevSaved(false)
     const result = await fetchWeeklyData(sid, week)
 
     if (result.storeInput) {
@@ -155,6 +170,7 @@ export default function WeeklyInputForm({
 
     setLastWeekInput(result.lastWeekInput)
     setConfig(result.config)
+    setPrevAction(result.prevAction)
     setStaffRows(
       result.staff.map((s) => {
         const existing = result.staffInputs.find((i) => i.staff_id === s.id)
@@ -218,13 +234,71 @@ export default function WeeklyInputForm({
     }
   }
 
+  async function handlePrevActionSave() {
+    if (!prevAction) return
+    setPrevSaving(true)
+    await savePrevActionResult(prevAction.id, prevResultStatus, prevResultNote, prevNextDecision)
+    setPrevSaving(false)
+    setPrevSaved(true)
+    setPrevAction(null)
+  }
+
   const DIAG_BORDER = { ok: 'border-emerald-500', warning: 'border-yellow-500', danger: 'border-red-500' }
   const DIAG_TEXT   = { ok: 'text-emerald-400',   warning: 'text-yellow-400',   danger: 'text-red-400' }
   const DIAG_BADGE  = { ok: '✅ 順調',             warning: '⚠️ 注意',           danger: '🚨 要対応' }
 
+  const showPrevVerify = prevAction && (prevAction.status === 'planned' || prevAction.status === 'in_progress') && !prevSaved
+
   return (
     <div className="space-y-4">
       <div ref={topRef} />
+
+      {/* 前週アクション検証カード */}
+      {showPrevVerify && (
+        <div className="bg-[#111A2B] rounded-2xl p-4 border-l-4 border-[#D4AF37]">
+          <p className="text-[#D4AF37] text-xs font-bold mb-1">📋 先週のアクション結果を記録</p>
+          <p className="text-[#E6ECF5] text-base font-bold mb-3">{prevAction!.action_title}</p>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {(['improved', 'unchanged', 'worsened'] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setPrevResultStatus(v)}
+                className={`py-2 rounded-xl text-xs font-bold transition ${prevResultStatus === v ? 'bg-[#D4AF37] text-black' : 'bg-[#0B1220] text-[#8B94A7] border border-white/10'}`}
+              >
+                {RESULT_LABEL[v]}
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={prevResultNote}
+            onChange={(e) => setPrevResultNote(e.target.value)}
+            placeholder="メモ（任意）"
+            rows={2}
+            className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-3 text-sm mb-3 focus:outline-none focus:border-[#D4AF37]/50 resize-none"
+          />
+          <div className="mb-3">
+            <p className="text-[#8B94A7] text-xs mb-2">来週のアクション</p>
+            <div className="grid grid-cols-2 gap-2">
+              {(['continue', 'switch'] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setPrevNextDecision(v)}
+                  className={`py-2 rounded-xl text-xs font-bold transition ${prevNextDecision === v ? 'bg-[#D4AF37] text-black' : 'bg-[#0B1220] text-[#8B94A7] border border-white/10'}`}
+                >
+                  {v === 'continue' ? '🔁 継続する' : '🔄 変更する'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={handlePrevActionSave}
+            disabled={prevSaving}
+            className="w-full py-3 bg-[#D4AF37] text-black font-bold rounded-xl text-sm hover:opacity-90 transition disabled:opacity-50"
+          >
+            {prevSaving ? '保存中...' : '記録する'}
+          </button>
+        </div>
+      )}
 
       {/* 診断カード（保存後に表示） */}
       {diagnosis && (
@@ -234,7 +308,13 @@ export default function WeeklyInputForm({
             <span className="text-[#8B94A7] text-xs">保存完了・診断結果</span>
           </div>
           <p className="text-[#E6ECF5] font-bold text-lg mb-2">{diagnosis.issue}</p>
-          <p className="text-[#D4AF37] text-sm">{diagnosis.action}</p>
+          <p className="text-[#D4AF37] text-sm mb-4">{diagnosis.action}</p>
+          <a
+            href={`/actions/confirm?storeId=${storeId}`}
+            className="inline-block text-sm px-5 py-3 bg-[#D4AF37] text-black font-bold rounded-xl hover:opacity-90 transition"
+          >
+            🎯 改善アクションを決める →
+          </a>
         </div>
       )}
 

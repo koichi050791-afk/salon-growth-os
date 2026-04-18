@@ -3,6 +3,7 @@ import { getActiveStores } from '@/lib/repositories/stores'
 import { getLatestMonthlyConfig } from '@/lib/repositories/monthly-configs'
 import { getWeeklyStoreInput } from '@/lib/repositories/weekly-store-inputs'
 import { getServerProfile } from '@/lib/repositories/profiles'
+import { getLatestImprovementAction } from '@/lib/repositories/improvement-actions'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import Navigation from '@/lib/components/Navigation'
 import type { WeeklyStoreInput, MonthlyConfig } from '@/lib/types/db'
@@ -45,59 +46,6 @@ function targetPct(
   return { text: `目標比 ${p.toFixed(0)}%`, up: p >= 90 }
 }
 
-type IssueResult = { issueLabel: string; action: string }
-
-function diagnose(
-  thisWeek: WeeklyStoreInput | null,
-  lastWeek: WeeklyStoreInput | null,
-  config: MonthlyConfig | null,
-): IssueResult {
-  const ok = { issueLabel: '現状維持：今の取り組みを継続', action: '今週の取り組みを来週も継続する' }
-  if (!thisWeek) return ok
-
-  const avail = thisWeek.availability_score ?? 0
-  if (avail >= 4) return { issueLabel: '平日集客施策不足', action: '平日限定クーポンをLINEで配信する' }
-
-  const sales = thisWeek.sales ?? null
-  const visits = thisWeek.visits ?? null
-  const prevSales = lastWeek?.sales ?? null
-  const prevVisits = lastWeek?.visits ?? null
-
-  // 先週データがある場合：前週比較
-  if (sales !== null && visits !== null && prevSales !== null && prevVisits !== null) {
-    const newC = thisWeek.new_customers ?? null
-    const prevNewC = lastWeek?.new_customers ?? null
-    if (newC !== null && prevNewC !== null && prevNewC > 0 && (newC - prevNewC) / prevNewC <= -0.3) {
-      return { issueLabel: '新規不足', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する' }
-    }
-    if (sales < prevSales && visits < prevVisits) {
-      return { issueLabel: '集客不足', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する' }
-    }
-    const unitPrice = visits > 0 ? sales / visits : null
-    const prevUnitPrice = prevVisits > 0 ? prevSales / prevVisits : null
-    if (visits >= prevVisits && unitPrice !== null && prevUnitPrice !== null && unitPrice < prevUnitPrice) {
-      return { issueLabel: '単価設計または提案不足', action: 'カラー前にケア提案を1回必ず入れる' }
-    }
-    const nextVisit = thisWeek.next_visit_count ?? null
-    const prevNextVisit = lastWeek?.next_visit_count ?? null
-    if (nextVisit !== null && visits > 0 && prevNextVisit !== null && prevVisits > 0) {
-      if (nextVisit / visits < (prevNextVisit / prevVisits) * 0.9) {
-        return { issueLabel: '次回予約導線不足', action: '会計時の次回予約案内を徹底する' }
-      }
-    }
-    return ok
-  }
-
-  // 先週データなし（初回）：月次目標で判定
-  if (sales !== null && config?.target_sales != null) {
-    const ratio = sales / (config.target_sales / WEEKLY_WEEKS)
-    if (ratio < 0.7) return { issueLabel: '集客不足', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する' }
-    if (ratio < 0.9) return { issueLabel: '売上が目標に届いていない', action: 'カラー前にケア提案を1回必ず入れる' }
-  }
-
-  return ok
-}
-
 export default async function Home() {
   const profile = await getServerProfile()
   const { data: stores } = await getActiveStores()
@@ -110,13 +58,14 @@ export default async function Home() {
   const thisWeekStart = getSundayISO()
   const lastWeekStart = prevWeekISO(thisWeekStart)
 
-  const [thisWeek, lastWeek, configResult] = mainStore
+  const [thisWeek, lastWeek, configResult, latestAction] = mainStore
     ? await Promise.all([
         getWeeklyStoreInput(mainStore.id, thisWeekStart),
         getWeeklyStoreInput(mainStore.id, lastWeekStart),
         getLatestMonthlyConfig(mainStore.id),
+        getLatestImprovementAction(mainStore.id),
       ])
-    : ([null, null, { data: null }] as const)
+    : ([null, null, { data: null }, null] as const)
 
   const config = (configResult as { data: MonthlyConfig | null }).data ?? null
   const weeklyTargetSales = config?.target_sales != null ? Math.round(config.target_sales / WEEKLY_WEEKS) : null
@@ -139,8 +88,9 @@ export default async function Home() {
   const today = new Date()
   const dateLabel = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
 
-  const { issueLabel, action } = diagnose(thisWeek ?? null, lastWeek ?? null, config)
   const hasData = thisWeek !== null
+  const hasActiveAction = latestAction && (latestAction.status === 'planned' || latestAction.status === 'in_progress')
+  const hasCompletedAction = latestAction && latestAction.status === 'completed'
 
   return (
     <AuthGuard>
@@ -162,17 +112,55 @@ export default async function Home() {
             </div>
           ) : (
             <>
+              {/* 今週のアクション（メインカード） */}
+              {hasActiveAction ? (
+                <div className="bg-[#111A2B] rounded-2xl p-4 border-l-4 border-[#D4AF37]">
+                  <p className="text-[#D4AF37] text-xs font-bold mb-1">🎯 今週やること</p>
+                  <p className="text-[#E6ECF5] text-xl font-bold mb-1">{latestAction!.action_title}</p>
+                  {latestAction!.action_detail && (
+                    <p className="text-[#8B94A7] text-sm mb-3">{latestAction!.action_detail}</p>
+                  )}
+                  <Link
+                    href="/actions"
+                    className="text-xs text-[#D4AF37] font-bold"
+                  >
+                    完了報告・詳細 →
+                  </Link>
+                </div>
+              ) : hasCompletedAction ? (
+                <div className="bg-[#111A2B] rounded-2xl p-4 border border-[#D4AF37]/20">
+                  <p className="text-[#8B94A7] text-xs mb-1">今週のアクション</p>
+                  <p className="text-emerald-400 text-sm font-bold mb-2">✅ 完了済み</p>
+                  <Link
+                    href={`/actions/confirm?storeId=${mainStore.id}`}
+                    className="inline-block text-sm px-4 py-2 bg-[#D4AF37] text-black font-bold rounded-xl hover:opacity-90 transition"
+                  >
+                    🎯 来週のアクションを決める
+                  </Link>
+                </div>
+              ) : (
+                <div className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
+                  <p className="text-[#8B94A7] text-sm mb-3">今週のアクションがまだ設定されていません</p>
+                  <Link
+                    href={`/actions/confirm?storeId=${mainStore.id}`}
+                    className="inline-block text-sm px-5 py-3 bg-[#D4AF37] text-black font-bold rounded-xl hover:opacity-90 transition"
+                  >
+                    🎯 今週のアクションを決める
+                  </Link>
+                </div>
+              )}
+
               {/* 今週速報カード */}
               <div className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-[#E6ECF5] text-lg font-semibold">{mainStore.store_name}</p>
+                  <p className="text-[#E6ECF5] text-base font-semibold">{mainStore.store_name}</p>
                   <span className="bg-[#D4AF37]/10 text-[#D4AF37] rounded-full px-3 py-1 text-xs font-bold">
                     今週速報
                   </span>
                 </div>
 
                 {!hasData ? (
-                  <div className="text-center py-6">
+                  <div className="text-center py-4">
                     <p className="text-[#8B94A7] text-sm mb-4">今週のデータが未入力です</p>
                     <Link
                       href={`/weekly-input?storeId=${mainStore.id}`}
@@ -206,23 +194,6 @@ export default async function Home() {
                   </div>
                 )}
               </div>
-
-              {hasData && (
-                <>
-                  {/* 今週の課題 */}
-                  <div className="bg-[#111A2B] rounded-2xl p-4 border-l-4 border-red-500">
-                    <p className="text-red-400 text-xs font-bold mb-1">⚠️ 今週の課題</p>
-                    <p className="text-[#E6ECF5] text-lg font-bold">{issueLabel}</p>
-                  </div>
-
-                  {/* 来週の一手 */}
-                  <div className="bg-[#111A2B] rounded-2xl p-4 border-l-4 border-[#D4AF37]">
-                    <p className="text-[#D4AF37] text-xs font-bold mb-1">🎯 来週の一手</p>
-                    <p className="text-[#E6ECF5] text-lg font-bold">{action}</p>
-                    <p className="text-[#8B94A7] text-xs mt-2">この1つに集中してください</p>
-                  </div>
-                </>
-              )}
 
               {/* ショートカット */}
               <div className="grid grid-cols-2 gap-3">

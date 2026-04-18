@@ -336,6 +336,63 @@ export interface Database {
         }
         Relationships: []
       }
+      improvement_actions: {
+        Row: {
+          id: string
+          store_id: string
+          week_start: string
+          issue_type: string
+          issue_cause: string | null
+          action_title: string
+          action_detail: string | null
+          assigned_to: string | null
+          due_date: string | null
+          status: 'planned' | 'in_progress' | 'completed' | 'skipped'
+          completed_at: string | null
+          result_status: 'improved' | 'unchanged' | 'worsened' | null
+          result_note: string | null
+          next_decision: 'continue' | 'switch' | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          week_start: string
+          issue_type: string
+          issue_cause?: string | null
+          action_title: string
+          action_detail?: string | null
+          assigned_to?: string | null
+          due_date?: string | null
+          status?: 'planned' | 'in_progress' | 'completed' | 'skipped'
+          completed_at?: string | null
+          result_status?: 'improved' | 'unchanged' | 'worsened' | null
+          result_note?: string | null
+          next_decision?: 'continue' | 'switch' | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          store_id?: string
+          week_start?: string
+          issue_type?: string
+          issue_cause?: string | null
+          action_title?: string
+          action_detail?: string | null
+          assigned_to?: string | null
+          due_date?: string | null
+          status?: 'planned' | 'in_progress' | 'completed' | 'skipped'
+          completed_at?: string | null
+          result_status?: 'improved' | 'unchanged' | 'worsened' | null
+          result_note?: string | null
+          next_decision?: 'continue' | 'switch' | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -377,6 +434,10 @@ export type WeeklyStoreInputUpdate = Database['public']['Tables']['weekly_store_
 export type WeeklyStaffInput = Database['public']['Tables']['weekly_staff_inputs']['Row']
 export type WeeklyStaffInputInsert = Database['public']['Tables']['weekly_staff_inputs']['Insert']
 export type WeeklyStaffInputUpdate = Database['public']['Tables']['weekly_staff_inputs']['Update']
+
+export type ImprovementAction = Database['public']['Tables']['improvement_actions']['Row']
+export type ImprovementActionInsert = Database['public']['Tables']['improvement_actions']['Insert']
+export type ImprovementActionUpdate = Database['public']['Tables']['improvement_actions']['Update']
 
 export type RepositoryResult<T> = {
   data: T | null
