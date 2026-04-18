@@ -4,16 +4,25 @@ import { revalidatePath } from 'next/cache'
 import { getActiveStaffByStore } from '@/lib/repositories/staff'
 import { getWeeklyStoreInput, upsertWeeklyStoreInput } from '@/lib/repositories/weekly-store-inputs'
 import { getWeeklyStaffInputs, upsertWeeklyStaffInputs } from '@/lib/repositories/weekly-staff-inputs'
+import { getLatestMonthlyConfig } from '@/lib/repositories/monthly-configs'
 import { logAudit } from '@/lib/repositories/audit-logs'
-import type { Staff, WeeklyStoreInput, WeeklyStaffInput } from '@/lib/types/db'
+import type { Staff, WeeklyStoreInput, WeeklyStaffInput, MonthlyConfig } from '@/lib/types/db'
+
+function prevWeekISO(weekStart: string): string {
+  const d = new Date(weekStart)
+  d.setDate(d.getDate() - 7)
+  return d.toISOString().slice(0, 10)
+}
 
 // ──────────────────────────────────────────────
-// データ取得（店舗・週選択時に呼ぶ）
+// データ取得
 // ──────────────────────────────────────────────
 export type WeeklyDataResult = {
   staff: Staff[]
   storeInput: WeeklyStoreInput | null
+  lastWeekInput: WeeklyStoreInput | null
   staffInputs: WeeklyStaffInput[]
+  config: MonthlyConfig | null
   error: string | null
 }
 
@@ -22,19 +31,28 @@ export async function fetchWeeklyData(
   weekStart: string
 ): Promise<WeeklyDataResult> {
   try {
-    const [staffResult, storeInput, staffInputsResult] = await Promise.all([
-      getActiveStaffByStore(storeId),
-      getWeeklyStoreInput(storeId, weekStart),
-      getWeeklyStaffInputs(storeId, weekStart),
-    ])
+    const lastWeekStart = prevWeekISO(weekStart)
+    const month = weekStart.slice(0, 7)
+
+    const [staffResult, storeInput, lastWeekInput, staffInputsResult, configResult] =
+      await Promise.all([
+        getActiveStaffByStore(storeId),
+        getWeeklyStoreInput(storeId, weekStart),
+        getWeeklyStoreInput(storeId, lastWeekStart),
+        getWeeklyStaffInputs(storeId, weekStart),
+        getLatestMonthlyConfig(storeId),
+      ])
+
     return {
       staff: staffResult.data,
       storeInput: storeInput ?? null,
+      lastWeekInput: lastWeekInput ?? null,
       staffInputs: staffInputsResult.data,
+      config: configResult.data,
       error: null,
     }
   } catch (e) {
-    return { staff: [], storeInput: null, staffInputs: [], error: String(e) }
+    return { staff: [], storeInput: null, lastWeekInput: null, staffInputs: [], config: null, error: String(e) }
   }
 }
 
@@ -75,6 +93,7 @@ export async function saveWeeklyInputs(
       await logAudit({ action: 'upsert', table_name: 'weekly_staff_inputs', new_data: staffPayloads })
     }
     revalidatePath('/dashboard')
+    revalidatePath('/')
     return { error: null }
   } catch (e) {
     console.error('saveWeeklyInputs error:', e)

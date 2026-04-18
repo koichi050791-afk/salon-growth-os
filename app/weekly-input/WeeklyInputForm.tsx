@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchWeeklyData, saveWeeklyInputs } from './actions'
-import type { Store } from '@/lib/types/db'
+import type { Store, WeeklyStoreInput, MonthlyConfig } from '@/lib/types/db'
 
 // ──────────────────────────────────────────────
 // ヘルパー
@@ -26,6 +26,87 @@ function unitPrice(sales: string, visits: string): string {
   const v = toInt(visits)
   if (s === null || v === null || v === 0) return '—'
   return '¥' + Math.round(s / v).toLocaleString('ja-JP')
+}
+
+// ──────────────────────────────────────────────
+// 診断ロジック
+// ──────────────────────────────────────────────
+type DiagnosisStatus = 'ok' | 'warning' | 'danger'
+type DiagnosisResult = { status: DiagnosisStatus; issue: string; action: string }
+
+function runDiagnosis(
+  sales: number | null,
+  visits: number | null,
+  nextVisitCount: number | null,
+  availabilityScore: number | null,
+  lastWeek: WeeklyStoreInput | null,
+  config: MonthlyConfig | null,
+): DiagnosisResult {
+  const prevSales = lastWeek?.sales ?? null
+  const prevVisits = lastWeek?.visits ?? null
+  const prevNextVisit = lastWeek?.next_visit_count ?? null
+
+  if (prevSales !== null && prevVisits !== null && sales !== null && visits !== null) {
+    const salesDown = sales < prevSales
+    const visitsDown = visits < prevVisits
+    const unitP = visits > 0 ? sales / visits : null
+    const prevUnitP = prevVisits > 0 ? prevSales / prevVisits : null
+
+    if (salesDown && visitsDown) {
+      return {
+        status: 'danger',
+        issue: '集客不足：売上と客数がともに減少',
+        action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する',
+      }
+    }
+    if (!visitsDown && unitP !== null && prevUnitP !== null && unitP < prevUnitP) {
+      return {
+        status: 'warning',
+        issue: '単価低下：客数は維持だが客単価が下落',
+        action: 'カラー前にケア提案を1回必ず入れる',
+      }
+    }
+    if (nextVisitCount !== null && visits > 0 && prevNextVisit !== null && prevVisits > 0) {
+      if (nextVisitCount / visits < (prevNextVisit / prevVisits) * 0.9) {
+        return {
+          status: 'warning',
+          issue: '再来率低下：次回予約率が前週より低下',
+          action: '会計時の次回予約案内を徹底してください',
+        }
+      }
+    }
+  } else if (config?.target_sales != null && sales !== null) {
+    const weeklyTarget = config.target_sales / 4
+    const ratio = sales / weeklyTarget
+    if (ratio < 0.7) {
+      return {
+        status: 'danger',
+        issue: '売上が目標の70%未満',
+        action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する',
+      }
+    }
+    if (ratio < 0.9) {
+      return {
+        status: 'warning',
+        issue: '売上が目標の70〜90%',
+        action: 'カラー前にケア提案を1回必ず入れる',
+      }
+    }
+  }
+
+  if ((availabilityScore ?? 0) >= 4) {
+    return {
+      status: 'warning',
+      issue: '空き枠が多い：平日集客に余地あり',
+      action: '平日限定クーポンをLINEで配信する',
+    }
+  }
+
+  return {
+    status: 'ok',
+    issue: '順調：主要指標に大きな異常なし',
+    action: '今週の取り組みを来週も継続する',
+  }
 }
 
 // ──────────────────────────────────────────────
@@ -73,16 +154,21 @@ export default function WeeklyInputForm({
   hideStoreSelect?: boolean
 }) {
   const router = useRouter()
+  const topRef = useRef<HTMLDivElement>(null)
   const [storeId, setStoreId] = useState(initialStoreId)
   const [weekStart, setWeekStart] = useState(getSundayISO())
   const [storeForm, setStoreForm] = useState<StoreForm>(EMPTY_STORE_FORM)
   const [staffRows, setStaffRows] = useState<StaffRow[]>([])
+  const [lastWeekInput, setLastWeekInput] = useState<WeeklyStoreInput | null>(null)
+  const [config, setConfig] = useState<MonthlyConfig | null>(null)
   const [fetching, setFetching] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
+  const [diagnosis, setDiagnosis] = useState<DiagnosisResult | null>(null)
 
   const loadData = useCallback(async (sid: string, week: string) => {
     if (!sid) return
     setFetching(true)
+    setDiagnosis(null)
     const result = await fetchWeeklyData(sid, week)
 
     if (result.storeInput) {
@@ -99,6 +185,9 @@ export default function WeeklyInputForm({
     } else {
       setStoreForm(EMPTY_STORE_FORM)
     }
+
+    setLastWeekInput(result.lastWeekInput)
+    setConfig(result.config)
 
     setStaffRows(
       result.staff.map((s) => {
@@ -140,12 +229,16 @@ export default function WeeklyInputForm({
     if (!storeId) return
     setSaveState('saving')
 
+    const sales = toInt(storeForm.sales)
+    const visits = toInt(storeForm.visits)
+    const nextVisitCount = toInt(storeForm.next_visit_count)
+
     const storePayload = {
       store_id:           storeId,
       week_start:         weekStart,
-      sales:              toInt(storeForm.sales),
-      visits:             toInt(storeForm.visits),
-      next_visit_count:   toInt(storeForm.next_visit_count),
+      sales,
+      visits,
+      next_visit_count:   nextVisitCount,
       new_customers:      toInt(storeForm.new_customers),
       repeat_customers:   toInt(storeForm.repeat_customers),
       availability_score: storeForm.availability_score,
@@ -168,12 +261,46 @@ export default function WeeklyInputForm({
       setTimeout(() => setSaveState('idle'), 3000)
     } else {
       setSaveState('success')
-      setTimeout(() => setSaveState('idle'), 2000)
+      const result = runDiagnosis(
+        sales,
+        visits,
+        nextVisitCount,
+        storeForm.availability_score,
+        lastWeekInput,
+        config,
+      )
+      setDiagnosis(result)
+      setTimeout(() => {
+        topRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+      setTimeout(() => setSaveState('idle'), 3000)
     }
+  }
+
+  const DIAG_STYLE = {
+    ok:      { border: 'border-green-700/50',  bg: 'bg-green-900/30',  text: 'text-green-400',  badge: '✅ 順調' },
+    warning: { border: 'border-yellow-700/50', bg: 'bg-yellow-900/30', text: 'text-yellow-400', badge: '⚠️ 注意' },
+    danger:  { border: 'border-red-700/50',    bg: 'bg-red-900/30',    text: 'text-red-400',    badge: '🚨 要対応' },
   }
 
   return (
     <div>
+      <div ref={topRef} />
+
+      {/* 診断カード（保存後に表示） */}
+      {diagnosis && (
+        <div className={`bg-gradient-to-br from-slate-800 to-slate-900 border ${DIAG_STYLE[diagnosis.status].border} rounded-2xl p-5 mb-4`}>
+          <div className="flex items-center gap-2 mb-3">
+            <span className={`text-sm font-bold px-3 py-1 rounded-full ${DIAG_STYLE[diagnosis.status].bg} ${DIAG_STYLE[diagnosis.status].text}`}>
+              {DIAG_STYLE[diagnosis.status].badge}
+            </span>
+            <span className="text-slate-400 text-xs">保存完了・診断結果</span>
+          </div>
+          <p className="text-white font-bold text-lg mb-2">{diagnosis.issue}</p>
+          <p className="text-amber-300 text-sm">{diagnosis.action}</p>
+        </div>
+      )}
+
       {/* 店舗・週選択 */}
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-5 mb-4 space-y-3">
         {!hideStoreSelect ? (

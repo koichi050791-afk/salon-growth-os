@@ -23,8 +23,8 @@ export default async function StaffListPage() {
         <Navigation />
         <div className="max-w-lg mx-auto px-4 py-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white">スタッフ別</h1>
-            <p className="text-slate-400 text-sm mt-0.5">週次KPIと異常検知</p>
+            <h1 className="text-2xl font-bold text-white">スタッフ成長サポート</h1>
+            <p className="text-slate-400 text-sm mt-0.5">各スタッフの傾向と気づき</p>
           </div>
 
           <StaffListClient

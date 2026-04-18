@@ -5,10 +5,10 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 
 const NAV_ITEMS = [
-  { href: '/dashboard',     icon: '🏠', label: 'ホーム' },
+  { href: '/',              icon: '🏠', label: 'ホーム' },
   { href: '/weekly-input',  icon: '➕', label: '入力' },
   { href: '/overview',      icon: '🏢', label: '全店' },
-  { href: '/staff',         icon: '👤', label: 'スタッフ' },
+  { href: '/staff',         icon: '👤', label: '育成' },
   { href: '/monthly-config', icon: '⚙️', label: '設定' },
 ]
 
@@ -29,7 +29,7 @@ export default function Navigation() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900 border-t border-gray-800">
       <div className="flex items-stretch">
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname.startsWith(item.href)
+          const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}

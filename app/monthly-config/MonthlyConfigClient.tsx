@@ -62,6 +62,50 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
 
       {selectedStoreId && (
         <>
+          {/* 週次必要数値（最新設定から自動算出） */}
+          {configs.length > 0 && (() => {
+            const c = configs[0]
+            const weeklySales = c.target_sales != null ? Math.round(c.target_sales / 4.3) : null
+            const dailySales = c.target_sales != null ? Math.round(c.target_sales / 25) : null
+            const weeklyVisits = c.target_visits != null ? Math.round(c.target_visits / 4.3) : null
+            const unitPrice = c.target_unit_price ?? null
+            return (
+              <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-amber-700/30 rounded-2xl p-5">
+                <p className="text-amber-300 font-bold mb-3">📊 週次必要数値（自動算出）</p>
+                <p className="text-slate-500 text-xs mb-3">{c.target_month} の目標から算出</p>
+                <div className="space-y-3">
+                  {c.target_sales != null && (
+                    <div>
+                      <p className="text-slate-400 text-xs mb-1">月目標 {fmt(c.target_sales, '円')}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-slate-800/60 rounded-xl p-3">
+                          <p className="text-slate-500 text-xs">週売上</p>
+                          <p className="text-white font-bold">{weeklySales !== null ? '¥' + weeklySales.toLocaleString('ja-JP') : '—'} 必要</p>
+                        </div>
+                        <div className="bg-slate-800/60 rounded-xl p-3">
+                          <p className="text-slate-500 text-xs">日売上</p>
+                          <p className="text-white font-bold">{dailySales !== null ? '¥' + dailySales.toLocaleString('ja-JP') : '—'} 必要</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {weeklyVisits !== null && (
+                    <div className="bg-slate-800/60 rounded-xl p-3">
+                      <p className="text-slate-500 text-xs">週客数</p>
+                      <p className="text-white font-bold">{weeklyVisits}人 必要</p>
+                    </div>
+                  )}
+                  {unitPrice !== null && (
+                    <div className="bg-slate-800/60 rounded-xl p-3">
+                      <p className="text-slate-500 text-xs">必要客単価</p>
+                      <p className="text-white font-bold">{'¥' + unitPrice.toLocaleString('ja-JP')}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+
           {/* 一覧ヘッダー */}
           <div className="flex items-center justify-between">
             <h2 className="text-white font-bold">月次基準値一覧</h2>

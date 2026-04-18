@@ -29,6 +29,26 @@ const INPUT_CLASS =
 const LABEL_CLASS = 'block text-sm text-slate-400 mb-1.5'
 
 // ──────────────────────────────────────────────
+// 傾向コメント
+// ──────────────────────────────────────────────
+type TrendComment = { text: string; color: string }
+
+function getTrendComment(
+  salesDiff: number | null,
+  unitPriceDiff: number | null,
+  visitsDiff: number | null,
+  isFirstEntry: boolean,
+): TrendComment {
+  if (isFirstEntry) return { text: '初回入力', color: 'text-slate-500' }
+  if (salesDiff !== null && salesDiff >= 10) return { text: '📈 売上上昇傾向', color: 'text-green-400' }
+  if (unitPriceDiff !== null && unitPriceDiff >= 5) return { text: '💰 単価上昇傾向', color: 'text-green-400' }
+  if (salesDiff !== null && salesDiff <= -20) return { text: '⚠️ 売上大幅下落', color: 'text-red-400' }
+  if (unitPriceDiff !== null && unitPriceDiff <= -10) return { text: '⚠️ 単価下落傾向', color: 'text-yellow-400' }
+  if (visitsDiff !== null && visitsDiff <= -20) return { text: '⚠️ 客数減少', color: 'text-red-400' }
+  return { text: '安定推移', color: 'text-slate-400' }
+}
+
+// ──────────────────────────────────────────────
 // 型
 // ──────────────────────────────────────────────
 type StaffCard = {
@@ -38,8 +58,14 @@ type StaffCard = {
   visits: number | null
   unitPrice: number | null
   prevSales: number | null
+  prevVisits: number | null
+  prevUnitPrice: number | null
   salesDiff: number | null
+  visitsDiff: number | null
+  unitPriceDiff: number | null
   isAlert: boolean
+  isFirstEntry: boolean
+  trend: TrendComment
 }
 
 // ──────────────────────────────────────────────
@@ -75,15 +101,36 @@ export default function StaffListClient({
       const unitPrice =
         sales !== null && visits !== null && visits > 0 ? Math.round(sales / visits) : null
       const prevSales = lastInput?.sales ?? null
+      const prevVisits = lastInput?.visits ?? null
+      const prevUnitPrice =
+        prevSales !== null && prevVisits !== null && prevVisits > 0
+          ? Math.round(prevSales / prevVisits)
+          : null
 
       const salesDiff =
         sales !== null && prevSales !== null && prevSales > 0
           ? ((sales - prevSales) / prevSales) * 100
           : null
+      const visitsDiff =
+        visits !== null && prevVisits !== null && prevVisits > 0
+          ? ((visits - prevVisits) / prevVisits) * 100
+          : null
+      const unitPriceDiff =
+        unitPrice !== null && prevUnitPrice !== null && prevUnitPrice > 0
+          ? ((unitPrice - prevUnitPrice) / prevUnitPrice) * 100
+          : null
 
       const isAlert = salesDiff !== null && salesDiff <= -20
+      const isFirstEntry = prevSales === null && prevVisits === null
+      const trend = getTrendComment(salesDiff, unitPriceDiff, visitsDiff, isFirstEntry)
 
-      return { id: s.id, name: s.name, sales, visits, unitPrice, prevSales, salesDiff, isAlert }
+      return {
+        id: s.id, name: s.name,
+        sales, visits, unitPrice,
+        prevSales, prevVisits, prevUnitPrice,
+        salesDiff, visitsDiff, unitPriceDiff,
+        isAlert, isFirstEntry, trend,
+      }
     })
 
     setCards(built)
@@ -145,7 +192,8 @@ export default function StaffListClient({
                   c.isAlert ? 'border-red-900/60' : 'border-slate-700/50'
                 }`}
               >
-                <div className="flex items-center justify-between mb-3">
+                {/* ヘッダー */}
+                <div className="flex items-center justify-between mb-1">
                   <p className="text-white text-lg font-bold">{c.name}</p>
                   {c.isAlert && (
                     <span className="text-xs bg-red-900/50 text-red-400 px-2 py-0.5 rounded-full">
@@ -153,6 +201,9 @@ export default function StaffListClient({
                     </span>
                   )}
                 </div>
+
+                {/* 傾向コメント */}
+                <p className={`text-sm mb-3 ${c.trend.color}`}>{c.trend.text}</p>
 
                 {c.sales === null && c.visits === null ? (
                   <p className="text-slate-500 text-sm">今週のデータ未入力</p>
@@ -165,7 +216,7 @@ export default function StaffListClient({
                         <p className={`text-xs mt-0.5 ${c.salesDiff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                           {c.salesDiff >= 0 ? '↑' : '↓'} {c.salesDiff >= 0 ? '+' : ''}{c.salesDiff.toFixed(1)}%
                         </p>
-                      ) : c.prevSales === null ? (
+                      ) : c.isFirstEntry ? (
                         <p className="text-slate-500 text-xs mt-0.5">初回</p>
                       ) : (
                         <p className="text-slate-500 text-xs mt-0.5">-</p>
@@ -174,10 +225,20 @@ export default function StaffListClient({
                     <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
                       <p className="text-slate-400 text-xs mb-1">週客数</p>
                       <p className="text-white text-2xl font-bold tracking-tight">{fmtNum(c.visits, '人')}</p>
+                      {c.visitsDiff !== null && (
+                        <p className={`text-xs mt-0.5 ${c.visitsDiff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {c.visitsDiff >= 0 ? '↑' : '↓'} {c.visitsDiff >= 0 ? '+' : ''}{c.visitsDiff.toFixed(1)}%
+                        </p>
+                      )}
                     </div>
                     <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
                       <p className="text-slate-400 text-xs mb-1">客単価</p>
                       <p className="text-white text-2xl font-bold tracking-tight">{fmtYen(c.unitPrice)}</p>
+                      {c.unitPriceDiff !== null && (
+                        <p className={`text-xs mt-0.5 ${c.unitPriceDiff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {c.unitPriceDiff >= 0 ? '↑' : '↓'} {c.unitPriceDiff >= 0 ? '+' : ''}{c.unitPriceDiff.toFixed(1)}%
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}

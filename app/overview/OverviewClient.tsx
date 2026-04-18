@@ -37,18 +37,18 @@ function getStatus(val: number | null, target: number | null): BadgeStatus {
 }
 
 const BADGE_CLASS: Record<BadgeStatus, string> = {
-  good:    'bg-amber-900/50 text-amber-400',
+  good:    'bg-green-900/50 text-green-400',
   warning: 'bg-yellow-900/50 text-yellow-400',
   danger:  'bg-red-900/50 text-red-400',
-  none:    'bg-slate-700/50 text-slate-400',
+  none:    'bg-slate-800 text-slate-500',
 }
 const BADGE_LABEL: Record<BadgeStatus, string> = {
-  good: '達成', warning: '注意', danger: '危険', none: '未入力',
+  good: '正常', warning: '注意', danger: '危険', none: '未入力',
 }
 const CARD_BORDER: Record<BadgeStatus, string> = {
-  good:    'border-amber-600/40',
-  warning: 'border-yellow-700/40',
-  danger:  'border-red-900/60',
+  good:    'border-green-800/30',
+  warning: 'border-yellow-800/30',
+  danger:  'border-red-800/40',
   none:    'border-slate-700/50',
 }
 
@@ -75,9 +75,17 @@ function diffPctVal(current: number | null, prev: number | null): number | null 
 // ──────────────────────────────────────────────
 type CauseType = 'achieved' | 'visits' | 'unit_price' | 'both' | 'no_data'
 
+const CAUSE_ISSUE: Record<CauseType, string | null> = {
+  achieved:   null,
+  visits:     '集客不足',
+  unit_price: '単価設計または提案不足',
+  both:       '集客・単価の両方が不足',
+  no_data:    null,
+}
+
 const CAUSE_ACTION: Record<CauseType, string | null> = {
   achieved:   '今週の取り組みを来週も継続する',
-  visits:     '仕上がり直後に口コミ案内をその場で送る',
+  visits:     '仕上がり直後にその場でGoogleの口コミ投稿を案内する',
   unit_price: 'カラー前にケア提案を1回必ず入れる',
   both:       '施術中に次回来店時期を必ず口頭で伝える',
   no_data:    null,
@@ -87,7 +95,6 @@ type Derived = {
   sales: number | null
   visits: number | null
   unitPrice: number | null
-  prevSales: number | null
   weeklyTargetSales: number | null
   weeklyTargetVisits: number | null
   weeklyTargetUnitPrice: number | null
@@ -97,6 +104,7 @@ type Derived = {
   visitsDiff: number | null
   unitPriceDiff: number | null
   cause: CauseType
+  issueLabel: string | null
   action: string | null
   lastInputDate: string
 }
@@ -137,7 +145,7 @@ function derive(s: StoreOverview): Derived {
   const lastInputDate = fmtDate(s.thisWeek?.updated_at ?? s.thisWeek?.created_at)
 
   return {
-    sales, visits, unitPrice, prevSales,
+    sales, visits, unitPrice,
     weeklyTargetSales, weeklyTargetVisits, weeklyTargetUnitPrice,
     salesStatus,
     salesPct: fmtPct(sales, weeklyTargetSales),
@@ -145,6 +153,7 @@ function derive(s: StoreOverview): Derived {
     visitsDiff: diffPctVal(visits, prevVisits),
     unitPriceDiff: diffPctVal(unitPrice, prevUnitPrice),
     cause,
+    issueLabel: CAUSE_ISSUE[cause],
     action: CAUSE_ACTION[cause],
     lastInputDate,
   }
@@ -214,10 +223,8 @@ export default function OverviewClient() {
                     <span className="text-xs bg-red-900/50 text-red-400 px-2 py-0.5 rounded-full">危険</span>
                   </div>
                   <p className="text-red-400 text-sm mb-1">売上 目標比 {d.salesPct}</p>
-                  {d.action && d.cause !== 'no_data' && d.cause !== 'achieved' && (
-                    <p className="text-red-300 text-sm mb-3">
-                      {d.cause === 'visits' ? '原因：客数不足' : d.cause === 'unit_price' ? '原因：客単価不足' : '原因：客数・客単価の両方が不足'}
-                    </p>
+                  {d.issueLabel && (
+                    <p className="text-red-300 text-sm mb-3">課題：{d.issueLabel}</p>
                   )}
                   <button
                     onClick={() => router.push(`/dashboard?storeId=${s.store.id}`)}
@@ -245,53 +252,66 @@ export default function OverviewClient() {
                 className={`bg-gradient-to-br from-slate-800 to-slate-900 border ${CARD_BORDER[d.salesStatus]} rounded-2xl p-5 mb-4`}
               >
                 {/* ヘッダー */}
-                <div className="flex items-start justify-between mb-1">
+                <div className="flex items-start justify-between mb-2">
                   <p className="text-white text-xl font-bold">{s.store.store_name}</p>
                   <span className={`text-xs px-3 py-1 rounded-full font-medium ${BADGE_CLASS[d.salesStatus]}`}>
                     {BADGE_LABEL[d.salesStatus]}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-4 mb-4">
-                  <p className="text-slate-500 text-xs">
-                    最終入力 <span className="text-white text-sm">{d.lastInputDate}</span>
-                  </p>
-                  {d.action && (
-                    <p className="text-slate-500 text-xs">
-                      今週やること <span className="text-amber-300 font-bold text-xs">{d.action}</span>
-                    </p>
-                  )}
-                </div>
+                {d.sales !== null ? (
+                  <>
+                    {/* 売上進捗・先週比・課題 */}
+                    <div className="mb-3 space-y-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {d.weeklyTargetSales !== null && (
+                          <span className="text-slate-400 text-xs">
+                            目標比 <span className="text-white font-bold">{d.salesPct}</span>
+                          </span>
+                        )}
+                        {d.salesDiff !== null && (
+                          <span className="text-slate-400 text-xs">
+                            先週比 <DiffBadge val={d.salesDiff} />
+                          </span>
+                        )}
+                        <span className="text-slate-400 text-xs">
+                          最終入力 <span className="text-white text-sm">{d.lastInputDate}</span>
+                        </span>
+                      </div>
+                      {d.issueLabel && (
+                        <p className="text-amber-300 text-sm font-medium">課題：{d.issueLabel}</p>
+                      )}
+                    </div>
 
-                {d.sales === null ? (
-                  <p className="text-slate-500 text-sm">今週のデータ未入力</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                        <p className="text-slate-400 text-xs mb-1">週売上</p>
+                        <p className="text-white text-2xl font-bold tracking-tight">{fmtYen(d.sales)}</p>
+                        <DiffBadge val={d.salesDiff} />
+                        {d.weeklyTargetSales !== null && (
+                          <p className="text-slate-600 text-xs mt-0.5">目標 {fmtYen(d.weeklyTargetSales)}</p>
+                        )}
+                      </div>
+                      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                        <p className="text-slate-400 text-xs mb-1">客単価</p>
+                        <p className="text-white text-2xl font-bold tracking-tight">{fmtYen(d.unitPrice)}</p>
+                        <DiffBadge val={d.unitPriceDiff} />
+                        {d.weeklyTargetUnitPrice !== null && (
+                          <p className="text-slate-600 text-xs mt-0.5">目標 {fmtYen(d.weeklyTargetUnitPrice)}</p>
+                        )}
+                      </div>
+                      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                        <p className="text-slate-400 text-xs mb-1">週客数</p>
+                        <p className="text-white text-2xl font-bold tracking-tight">{fmtNum(d.visits, '人')}</p>
+                        <DiffBadge val={d.visitsDiff} />
+                        {d.weeklyTargetVisits !== null && (
+                          <p className="text-slate-600 text-xs mt-0.5">目標 {fmtNum(d.weeklyTargetVisits, '人')}</p>
+                        )}
+                      </div>
+                    </div>
+                  </>
                 ) : (
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
-                      <p className="text-slate-400 text-xs mb-1">週売上</p>
-                      <p className="text-white text-2xl font-bold tracking-tight">{fmtYen(d.sales)}</p>
-                      <DiffBadge val={d.salesDiff} />
-                      {d.weeklyTargetSales !== null && (
-                        <p className="text-slate-600 text-xs mt-0.5">目標 {fmtYen(d.weeklyTargetSales)}</p>
-                      )}
-                    </div>
-                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
-                      <p className="text-slate-400 text-xs mb-1">客単価</p>
-                      <p className="text-white text-2xl font-bold tracking-tight">{fmtYen(d.unitPrice)}</p>
-                      <DiffBadge val={d.unitPriceDiff} />
-                      {d.weeklyTargetUnitPrice !== null && (
-                        <p className="text-slate-600 text-xs mt-0.5">目標 {fmtYen(d.weeklyTargetUnitPrice)}</p>
-                      )}
-                    </div>
-                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
-                      <p className="text-slate-400 text-xs mb-1">週客数</p>
-                      <p className="text-white text-2xl font-bold tracking-tight">{fmtNum(d.visits, '人')}</p>
-                      <DiffBadge val={d.visitsDiff} />
-                      {d.weeklyTargetVisits !== null && (
-                        <p className="text-slate-600 text-xs mt-0.5">目標 {fmtNum(d.weeklyTargetVisits, '人')}</p>
-                      )}
-                    </div>
-                  </div>
+                  <p className="text-slate-500 text-sm">今週のデータ未入力</p>
                 )}
               </div>
             ))}
