@@ -26,9 +26,9 @@ function trendStatus(current: number, med: number): TrendStatus {
 }
 
 const STATUS_BADGE: Record<TrendStatus, string> = {
-  good:    'bg-amber-900/50 text-amber-400',
-  warning: 'bg-yellow-900/50 text-yellow-400',
-  danger:  'bg-red-900/50 text-red-400',
+  good:    'bg-emerald-500/10 text-emerald-400',
+  warning: 'bg-yellow-500/10 text-yellow-400',
+  danger:  'bg-red-500/10 text-red-400',
 }
 const STATUS_LABEL: Record<TrendStatus, string> = {
   good: '好調', warning: '普通', danger: '要注意',
@@ -86,7 +86,6 @@ export default async function StaffDetailPage({
   if (!staff) notFound()
 
   const profile = await getServerProfile()
-  // manager は自店舗スタッフのみ閲覧可
   if (profile?.role === 'manager' && profile.store_id && staff.store_id !== profile.store_id) {
     redirect(`/dashboard?storeId=${profile.store_id}`)
   }
@@ -108,9 +107,7 @@ export default async function StaffDetailPage({
 
   const metricStatuses: MetricStatus[] = METRIC_DEFS.map((def) => {
     const currentValue = latest ? def.compute(latest) : null
-    if (currentValue === null || previous.length === 0) {
-      return { def, currentValue, status: null, changeRate: null }
-    }
+    if (currentValue === null || previous.length === 0) return { def, currentValue, status: null, changeRate: null }
     const prevValues = previous.map(def.compute).filter((v): v is number => v !== null)
     const med = median(prevValues)
     if (med === null) return { def, currentValue, status: null, changeRate: null }
@@ -119,9 +116,7 @@ export default async function StaffDetailPage({
   })
 
   const worstMetric = (() => {
-    const danger = metricStatuses
-      .filter((m) => m.status === 'danger')
-      .sort((a, b) => (a.changeRate ?? 0) - (b.changeRate ?? 0))
+    const danger = metricStatuses.filter((m) => m.status === 'danger').sort((a, b) => (a.changeRate ?? 0) - (b.changeRate ?? 0))
     return danger[0] ?? null
   })()
 
@@ -130,46 +125,46 @@ export default async function StaffDetailPage({
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-slate-950 pb-20">
+      <div className="min-h-screen bg-[#0B1220] pb-20">
         <Navigation />
-        <div className="max-w-lg mx-auto px-4 py-6">
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
           {/* ヘッダー */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white">{staff.name}</h1>
-            <p className="text-slate-400 text-sm mt-0.5">個人の改善状況</p>
+          <div>
+            <h1 className="text-lg font-semibold text-[#E6ECF5]">{staff.name}</h1>
+            <p className="text-[#8B94A7] text-xs mt-0.5">個人の改善状況</p>
           </div>
 
           {/* 今週やること */}
           {todayAction ? (
-            <div className="bg-gradient-to-r from-blue-900/40 to-blue-800/40 border border-blue-700/50 rounded-2xl p-5 mb-4">
-              <p className="text-slate-400 text-xs mb-2">🎯 今週やること</p>
-              <p className="text-amber-300 text-lg font-bold leading-snug mb-2">{todayAction}</p>
-              <p className="text-slate-400 text-sm">※ 今週はこの1つに集中してください</p>
+            <div className="bg-[#111A2B] rounded-2xl p-4 border-l-4 border-[#D4AF37]">
+              <p className="text-[#D4AF37] text-xs font-bold mb-1">🎯 今週やること</p>
+              <p className="text-[#E6ECF5] text-lg font-bold leading-snug mb-1">{todayAction}</p>
+              <p className="text-[#8B94A7] text-sm">※ 今週はこの1つに集中してください</p>
             </div>
           ) : latest ? (
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-amber-600/40 rounded-2xl p-5 mb-4">
-              <p className="text-amber-400 font-bold text-sm mb-1">✨ 今週は好調です</p>
-              <p className="text-slate-400 text-sm">このペースを維持しましょう</p>
+            <div className="bg-[#111A2B] rounded-2xl p-4 border-l-4 border-emerald-500">
+              <p className="text-emerald-400 font-bold text-sm mb-1">✨ 今週は好調です</p>
+              <p className="text-[#8B94A7] text-sm">このペースを維持しましょう</p>
             </div>
           ) : null}
 
           {/* 今週の状態 */}
           {latest && (
-            <div className="mb-4">
-              <h2 className="text-slate-400 text-sm font-medium mb-3 uppercase tracking-wide">今週の状態</h2>
+            <div>
+              <h2 className="text-[#8B94A7] text-xs font-medium mb-3 uppercase tracking-wide">今週の状態</h2>
               <div className="grid grid-cols-2 gap-3">
                 {metricStatuses.map(({ def, currentValue, status }) => (
-                  <div key={def.key} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-4">
-                    <p className="text-slate-400 text-xs mb-2">{def.label}</p>
-                    <p className="text-white text-2xl font-bold tracking-tight mb-2">
+                  <div key={def.key} className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
+                    <p className="text-[#8B94A7] text-xs mb-2">{def.label}</p>
+                    <p className="text-[#E6ECF5] text-2xl font-bold tracking-tight mb-2">
                       {def.isYen ? fmtYen(currentValue) : fmt(currentValue, def.suffix, def.digits)}
                     </p>
                     {status ? (
-                      <span className={`inline-block text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_BADGE[status]}`}>
+                      <span className={`inline-block text-xs px-2.5 py-1 rounded-full font-bold ${STATUS_BADGE[status]}`}>
                         {STATUS_LABEL[status]}
                       </span>
                     ) : (
-                      <span className="inline-block text-xs px-2.5 py-1 rounded-full bg-slate-700/50 text-slate-400">
+                      <span className="inline-block text-xs px-2.5 py-1 rounded-full bg-white/5 text-[#8B94A7]">
                         データ不足
                       </span>
                     )}
@@ -180,42 +175,37 @@ export default async function StaffDetailPage({
           )}
 
           {/* 直近4週の推移 */}
-          <div className="mb-4">
-            <h2 className="text-slate-400 text-sm font-medium mb-3 uppercase tracking-wide">直近4週の推移</h2>
+          <div>
+            <h2 className="text-[#8B94A7] text-xs font-medium mb-3 uppercase tracking-wide">直近4週の推移</h2>
             {records.length === 0 ? (
-              <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl py-8 text-center text-slate-500 text-sm">
+              <div className="bg-[#111A2B] rounded-2xl py-8 border border-white/5 text-center text-[#8B94A7] text-sm">
                 記録がありません。週次入力から実績を登録してください。
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-2xl border border-slate-700/50">
+              <div className="overflow-x-auto rounded-2xl border border-white/5">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-slate-800/80">
+                  <thead className="bg-[#0B1220]">
                     <tr>
                       {['週', '売上', '客数', '客単価', '次回予約率', '口コミ'].map((h) => (
-                        <th key={h} className="px-3 py-3 text-left text-xs font-medium text-slate-500 whitespace-nowrap">
-                          {h}
-                        </th>
+                        <th key={h} className="px-3 py-3 text-left text-xs font-medium text-[#8B94A7] whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-700/50">
+                  <tbody className="divide-y divide-white/5">
                     {[...records].reverse().map((r) => {
-                      const up = r.visits && r.visits > 0 && r.sales !== null
-                        ? Math.round(r.sales / r.visits) : null
+                      const up = r.visits && r.visits > 0 && r.sales !== null ? Math.round(r.sales / r.visits) : null
                       const isLatest = r.id === latest?.id
                       return (
-                        <tr key={r.id} className={isLatest ? 'bg-blue-900/20' : 'bg-slate-900/50'}>
+                        <tr key={r.id} className={isLatest ? 'bg-[#D4AF37]/5' : 'bg-[#111A2B]'}>
                           <td className="px-3 py-3 font-medium whitespace-nowrap">
-                            <span className={isLatest ? 'text-blue-400' : 'text-slate-300'}>{r.record_date}</span>
-                            {isLatest && <span className="ml-1 text-xs text-blue-500">今週</span>}
+                            <span className={isLatest ? 'text-[#D4AF37]' : 'text-[#E6ECF5]'}>{r.record_date}</span>
+                            {isLatest && <span className="ml-1 text-xs text-[#D4AF37]/70">今週</span>}
                           </td>
-                          <td className="px-3 py-3 text-slate-300 whitespace-nowrap">{fmt(r.sales, '円')}</td>
-                          <td className="px-3 py-3 text-slate-300 whitespace-nowrap">{fmt(r.visits, '人')}</td>
-                          <td className="px-3 py-3 text-slate-300 whitespace-nowrap">{fmt(up, '円')}</td>
-                          <td className="px-3 py-3 text-slate-300 whitespace-nowrap">
-                            {r.repeat_rate !== null ? `${r.repeat_rate}%` : '—'}
-                          </td>
-                          <td className="px-3 py-3 text-slate-300 whitespace-nowrap">{fmt(r.review_count, '件')}</td>
+                          <td className="px-3 py-3 text-[#E6ECF5] whitespace-nowrap">{fmt(r.sales, '円')}</td>
+                          <td className="px-3 py-3 text-[#E6ECF5] whitespace-nowrap">{fmt(r.visits, '人')}</td>
+                          <td className="px-3 py-3 text-[#E6ECF5] whitespace-nowrap">{fmt(up, '円')}</td>
+                          <td className="px-3 py-3 text-[#E6ECF5] whitespace-nowrap">{r.repeat_rate !== null ? `${r.repeat_rate}%` : '—'}</td>
+                          <td className="px-3 py-3 text-[#E6ECF5] whitespace-nowrap">{fmt(r.review_count, '件')}</td>
                         </tr>
                       )
                     })}

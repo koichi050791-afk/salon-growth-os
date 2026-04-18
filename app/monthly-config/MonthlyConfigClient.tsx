@@ -18,17 +18,15 @@ function fmt(val: number | null, suffix = ''): string {
   return val.toLocaleString('ja-JP') + suffix
 }
 
-const INPUT_CLASS =
-  'block w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 placeholder:text-slate-600'
-const LABEL_CLASS = 'block text-sm text-slate-400 mb-1.5'
+const INPUT_CLASS = 'block w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-4 text-sm focus:outline-none focus:border-[#D4AF37]/50 placeholder:text-[#8B94A7]/50'
+const LABEL_CLASS = 'block text-sm text-[#8B94A7] mb-1'
 
 export default function MonthlyConfigClient({ stores, selectedStoreId, configs }: Props) {
   const router = useRouter()
   const [state, formAction, pending] = useActionState(saveMonthlyConfig, initialState)
-
   const [editingConfig, setEditingConfig] = useState<MonthlyConfig | null | undefined>(undefined)
-
   const prevStateRef = useRef(initialState)
+
   useEffect(() => {
     if (state !== prevStateRef.current && state.success) {
       router.refresh()
@@ -38,11 +36,12 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
   }, [state, router])
 
   const defaultMonth = new Date().toISOString().slice(0, 7)
+  const latestConfig = configs[0] ?? null
 
   return (
     <div className="space-y-4">
       {/* 店舗選択 */}
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-5">
+      <div className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
         <label className={LABEL_CLASS}>店舗</label>
         <select
           value={selectedStoreId}
@@ -51,56 +50,58 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
             setEditingConfig(undefined)
             router.push(val ? `/monthly-config?storeId=${val}` : '/monthly-config')
           }}
-          className={INPUT_CLASS}
+          className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:border-[#D4AF37]/50"
         >
           <option value="">-- 店舗を選択してください --</option>
-          {stores.map((store) => (
-            <option key={store.id} value={store.id}>{store.store_name}</option>
-          ))}
+          {stores.map((store) => <option key={store.id} value={store.id}>{store.store_name}</option>)}
         </select>
       </div>
 
       {selectedStoreId && (
         <>
           {/* 週次必要数値（最新設定から自動算出） */}
-          {configs.length > 0 && (() => {
-            const c = configs[0]
-            const weeklySales = c.target_sales != null ? Math.round(c.target_sales / 4.3) : null
-            const dailySales = c.target_sales != null ? Math.round(c.target_sales / 25) : null
-            const weeklyVisits = c.target_visits != null ? Math.round(c.target_visits / 4.3) : null
-            const unitPrice = c.target_unit_price ?? null
+          {latestConfig && (() => {
+            const weeklySales = latestConfig.target_sales != null ? Math.round(latestConfig.target_sales / 4.3) : null
+            const dailySales = latestConfig.target_sales != null ? Math.round(latestConfig.target_sales / 25) : null
+            const weeklyVisits = latestConfig.target_visits != null ? Math.round(latestConfig.target_visits / 4.3) : null
+            const unitPrice = latestConfig.target_unit_price ?? null
             return (
-              <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-amber-700/30 rounded-2xl p-5">
-                <p className="text-amber-300 font-bold mb-3">📊 週次必要数値（自動算出）</p>
-                <p className="text-slate-500 text-xs mb-3">{c.target_month} の目標から算出</p>
+              <div className="bg-[#111A2B] rounded-2xl p-4 border border-[#D4AF37]/20">
+                <p className="text-[#D4AF37] font-bold mb-1">📊 週次必要数値（自動算出）</p>
+                <p className="text-[#8B94A7] text-xs mb-4">{latestConfig.target_month} の目標から算出</p>
                 <div className="space-y-3">
-                  {c.target_sales != null && (
+                  {latestConfig.target_sales != null && (
                     <div>
-                      <p className="text-slate-400 text-xs mb-1">月目標 {fmt(c.target_sales, '円')}</p>
+                      <p className="text-[#8B94A7] text-xs mb-2">月目標 {fmt(latestConfig.target_sales, '円')}</p>
                       <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-slate-800/60 rounded-xl p-3">
-                          <p className="text-slate-500 text-xs">週売上</p>
-                          <p className="text-white font-bold">{weeklySales !== null ? '¥' + weeklySales.toLocaleString('ja-JP') : '—'} 必要</p>
+                        <div className="bg-[#0B1220] rounded-xl p-3">
+                          <p className="text-[#8B94A7] text-xs mb-1">週売上</p>
+                          <p className="text-[#E6ECF5] text-xl font-bold">{weeklySales !== null ? '¥' + weeklySales.toLocaleString('ja-JP') : '—'}</p>
+                          <p className="text-[#8B94A7] text-xs">必要</p>
                         </div>
-                        <div className="bg-slate-800/60 rounded-xl p-3">
-                          <p className="text-slate-500 text-xs">日売上</p>
-                          <p className="text-white font-bold">{dailySales !== null ? '¥' + dailySales.toLocaleString('ja-JP') : '—'} 必要</p>
+                        <div className="bg-[#0B1220] rounded-xl p-3">
+                          <p className="text-[#8B94A7] text-xs mb-1">日売上</p>
+                          <p className="text-[#E6ECF5] text-xl font-bold">{dailySales !== null ? '¥' + dailySales.toLocaleString('ja-JP') : '—'}</p>
+                          <p className="text-[#8B94A7] text-xs">必要</p>
                         </div>
                       </div>
                     </div>
                   )}
-                  {weeklyVisits !== null && (
-                    <div className="bg-slate-800/60 rounded-xl p-3">
-                      <p className="text-slate-500 text-xs">週客数</p>
-                      <p className="text-white font-bold">{weeklyVisits}人 必要</p>
-                    </div>
-                  )}
-                  {unitPrice !== null && (
-                    <div className="bg-slate-800/60 rounded-xl p-3">
-                      <p className="text-slate-500 text-xs">必要客単価</p>
-                      <p className="text-white font-bold">{'¥' + unitPrice.toLocaleString('ja-JP')}</p>
-                    </div>
-                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    {weeklyVisits !== null && (
+                      <div className="bg-[#0B1220] rounded-xl p-3">
+                        <p className="text-[#8B94A7] text-xs mb-1">週客数</p>
+                        <p className="text-[#E6ECF5] text-xl font-bold">{weeklyVisits}人</p>
+                        <p className="text-[#8B94A7] text-xs">必要</p>
+                      </div>
+                    )}
+                    {unitPrice !== null && (
+                      <div className="bg-[#0B1220] rounded-xl p-3">
+                        <p className="text-[#8B94A7] text-xs mb-1">必要客単価</p>
+                        <p className="text-[#E6ECF5] text-xl font-bold">{'¥' + unitPrice.toLocaleString('ja-JP')}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )
@@ -108,10 +109,10 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
 
           {/* 一覧ヘッダー */}
           <div className="flex items-center justify-between">
-            <h2 className="text-white font-bold">月次基準値一覧</h2>
+            <h2 className="text-[#E6ECF5] font-semibold">月次基準値一覧</h2>
             <button
               onClick={() => setEditingConfig(null)}
-              className="bg-gradient-to-r from-blue-600 to-blue-500 text-white text-sm px-4 py-2 rounded-xl hover:opacity-90 transition active:scale-[0.98]"
+              className="bg-[#D4AF37] text-black text-sm px-4 py-2 rounded-xl font-bold hover:opacity-90 transition active:scale-[0.98]"
             >
               ＋ 新規追加
             </button>
@@ -119,7 +120,7 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
 
           {/* 一覧 */}
           {configs.length === 0 ? (
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl py-10 text-center text-slate-500 text-sm">
+            <div className="bg-[#111A2B] rounded-2xl py-10 border border-white/5 text-center text-[#8B94A7] text-sm">
               データがありません。「新規追加」から登録してください。
             </div>
           ) : (
@@ -127,20 +128,11 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
               {configs.map((c) => (
                 <div
                   key={c.id}
-                  className={`bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 border ${
-                    editingConfig && editingConfig.id === c.id
-                      ? 'border-blue-700/50'
-                      : 'border-slate-700/50'
-                  }`}
+                  className={`bg-[#111A2B] rounded-2xl p-4 border ${editingConfig && editingConfig.id === c.id ? 'border-[#D4AF37]/30' : 'border-white/5'}`}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-white font-bold">{c.target_month}</p>
-                    <button
-                      onClick={() => setEditingConfig(c)}
-                      className="text-blue-400 text-sm hover:text-blue-300 transition"
-                    >
-                      編集
-                    </button>
+                    <p className="text-[#E6ECF5] font-bold">{c.target_month}</p>
+                    <button onClick={() => setEditingConfig(c)} className="text-[#D4AF37] text-sm hover:opacity-70 transition">編集</button>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <Row label="目標売上"   value={fmt(c.target_sales, '円')} />
@@ -157,100 +149,68 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
 
           {/* 編集・新規フォーム */}
           {editingConfig !== undefined && (
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-blue-700/50 rounded-2xl p-5">
+            <div className="bg-[#111A2B] rounded-2xl border border-[#D4AF37]/20 p-4">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-white font-bold">
+                <h3 className="text-[#E6ECF5] font-bold">
                   {editingConfig === null ? '新規追加' : `${editingConfig.target_month} を編集`}
                 </h3>
-                <button
-                  type="button"
-                  onClick={() => setEditingConfig(undefined)}
-                  className="text-slate-400 hover:text-slate-200 text-sm transition"
-                >
+                <button type="button" onClick={() => setEditingConfig(undefined)} className="text-[#8B94A7] hover:text-[#E6ECF5] text-sm transition">
                   ✕ 閉じる
                 </button>
               </div>
 
-              <form
-                key={editingConfig === null ? 'new' : editingConfig.id}
-                action={formAction}
-                className="space-y-4"
-              >
+              <form key={editingConfig === null ? 'new' : editingConfig.id} action={formAction} className="space-y-4">
                 <input type="hidden" name="store_id" value={selectedStoreId} />
 
                 <div>
                   <label className={LABEL_CLASS}>対象月</label>
-                  <input
-                    type="month"
-                    name="target_month"
-                    defaultValue={editingConfig?.target_month ?? defaultMonth}
-                    required
-                    className={INPUT_CLASS}
-                  />
+                  <input type="month" name="target_month" defaultValue={editingConfig?.target_month ?? defaultMonth} required className={INPUT_CLASS} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className={LABEL_CLASS}>目標売上（円）</label>
-                    <input type="number" name="target_sales"
-                      defaultValue={editingConfig?.target_sales ?? ''}
-                      min="0" className={INPUT_CLASS} />
+                    <input type="number" name="target_sales" defaultValue={editingConfig?.target_sales ?? ''} min="0" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>目標客単価（円）</label>
-                    <input type="number" name="target_unit_price"
-                      defaultValue={editingConfig?.target_unit_price ?? ''}
-                      min="0" className={INPUT_CLASS} />
+                    <input type="number" name="target_unit_price" defaultValue={editingConfig?.target_unit_price ?? ''} min="0" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>目標来店数</label>
-                    <input type="number" name="target_visits"
-                      defaultValue={editingConfig?.target_visits ?? ''}
-                      min="0" className={INPUT_CLASS} />
+                    <input type="number" name="target_visits" defaultValue={editingConfig?.target_visits ?? ''} min="0" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>目標生産性</label>
-                    <input type="number" name="target_productivity"
-                      defaultValue={editingConfig?.target_productivity ?? ''}
-                      min="0" step="0.01" className={INPUT_CLASS} />
+                    <input type="number" name="target_productivity" defaultValue={editingConfig?.target_productivity ?? ''} min="0" step="0.01" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>目標再来率（%）</label>
-                    <input type="number" name="target_repeat_rate"
-                      defaultValue={editingConfig?.target_repeat_rate ?? ''}
-                      min="0" max="100" step="0.1" className={INPUT_CLASS} />
+                    <input type="number" name="target_repeat_rate" defaultValue={editingConfig?.target_repeat_rate ?? ''} min="0" max="100" step="0.1" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>メモ</label>
-                    <textarea name="memo"
-                      defaultValue={editingConfig?.memo ?? ''}
-                      rows={2} className={INPUT_CLASS} />
+                    <textarea name="memo" defaultValue={editingConfig?.memo ?? ''} rows={2} className={INPUT_CLASS} />
                   </div>
                 </div>
 
                 {state.message && (
                   <div className={`rounded-xl px-4 py-3 text-sm border ${
                     state.success
-                      ? 'bg-green-900/30 text-green-400 border-green-700/50'
-                      : 'bg-red-900/30 text-red-400 border-red-700/50'
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : 'bg-red-500/10 text-red-400 border-red-500/20'
                   }`}>
                     {state.message}
                   </div>
                 )}
 
                 <div className="flex gap-3 pt-1">
-                  <button
-                    type="submit"
-                    disabled={pending}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 text-white py-3 rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 transition active:scale-[0.98]"
-                  >
+                  <button type="submit" disabled={pending}
+                    className="flex-1 bg-[#D4AF37] text-black py-4 rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 transition active:scale-[0.98]">
                     {pending ? '保存中...' : '保存する'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingConfig(undefined)}
-                    className="px-4 py-3 border border-slate-700 rounded-xl text-sm text-slate-400 hover:border-slate-500 transition"
-                  >
+                  <button type="button" onClick={() => setEditingConfig(undefined)}
+                    className="px-4 py-4 bg-[#111A2B] border border-[#D4AF37]/30 rounded-xl text-sm text-[#D4AF37] hover:opacity-70 transition">
                     キャンセル
                   </button>
                 </div>
@@ -266,8 +226,8 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-slate-500 text-xs">{label}</span>
-      <span className="text-slate-300 text-sm font-medium">{value}</span>
+      <span className="text-[#8B94A7] text-xs">{label}</span>
+      <span className="text-[#E6ECF5] text-sm font-medium">{value}</span>
     </div>
   )
 }

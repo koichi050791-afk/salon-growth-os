@@ -43,27 +43,22 @@ function targetPct(
   return { text: `目標比 ${p.toFixed(0)}%`, up: p >= 90 }
 }
 
-type IssueResult = { issueLabel: string; action: string; isOk: boolean }
+type IssueResult = { issueLabel: string; action: string }
 
 function diagnose(
   thisWeek: WeeklyStoreInput | null,
   lastWeek: WeeklyStoreInput | null,
 ): IssueResult {
-  const ok = { issueLabel: '現状維持：今の取り組みを継続', action: '今週の取り組みを来週も継続する', isOk: true }
-
+  const ok = { issueLabel: '現状維持：今の取り組みを継続', action: '今週の取り組みを来週も継続する' }
   if (!thisWeek) return ok
 
   const avail = thisWeek.availability_score ?? 0
-  if (avail >= 4) {
-    return { issueLabel: '平日集客施策不足', action: '平日限定クーポンをLINEで配信する', isOk: false }
-  }
+  if (avail >= 4) return { issueLabel: '平日集客施策不足', action: '平日限定クーポンをLINEで配信する' }
 
   const newC = thisWeek.new_customers ?? null
   const prevNewC = lastWeek?.new_customers ?? null
-  if (newC !== null && prevNewC !== null && prevNewC > 0) {
-    if ((newC - prevNewC) / prevNewC <= -0.3) {
-      return { issueLabel: '新規不足', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する', isOk: false }
-    }
+  if (newC !== null && prevNewC !== null && prevNewC > 0 && (newC - prevNewC) / prevNewC <= -0.3) {
+    return { issueLabel: '新規不足', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する' }
   }
 
   const sales = thisWeek.sales ?? null
@@ -72,23 +67,19 @@ function diagnose(
   const prevVisits = lastWeek?.visits ?? null
 
   if (sales !== null && visits !== null && prevSales !== null && prevVisits !== null) {
-    const salesDown = sales < prevSales
-    const visitsDown = visits < prevVisits
+    if (sales < prevSales && visits < prevVisits) {
+      return { issueLabel: '集客不足', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する' }
+    }
     const unitPrice = visits > 0 ? sales / visits : null
     const prevUnitPrice = prevVisits > 0 ? prevSales / prevVisits : null
-
-    if (salesDown && visitsDown) {
-      return { issueLabel: '集客不足', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する', isOk: false }
+    if (visits >= prevVisits && unitPrice !== null && prevUnitPrice !== null && unitPrice < prevUnitPrice) {
+      return { issueLabel: '単価設計または提案不足', action: 'カラー前にケア提案を1回必ず入れる' }
     }
-    if (!visitsDown && unitPrice !== null && prevUnitPrice !== null && unitPrice < prevUnitPrice) {
-      return { issueLabel: '単価設計または提案不足', action: 'カラー前にケア提案を1回必ず入れる', isOk: false }
-    }
-
     const nextVisit = thisWeek.next_visit_count ?? null
     const prevNextVisit = lastWeek?.next_visit_count ?? null
     if (nextVisit !== null && visits > 0 && prevNextVisit !== null && prevVisits > 0) {
       if (nextVisit / visits < (prevNextVisit / prevVisits) * 0.9) {
-        return { issueLabel: '次回予約導線不足', action: '会計時の次回予約案内を徹底する', isOk: false }
+        return { issueLabel: '次回予約導線不足', action: '会計時の次回予約案内を徹底する' }
       }
     }
   }
@@ -121,69 +112,60 @@ export default async function Home() {
 
   const sales = thisWeek?.sales ?? null
   const visits = thisWeek?.visits ?? null
-  const unitPrice =
-    sales !== null && visits !== null && visits > 0 ? Math.round(sales / visits) : null
+  const unitPrice = sales !== null && visits !== null && visits > 0 ? Math.round(sales / visits) : null
   const prevSales = lastWeek?.sales ?? null
   const prevVisits = lastWeek?.visits ?? null
-  const prevUnitPrice =
-    prevSales !== null && (lastWeek?.visits ?? 0) > 0
-      ? Math.round(prevSales / lastWeek!.visits!)
-      : null
+  const prevUnitPrice = prevSales !== null && (lastWeek?.visits ?? 0) > 0
+    ? Math.round(prevSales / lastWeek!.visits!) : null
 
   const nextVisitCount = thisWeek?.next_visit_count ?? null
   const prevNextVisitCount = lastWeek?.next_visit_count ?? null
-  const repeatRate =
-    nextVisitCount !== null && visits !== null && visits > 0
-      ? Math.round((nextVisitCount / visits) * 100)
-      : null
-  const prevRepeatRate =
-    prevNextVisitCount !== null && prevVisits !== null && prevVisits > 0
-      ? Math.round((prevNextVisitCount / prevVisits) * 100)
-      : null
+  const repeatRate = nextVisitCount !== null && visits !== null && visits > 0
+    ? Math.round((nextVisitCount / visits) * 100) : null
+  const prevRepeatRate = prevNextVisitCount !== null && prevVisits !== null && prevVisits > 0
+    ? Math.round((prevNextVisitCount / prevVisits) * 100) : null
 
   const today = new Date()
   const dateLabel = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
 
-  const { issueLabel, action, isOk } = diagnose(thisWeek ?? null, lastWeek ?? null)
+  const { issueLabel, action } = diagnose(thisWeek ?? null, lastWeek ?? null)
   const hasData = thisWeek !== null
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-slate-950 pb-20">
+      <div className="min-h-screen bg-[#0B1220] pb-20">
         <Navigation />
-        <div className="max-w-lg mx-auto px-4 py-6">
-          <div className="mb-6">
-            <h1 className="text-xl font-bold text-white">Salon Growth OS</h1>
-            <p className="text-slate-400 text-sm mt-0.5">{dateLabel}</p>
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+          {/* ヘッダー */}
+          <div>
+            <h1 className="text-lg font-semibold text-[#E6ECF5]">Salon Growth OS</h1>
+            <p className="text-[#8B94A7] text-xs mt-0.5">{dateLabel}</p>
           </div>
 
           {!mainStore ? (
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl py-12 text-center">
-              <p className="text-slate-500 text-sm mb-4">店舗データがありません</p>
-              <Link
-                href="/settings"
-                className="text-sm px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:opacity-90 transition"
-              >
+            <div className="bg-[#111A2B] rounded-2xl p-6 border border-white/5 text-center">
+              <p className="text-[#8B94A7] text-sm mb-4">店舗データがありません</p>
+              <Link href="/settings" className="text-sm px-5 py-3 bg-[#D4AF37] text-black font-bold rounded-xl hover:opacity-90 transition">
                 設定から店舗を追加する
               </Link>
             </div>
           ) : (
             <>
               {/* 今週速報カード */}
-              <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-5 mb-4">
+              <div className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-white text-xl font-bold">{mainStore.store_name}</p>
-                  <span className="bg-blue-600/30 text-blue-300 rounded-full px-3 py-1 text-xs">
+                  <p className="text-[#E6ECF5] text-lg font-semibold">{mainStore.store_name}</p>
+                  <span className="bg-[#D4AF37]/10 text-[#D4AF37] rounded-full px-3 py-1 text-xs font-bold">
                     今週速報
                   </span>
                 </div>
 
                 {!hasData ? (
                   <div className="text-center py-6">
-                    <p className="text-slate-500 text-sm mb-4">今週のデータが未入力です</p>
+                    <p className="text-[#8B94A7] text-sm mb-4">今週のデータが未入力です</p>
                     <Link
                       href={`/weekly-input?storeId=${mainStore.id}`}
-                      className="inline-block text-sm px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:opacity-90 transition"
+                      className="inline-block text-sm px-5 py-3 bg-[#D4AF37] text-black font-bold rounded-xl hover:opacity-90 transition"
                     >
                       週次入力へ →
                     </Link>
@@ -217,31 +199,31 @@ export default async function Home() {
               {hasData && (
                 <>
                   {/* 今週の課題 */}
-                  <div className="bg-gradient-to-br from-red-900/20 to-red-800/10 border border-red-800/40 rounded-2xl p-4 mt-4">
-                    <p className="text-red-300 text-sm font-bold mb-1">⚠️ 今週の課題</p>
-                    <p className="text-white text-lg font-bold">{issueLabel}</p>
+                  <div className="bg-[#111A2B] rounded-2xl p-4 border-l-4 border-red-500">
+                    <p className="text-red-400 text-xs font-bold mb-1">⚠️ 今週の課題</p>
+                    <p className="text-[#E6ECF5] text-lg font-bold">{issueLabel}</p>
                   </div>
 
                   {/* 来週の一手 */}
-                  <div className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 border border-blue-800/40 rounded-2xl p-4 mt-3">
-                    <p className="text-blue-300 text-sm font-bold mb-1">🎯 来週の一手</p>
-                    <p className="text-white text-lg font-bold">{action}</p>
-                    <p className="text-slate-400 text-xs mt-2">この1つに集中してください</p>
+                  <div className="bg-[#111A2B] rounded-2xl p-4 border-l-4 border-[#D4AF37]">
+                    <p className="text-[#D4AF37] text-xs font-bold mb-1">🎯 来週の一手</p>
+                    <p className="text-[#E6ECF5] text-lg font-bold">{action}</p>
+                    <p className="text-[#8B94A7] text-xs mt-2">この1つに集中してください</p>
                   </div>
                 </>
               )}
 
               {/* ショートカット */}
-              <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="grid grid-cols-2 gap-3">
                 <Link
                   href={`/weekly-input?storeId=${mainStore.id}`}
-                  className="text-center text-sm py-3 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl text-white hover:opacity-90 transition font-medium"
+                  className="text-center text-sm py-4 bg-[#D4AF37] rounded-xl text-black font-bold hover:opacity-90 transition"
                 >
                   ➕ 週次入力
                 </Link>
                 <Link
                   href={`/dashboard?storeId=${mainStore.id}`}
-                  className="text-center text-sm py-3 border border-slate-700 rounded-xl text-slate-400 hover:border-slate-500 transition"
+                  className="text-center text-sm py-4 bg-[#111A2B] border border-[#D4AF37]/30 rounded-xl text-[#D4AF37] hover:opacity-90 transition"
                 >
                   📊 ダッシュボード
                 </Link>
@@ -264,15 +246,15 @@ function MetricCard({
   diff: { text: string; up: boolean } | null
 }) {
   return (
-    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
-      <p className="text-slate-400 text-xs mb-1">{label}</p>
-      <p className="text-white text-2xl font-bold">{value}</p>
+    <div className="bg-[#0B1220] rounded-xl p-3 border border-white/5">
+      <p className="text-[#8B94A7] text-xs mb-1">{label}</p>
+      <p className="text-[#E6ECF5] text-2xl font-bold">{value}</p>
       {diff ? (
-        <p className={`text-xs mt-1 ${diff.up ? 'text-green-400' : 'text-red-400'}`}>
+        <p className={`text-xs mt-1 ${diff.up ? 'text-emerald-400' : 'text-red-400'}`}>
           {diff.up ? '↑' : '↓'} {diff.text}
         </p>
       ) : (
-        <p className="text-slate-500 text-xs mt-1">-</p>
+        <p className="text-[#8B94A7] text-xs mt-1">-</p>
       )}
     </div>
   )

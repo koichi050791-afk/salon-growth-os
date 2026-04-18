@@ -26,7 +26,7 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900 border-t border-gray-800">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0B1220]/95 backdrop-blur-lg border-t border-white/5">
       <div className="flex items-stretch">
         {NAV_ITEMS.map((item) => {
           const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
@@ -35,7 +35,7 @@ export default function Navigation() {
               key={item.href}
               href={item.href}
               className={`flex-1 flex flex-col items-center justify-center py-3 min-h-[56px] transition-colors ${
-                isActive ? 'text-blue-400' : 'text-gray-500'
+                isActive ? 'text-[#D4AF37]' : 'text-[#8B94A7]'
               }`}
             >
               <span className="text-xl leading-none mb-1">{item.icon}</span>
@@ -45,7 +45,7 @@ export default function Navigation() {
         })}
         <button
           onClick={handleSignOut}
-          className="flex-1 flex flex-col items-center justify-center py-3 min-h-[56px] text-gray-500 hover:text-gray-300 transition-colors"
+          className="flex-1 flex flex-col items-center justify-center py-3 min-h-[56px] text-[#8B94A7] hover:text-[#E6ECF5] transition-colors"
         >
           <span className="text-xl leading-none mb-1">🚪</span>
           <span className="text-xs">ログアウト</span>

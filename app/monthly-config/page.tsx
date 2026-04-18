@@ -19,12 +19,12 @@ export default async function MonthlyConfigPage({
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-slate-950 pb-20">
+      <div className="min-h-screen bg-[#0B1220] pb-20">
         <Navigation />
         <div className="max-w-lg mx-auto px-4 py-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white">月次基準値</h1>
-            <p className="text-slate-400 text-sm mt-0.5">店舗ごとの月次目標値を管理します</p>
+            <h1 className="text-lg font-semibold text-[#E6ECF5]">月次基準値</h1>
+            <p className="text-[#8B94A7] text-xs mt-0.5">店舗ごとの月次目標値を管理します</p>
           </div>
           <MonthlyConfigClient
             stores={stores}
