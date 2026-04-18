@@ -7,6 +7,8 @@ import { AuthGuard } from '@/lib/components/AuthGuard'
 import Navigation from '@/lib/components/Navigation'
 import type { WeeklyStoreInput, MonthlyConfig } from '@/lib/types/db'
 
+const WEEKLY_WEEKS = 4.3
+
 function getSundayISO(): string {
   const today = new Date()
   const sunday = new Date(today)
@@ -48,6 +50,7 @@ type IssueResult = { issueLabel: string; action: string }
 function diagnose(
   thisWeek: WeeklyStoreInput | null,
   lastWeek: WeeklyStoreInput | null,
+  config: MonthlyConfig | null,
 ): IssueResult {
   const ok = { issueLabel: '現状維持：今の取り組みを継続', action: '今週の取り組みを来週も継続する' }
   if (!thisWeek) return ok
@@ -55,18 +58,18 @@ function diagnose(
   const avail = thisWeek.availability_score ?? 0
   if (avail >= 4) return { issueLabel: '平日集客施策不足', action: '平日限定クーポンをLINEで配信する' }
 
-  const newC = thisWeek.new_customers ?? null
-  const prevNewC = lastWeek?.new_customers ?? null
-  if (newC !== null && prevNewC !== null && prevNewC > 0 && (newC - prevNewC) / prevNewC <= -0.3) {
-    return { issueLabel: '新規不足', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する' }
-  }
-
   const sales = thisWeek.sales ?? null
   const visits = thisWeek.visits ?? null
   const prevSales = lastWeek?.sales ?? null
   const prevVisits = lastWeek?.visits ?? null
 
+  // 先週データがある場合：前週比較
   if (sales !== null && visits !== null && prevSales !== null && prevVisits !== null) {
+    const newC = thisWeek.new_customers ?? null
+    const prevNewC = lastWeek?.new_customers ?? null
+    if (newC !== null && prevNewC !== null && prevNewC > 0 && (newC - prevNewC) / prevNewC <= -0.3) {
+      return { issueLabel: '新規不足', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する' }
+    }
     if (sales < prevSales && visits < prevVisits) {
       return { issueLabel: '集客不足', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する' }
     }
@@ -82,6 +85,14 @@ function diagnose(
         return { issueLabel: '次回予約導線不足', action: '会計時の次回予約案内を徹底する' }
       }
     }
+    return ok
+  }
+
+  // 先週データなし（初回）：月次目標で判定
+  if (sales !== null && config?.target_sales != null) {
+    const ratio = sales / (config.target_sales / WEEKLY_WEEKS)
+    if (ratio < 0.7) return { issueLabel: '集客不足', action: '仕上がり直後にその場でGoogleの口コミ投稿を案内する' }
+    if (ratio < 0.9) return { issueLabel: '売上が目標に届いていない', action: 'カラー前にケア提案を1回必ず入れる' }
   }
 
   return ok
@@ -108,7 +119,7 @@ export default async function Home() {
     : ([null, null, { data: null }] as const)
 
   const config = (configResult as { data: MonthlyConfig | null }).data ?? null
-  const weeklyTargetSales = config?.target_sales != null ? Math.round(config.target_sales / 4) : null
+  const weeklyTargetSales = config?.target_sales != null ? Math.round(config.target_sales / WEEKLY_WEEKS) : null
 
   const sales = thisWeek?.sales ?? null
   const visits = thisWeek?.visits ?? null
@@ -128,7 +139,7 @@ export default async function Home() {
   const today = new Date()
   const dateLabel = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
 
-  const { issueLabel, action } = diagnose(thisWeek ?? null, lastWeek ?? null)
+  const { issueLabel, action } = diagnose(thisWeek ?? null, lastWeek ?? null, config)
   const hasData = thisWeek !== null
 
   return (
@@ -188,7 +199,7 @@ export default async function Home() {
                       diff={diffPct(unitPrice, prevUnitPrice)}
                     />
                     <MetricCard
-                      label="再来率"
+                      label="次回予約率"
                       value={repeatRate !== null ? `${repeatRate}%` : '—'}
                       diff={diffPct(repeatRate, prevRepeatRate)}
                     />

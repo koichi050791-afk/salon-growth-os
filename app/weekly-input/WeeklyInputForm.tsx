@@ -198,7 +198,11 @@ export default function WeeklyInputForm({
     }
 
     const staffPayloads = staffRows
-      .filter((r) => r.sales !== '' || r.visits !== '')
+      .filter((r) => {
+        const s = toInt(r.sales)
+        const v = toInt(r.visits)
+        return (s !== null && s > 0) || (v !== null && v > 0)
+      })
       .map((r) => ({ store_id: storeId, staff_id: r.staff_id, week_start: weekStart, sales: toInt(r.sales), visits: toInt(r.visits) }))
 
     const { error } = await saveWeeklyInputs(storePayload, staffPayloads)
@@ -252,6 +256,7 @@ export default function WeeklyInputForm({
         )}
         <div>
           <label className={LABEL_CLASS}>対象週（日曜日）</label>
+          <p className="text-[#8B94A7] text-xs mb-2">この週の日曜日を選択してください</p>
           <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:border-[#D4AF37]/50" />
         </div>
       </div>

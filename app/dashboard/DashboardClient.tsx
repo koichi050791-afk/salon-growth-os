@@ -111,8 +111,8 @@ export default function DashboardClient({
     router.replace(val ? `/dashboard?storeId=${val}` : '/dashboard')
   }
 
-  const weeklyTargetSales = data?.config?.target_sales != null ? Math.round(data.config.target_sales / 4) : null
-  const weeklyTargetVisits = data?.config?.target_visits != null ? Math.round(data.config.target_visits / 4) : null
+  const weeklyTargetSales = data?.config?.target_sales != null ? Math.round(data.config.target_sales / 4.3) : null
+  const weeklyTargetVisits = data?.config?.target_visits != null ? Math.round(data.config.target_visits / 4.3) : null
   const weeklyTargetUnitPrice = data?.config?.target_unit_price ?? null
 
   const sales = data?.thisWeek?.sales ?? null
@@ -203,9 +203,9 @@ export default function DashboardClient({
               <span className={`text-xs px-3 py-1 rounded-full font-bold ${BADGE_CLASS[salesStatus]}`}>{BADGE_LABEL[salesStatus]}</span>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              <MetricInner label="週売上" value={fmtYen(sales)} diff={diffPctStr(sales, prevSales)} target={weeklyTargetSales !== null ? fmtYen(weeklyTargetSales) : null} />
-              <MetricInner label="週客数" value={fmtNum(visits, '人')} diff={diffPctStr(visits, prevVisits)} target={weeklyTargetVisits !== null ? fmtNum(weeklyTargetVisits, '人') : null} />
-              <MetricInner label="客単価" value={fmtYen(unitPrice)} diff={diffPctStr(unitPrice, prevUnitPrice)} target={weeklyTargetUnitPrice !== null ? fmtYen(weeklyTargetUnitPrice) : null} />
+              <MetricInner label="週売上" value={fmtYen(sales)} diff={diffPctStr(sales, prevSales)} target={weeklyTargetSales !== null ? `週目標 ${fmtYen(weeklyTargetSales)}` : null} />
+              <MetricInner label="週客数" value={fmtNum(visits, '人')} diff={diffPctStr(visits, prevVisits)} target={weeklyTargetVisits !== null ? `週目標 ${fmtNum(weeklyTargetVisits, '人')}` : null} />
+              <MetricInner label="客単価" value={fmtYen(unitPrice)} diff={diffPctStr(unitPrice, prevUnitPrice)} target={weeklyTargetUnitPrice !== null ? `目標 ${fmtYen(weeklyTargetUnitPrice)}` : null} />
             </div>
           </div>
 
