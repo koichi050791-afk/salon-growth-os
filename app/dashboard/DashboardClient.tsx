@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchDashboardData } from './actions'
 import type { Store } from '@/lib/types/db'
-import type { DashboardData } from './actions'
+import type { DashboardData, HistoryWeek } from './actions'
 
 // ──────────────────────────────────────────────
 // ヘルパー
@@ -264,6 +264,9 @@ export default function DashboardClient({
               <p className="text-[#8B94A7] text-sm">※ 今週はこの1つに集中してください</p>
             </div>
           )}
+
+          {/* セクション5：過去4週の推移 */}
+          <HistorySection history={data.history ?? []} />
         </>
       )}
 
@@ -272,6 +275,102 @@ export default function DashboardClient({
           店舗を選択してください
         </div>
       )}
+    </div>
+  )
+}
+
+// ──────────────────────────────────────────────
+// 過去4週履歴セクション
+// ──────────────────────────────────────────────
+function HistorySection({ history }: { history: HistoryWeek[] }) {
+  const hasAny = history.some((h) => h.input !== null)
+  if (!hasAny) return null
+
+  function fmtWeekLabel(iso: string): string {
+    const d = new Date(iso)
+    return `${d.getMonth() + 1}/${d.getDate()}週`
+  }
+
+  function fmtYenH(val: number | null): string {
+    if (val === null) return '—'
+    return '¥' + val.toLocaleString('ja-JP')
+  }
+
+  function fmtNumH(val: number | null, suffix = ''): string {
+    if (val === null) return '—'
+    return val.toLocaleString('ja-JP') + suffix
+  }
+
+  function salesTrend(curr: number | null, prev: number | null): 'up' | 'flat' | 'down' | null {
+    if (curr === null || prev === null || prev === 0) return null
+    const pct = (curr - prev) / prev
+    if (pct > 0.05) return 'up'
+    if (pct < -0.05) return 'down'
+    return 'flat'
+  }
+
+  const ACTION_STATUS: Record<string, string> = {
+    completed: '完了',
+    skipped: 'スキップ',
+    planned: '実行中',
+    in_progress: '実行中',
+  }
+  const ACTION_STATUS_CLASS: Record<string, string> = {
+    completed: 'bg-emerald-500/10 text-emerald-400',
+    skipped: 'bg-white/5 text-[#8B94A7]',
+    planned: 'bg-[#D4AF37]/10 text-[#D4AF37]',
+    in_progress: 'bg-[#D4AF37]/10 text-[#D4AF37]',
+  }
+
+  return (
+    <div>
+      <h2 className="text-[#E6ECF5] text-lg font-semibold mb-3">📋 過去4週の推移</h2>
+      {history.map((week, idx) => {
+        const prevInput = history[idx + 1]?.input ?? null
+        const trend = salesTrend(week.input?.sales ?? null, prevInput?.sales ?? null)
+        const unitP = week.input?.sales != null && week.input?.visits != null && week.input.visits > 0
+          ? Math.round(week.input.sales / week.input.visits) : null
+
+        return (
+          <div key={week.weekStart} className="bg-[#111A2B] rounded-2xl p-4 border border-[#1E293B] mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[#8B94A7] text-xs">{fmtWeekLabel(week.weekStart)}</p>
+              {trend === 'up' && <span className="text-emerald-500 text-sm font-bold">↑</span>}
+              {trend === 'flat' && <span className="text-[#8B94A7] text-sm">→</span>}
+              {trend === 'down' && <span className="text-red-500 text-sm font-bold">↓</span>}
+            </div>
+
+            {week.input === null ? (
+              <p className="text-[#8B94A7] text-sm">データなし</p>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  <div>
+                    <p className="text-[#8B94A7] text-xs mb-0.5">売上</p>
+                    <p className="text-[#E6ECF5] font-bold text-sm">{fmtYenH(week.input.sales)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[#8B94A7] text-xs mb-0.5">客数</p>
+                    <p className="text-[#E6ECF5] text-sm">{fmtNumH(week.input.visits, '人')}</p>
+                  </div>
+                  <div>
+                    <p className="text-[#8B94A7] text-xs mb-0.5">客単価</p>
+                    <p className="text-[#E6ECF5] text-sm">{fmtYenH(unitP)}</p>
+                  </div>
+                </div>
+                {week.action && (
+                  <div className="pt-2 border-t border-white/5">
+                    <p className="text-[#D4AF37] text-sm mb-1">{week.action.action_title}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${ACTION_STATUS_CLASS[week.action.status]}`}>
+                      {ACTION_STATUS[week.action.status] ?? week.action.status}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

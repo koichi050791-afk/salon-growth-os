@@ -6,6 +6,7 @@ import { getServerProfile } from '@/lib/repositories/profiles'
 import { getLatestImprovementAction } from '@/lib/repositories/improvement-actions'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import Navigation from '@/lib/components/Navigation'
+import HomeActionCard from './HomeActionCard'
 import type { WeeklyStoreInput, MonthlyConfig } from '@/lib/types/db'
 
 const WEEKLY_WEEKS = 4.3
@@ -87,10 +88,7 @@ export default async function Home() {
 
   const today = new Date()
   const dateLabel = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
-
   const hasData = thisWeek !== null
-  const hasActiveAction = latestAction && (latestAction.status === 'planned' || latestAction.status === 'in_progress')
-  const hasCompletedAction = latestAction && latestAction.status === 'completed'
 
   return (
     <AuthGuard>
@@ -112,43 +110,8 @@ export default async function Home() {
             </div>
           ) : (
             <>
-              {/* 今週のアクション（メインカード） */}
-              {hasActiveAction ? (
-                <div className="bg-[#111A2B] rounded-2xl p-4 border-l-4 border-[#D4AF37]">
-                  <p className="text-[#D4AF37] text-xs font-bold mb-1">🎯 今週やること</p>
-                  <p className="text-[#E6ECF5] text-xl font-bold mb-1">{latestAction!.action_title}</p>
-                  {latestAction!.action_detail && (
-                    <p className="text-[#8B94A7] text-sm mb-3">{latestAction!.action_detail}</p>
-                  )}
-                  <Link
-                    href="/actions"
-                    className="text-xs text-[#D4AF37] font-bold"
-                  >
-                    完了報告・詳細 →
-                  </Link>
-                </div>
-              ) : hasCompletedAction ? (
-                <div className="bg-[#111A2B] rounded-2xl p-4 border border-[#D4AF37]/20">
-                  <p className="text-[#8B94A7] text-xs mb-1">今週のアクション</p>
-                  <p className="text-emerald-400 text-sm font-bold mb-2">✅ 完了済み</p>
-                  <Link
-                    href={`/actions/confirm?storeId=${mainStore.id}`}
-                    className="inline-block text-sm px-4 py-2 bg-[#D4AF37] text-black font-bold rounded-xl hover:opacity-90 transition"
-                  >
-                    🎯 来週のアクションを決める
-                  </Link>
-                </div>
-              ) : (
-                <div className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
-                  <p className="text-[#8B94A7] text-sm mb-3">今週のアクションがまだ設定されていません</p>
-                  <Link
-                    href={`/actions/confirm?storeId=${mainStore.id}`}
-                    className="inline-block text-sm px-5 py-3 bg-[#D4AF37] text-black font-bold rounded-xl hover:opacity-90 transition"
-                  >
-                    🎯 今週のアクションを決める
-                  </Link>
-                </div>
-              )}
+              {/* 今週のアクション（インタラクティブカード） */}
+              <HomeActionCard action={latestAction} storeId={mainStore.id} />
 
               {/* 今週速報カード */}
               <div className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
@@ -171,42 +134,26 @@ export default async function Home() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
-                    <MetricCard
-                      label="週売上"
-                      value={fmtYen(sales)}
-                      diff={targetPct(sales, weeklyTargetSales) ?? diffPct(sales, prevSales)}
-                    />
-                    <MetricCard
-                      label="客数"
-                      value={visits !== null ? `${visits}人` : '—'}
-                      diff={diffPct(visits, prevVisits)}
-                    />
-                    <MetricCard
-                      label="客単価"
-                      value={fmtYen(unitPrice)}
-                      diff={diffPct(unitPrice, prevUnitPrice)}
-                    />
-                    <MetricCard
-                      label="次回予約率"
-                      value={repeatRate !== null ? `${repeatRate}%` : '—'}
-                      diff={diffPct(repeatRate, prevRepeatRate)}
-                    />
+                    <MetricCard label="週売上" value={fmtYen(sales)}
+                      diff={targetPct(sales, weeklyTargetSales) ?? diffPct(sales, prevSales)} />
+                    <MetricCard label="客数" value={visits !== null ? `${visits}人` : '—'}
+                      diff={diffPct(visits, prevVisits)} />
+                    <MetricCard label="客単価" value={fmtYen(unitPrice)}
+                      diff={diffPct(unitPrice, prevUnitPrice)} />
+                    <MetricCard label="次回予約率" value={repeatRate !== null ? `${repeatRate}%` : '—'}
+                      diff={diffPct(repeatRate, prevRepeatRate)} />
                   </div>
                 )}
               </div>
 
               {/* ショートカット */}
               <div className="grid grid-cols-2 gap-3">
-                <Link
-                  href={`/weekly-input?storeId=${mainStore.id}`}
-                  className="text-center text-sm py-4 bg-[#D4AF37] rounded-xl text-black font-bold hover:opacity-90 transition"
-                >
+                <Link href={`/weekly-input?storeId=${mainStore.id}`}
+                  className="text-center text-sm py-4 bg-[#D4AF37] rounded-xl text-black font-bold hover:opacity-90 transition">
                   ➕ 週次入力
                 </Link>
-                <Link
-                  href={`/dashboard?storeId=${mainStore.id}`}
-                  className="text-center text-sm py-4 bg-[#111A2B] border border-[#D4AF37]/30 rounded-xl text-[#D4AF37] hover:opacity-90 transition"
-                >
+                <Link href={`/dashboard?storeId=${mainStore.id}`}
+                  className="text-center text-sm py-4 bg-[#111A2B] border border-[#D4AF37]/30 rounded-xl text-[#D4AF37] hover:opacity-90 transition">
                   📊 ダッシュボード
                 </Link>
               </div>
@@ -219,13 +166,9 @@ export default async function Home() {
 }
 
 function MetricCard({
-  label,
-  value,
-  diff,
+  label, value, diff,
 }: {
-  label: string
-  value: string
-  diff: { text: string; up: boolean } | null
+  label: string; value: string; diff: { text: string; up: boolean } | null
 }) {
   return (
     <div className="bg-[#0B1220] rounded-xl p-3 border border-white/5">

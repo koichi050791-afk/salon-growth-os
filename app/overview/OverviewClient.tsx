@@ -27,6 +27,7 @@ function fmtDate(iso: string | null | undefined): string {
 }
 
 type BadgeStatus = 'good' | 'warning' | 'danger' | 'none'
+type InputStatus = 'entered' | 'not_entered' | 'overdue'
 
 function getStatus(val: number | null, target: number | null): BadgeStatus {
   if (val === null || target === null || target === 0) return 'none'
@@ -34,6 +35,13 @@ function getStatus(val: number | null, target: number | null): BadgeStatus {
   if (r >= 0.9) return 'good'
   if (r >= 0.7) return 'warning'
   return 'danger'
+}
+
+function getInputStatus(weekStart: string, hasData: boolean): InputStatus {
+  if (hasData) return 'entered'
+  const currentSunday = getSundayISO()
+  if (weekStart < currentSunday) return 'overdue'
+  return 'not_entered'
 }
 
 const BADGE_CLASS: Record<BadgeStatus, string> = {
@@ -46,11 +54,16 @@ const BADGE_LABEL: Record<BadgeStatus, string> = { good: '正常', warning: '注
 const PROGRESS_BAR: Record<BadgeStatus, string> = {
   good: 'bg-emerald-500', warning: 'bg-yellow-500', danger: 'bg-red-500', none: 'bg-[#8B94A7]',
 }
-const CARD_BORDER: Record<BadgeStatus, string> = {
-  good:    'border-white/5',
-  warning: 'border-white/5',
-  danger:  'border-white/5',
-  none:    'border-white/5',
+
+const INPUT_BADGE: Record<InputStatus, string> = {
+  entered:     'bg-emerald-900/30 text-emerald-400',
+  not_entered: 'bg-red-900/30 text-red-400',
+  overdue:     'bg-red-900/50 text-red-400 font-bold',
+}
+const INPUT_BADGE_LABEL: Record<InputStatus, string> = {
+  entered:     '✅ 入力済み',
+  not_entered: '❌ 未入力',
+  overdue:     '⚠️ 期限超過',
 }
 
 function fmtYen(val: number | null): string {
@@ -97,9 +110,10 @@ type Derived = {
   unitPriceDiff: number | null
   issueLabel: string | null
   lastInputDate: string
+  inputStatus: InputStatus
 }
 
-function derive(s: StoreOverview): Derived {
+function derive(s: StoreOverview, weekStart: string): Derived {
   const sales = s.thisWeek?.sales ?? null
   const visits = s.thisWeek?.visits ?? null
   const unitPrice = sales !== null && visits !== null && visits > 0 ? Math.round(sales / visits) : null
@@ -107,8 +121,8 @@ function derive(s: StoreOverview): Derived {
   const prevVisits = s.lastWeek?.visits ?? null
   const prevUnitPrice = prevSales !== null && (s.lastWeek?.visits ?? 0) > 0 ? Math.round(prevSales / s.lastWeek!.visits!) : null
 
-  const weeklyTargetSales = s.config?.target_sales != null ? Math.round(s.config.target_sales / 4) : null
-  const weeklyTargetVisits = s.config?.target_visits != null ? Math.round(s.config.target_visits / 4) : null
+  const weeklyTargetSales = s.config?.target_sales != null ? Math.round(s.config.target_sales / 4.3) : null
+  const weeklyTargetVisits = s.config?.target_visits != null ? Math.round(s.config.target_visits / 4.3) : null
   const weeklyTargetUnitPrice = s.config?.target_unit_price ?? null
 
   const salesStatus = getStatus(sales, weeklyTargetSales)
@@ -138,6 +152,7 @@ function derive(s: StoreOverview): Derived {
     unitPriceDiff: diffPctVal(unitPrice, prevUnitPrice),
     issueLabel: CAUSE_ISSUE[cause],
     lastInputDate: fmtDate(s.thisWeek?.updated_at ?? s.thisWeek?.created_at),
+    inputStatus: getInputStatus(weekStart, sales !== null),
   }
 }
 
@@ -168,10 +183,21 @@ export default function OverviewClient() {
 
   useEffect(() => { loadData(weekStart) }, [weekStart, loadData])
 
-  const derivedList = (data?.stores ?? []).map((s) => ({ s, d: derive(s) }))
-  const dangerStores = derivedList.filter(({ d }) => d.salesStatus === 'danger')
-  const inputtedCount = derivedList.filter(({ d }) => d.sales !== null).length
-  const totalCount = derivedList.length
+  const allDerived = (data?.stores ?? []).map((s) => ({ s, d: derive(s, weekStart) }))
+
+  // 未入力・期限超過を上部に表示
+  const sorted = [
+    ...allDerived.filter(({ d }) => d.inputStatus !== 'entered'),
+    ...allDerived.filter(({ d }) => d.inputStatus === 'entered'),
+  ]
+
+  const enteredCount = allDerived.filter(({ d }) => d.inputStatus === 'entered').length
+  const totalCount = allDerived.length
+  const allDone = totalCount > 0 && enteredCount === totalCount
+  const noneEntered = enteredCount === 0
+
+  const progressBarColor = allDone ? 'bg-emerald-500' : noneEntered ? 'bg-red-500' : 'bg-amber-500'
+  const progressPctNum = totalCount > 0 ? Math.round((enteredCount / totalCount) * 100) : 0
 
   return (
     <div className="space-y-4">
@@ -186,50 +212,71 @@ export default function OverviewClient() {
 
       {!fetching && data && (
         <>
-          {/* 危険店舗アラート */}
-          {dangerStores.length > 0 && (
-            <div>
-              <h2 className="text-[#E6ECF5] text-lg font-semibold mb-3">🚨 要対応店舗</h2>
-              {dangerStores.map(({ s, d }) => (
-                <div key={s.store.id} className="bg-[#111A2B] rounded-2xl p-4 border border-red-500/30 mb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[#E6ECF5] text-lg font-bold">{s.store.store_name}</p>
-                    <span className="text-xs bg-red-500/10 text-red-400 px-3 py-1 rounded-full font-bold">危険</span>
-                  </div>
-                  <p className="text-red-400 text-sm mb-1">売上 目標比 {d.salesPct}</p>
-                  {d.issueLabel && <p className="text-red-300 text-sm mb-3">課題：{d.issueLabel}</p>}
-                  <button onClick={() => router.push(`/dashboard?storeId=${s.store.id}`)}
-                    className="text-sm text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg px-3 py-1.5 hover:border-[#D4AF37]/60 transition">
-                    → 詳細を見る
-                  </button>
-                </div>
-              ))}
+          {/* 入力完了率セクション */}
+          <div className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
+            <p className="text-[#E6ECF5] font-semibold mb-3">今週の入力状況</p>
+            <p className="text-[#E6ECF5] text-2xl font-bold mb-3">
+              {enteredCount} <span className="text-[#8B94A7] text-base font-normal">/ {totalCount} 店舗入力済み</span>
+            </p>
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${progressBarColor}`}
+                style={{ width: `${progressPctNum}%` }}
+              />
             </div>
-          )}
+            <p className={`text-xs mt-2 ${allDone ? 'text-emerald-400' : noneEntered ? 'text-red-400' : 'text-amber-400'}`}>
+              {allDone ? '✅ 全店舗入力完了' : noneEntered ? '❌ 全店舗未入力' : `⚠️ ${totalCount - enteredCount}店舗が未入力`}
+            </p>
+          </div>
 
           {/* 全店一覧 */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[#E6ECF5] text-lg font-semibold">
-                📊 全店比較（{formatWeekLabel(weekStart)}）
-              </h2>
-              <span className="text-[#8B94A7] text-xs">入力済み：{inputtedCount} / {totalCount}店舗</span>
-            </div>
+            <h2 className="text-[#E6ECF5] text-lg font-semibold mb-3">
+              📊 全店比較（{formatWeekLabel(weekStart)}）
+            </h2>
 
-            {derivedList.map(({ s, d }) => (
-              <div key={s.store.id} className={`bg-[#111A2B] rounded-2xl p-4 border ${CARD_BORDER[d.salesStatus]} mb-3 ${d.sales === null ? 'opacity-60' : ''}`}>
+            {sorted.map(({ s, d }) => (
+              <div
+                key={s.store.id}
+                className={`bg-[#111A2B] rounded-2xl p-4 mb-3 border ${
+                  d.inputStatus === 'overdue'
+                    ? 'border-red-500/40'
+                    : d.inputStatus === 'not_entered'
+                    ? 'border-red-500/20'
+                    : 'border-white/5'
+                }`}
+              >
                 {/* ヘッダー */}
                 <div className="flex items-start justify-between mb-3">
                   <p className="text-[#E6ECF5] text-lg font-bold">{s.store.store_name}</p>
-                  <span className={`text-xs px-3 py-1 rounded-full font-bold ${BADGE_CLASS[d.salesStatus]}`}>{BADGE_LABEL[d.salesStatus]}</span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${INPUT_BADGE[d.inputStatus]}`}>
+                      {INPUT_BADGE_LABEL[d.inputStatus]}
+                    </span>
+                    {d.inputStatus === 'entered' && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${BADGE_CLASS[d.salesStatus]}`}>
+                        {BADGE_LABEL[d.salesStatus]}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {d.sales === null ? (
-                  <p className="text-[#8B94A7] text-sm">今週のデータ未入力</p>
+                {d.inputStatus !== 'entered' ? (
+                  <div className="flex items-center justify-between">
+                    <p className="text-[#8B94A7] text-sm">
+                      {d.inputStatus === 'overdue' ? '期限を過ぎても入力されていません' : '今週のデータが未入力です'}
+                    </p>
+                    <button
+                      onClick={() => router.push(`/weekly-input?storeId=${s.store.id}`)}
+                      className="text-xs text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg px-3 py-1.5 hover:border-[#D4AF37]/60 transition"
+                    >
+                      入力する
+                    </button>
+                  </div>
                 ) : (
                   <>
                     {/* 売上数値 */}
-                    <p className="text-[#E6ECF5] text-2xl font-bold mb-1">{`¥${d.sales.toLocaleString('ja-JP')}`}</p>
+                    <p className="text-[#E6ECF5] text-2xl font-bold mb-1">{`¥${d.sales!.toLocaleString('ja-JP')}`}</p>
 
                     {/* 達成率バー */}
                     {d.weeklyTargetSales !== null && (
@@ -270,10 +317,15 @@ export default function OverviewClient() {
                         <DiffBadge val={d.visitsDiff} />
                       </div>
                       <div className="bg-[#0B1220] rounded-xl p-2.5">
-                        <p className="text-[#8B94A7] text-xs mb-0.5">目標</p>
+                        <p className="text-[#8B94A7] text-xs mb-0.5">週目標</p>
                         <p className="text-[#E6ECF5] font-bold text-sm">{d.weeklyTargetSales !== null ? fmtYen(d.weeklyTargetSales) : '—'}</p>
                       </div>
                     </div>
+
+                    <button onClick={() => router.push(`/dashboard?storeId=${s.store.id}`)}
+                      className="mt-3 text-sm text-[#D4AF37] border border-[#D4AF37]/30 rounded-lg px-3 py-1.5 hover:border-[#D4AF37]/60 transition">
+                      → 詳細を見る
+                    </button>
                   </>
                 )}
               </div>

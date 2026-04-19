@@ -77,7 +77,69 @@ function runDiagnosis(
 }
 
 // ──────────────────────────────────────────────
-// 型
+// バリデーション
+// ──────────────────────────────────────────────
+type StaffRow = { staff_id: string; name: string; sales: string; visits: string }
+
+function validateForm(
+  storeForm: StoreForm,
+  staffRows: StaffRow[],
+): Record<string, string> {
+  const errs: Record<string, string> = {}
+  const s = storeForm.sales.trim()
+  const v = storeForm.visits.trim()
+
+  if (!s && !v) {
+    errs.noData = '少なくとも売上または客数を入力してください'
+    return errs
+  }
+
+  if (s) {
+    const n = Number(s)
+    if (isNaN(n) || n <= 0) errs.sales = '売上は1以上の数値を入力してください'
+  }
+
+  if (v) {
+    const n = Number(v)
+    if (isNaN(n) || n <= 0 || !Number.isInteger(n)) errs.visits = '客数は1以上の整数を入力してください'
+  }
+
+  const nvc = storeForm.next_visit_count.trim()
+  if (nvc) {
+    const n = Number(nvc)
+    if (isNaN(n) || n < 0 || !Number.isInteger(n)) errs.next_visit_count = '0以上の整数を入力してください'
+  }
+
+  const nc = storeForm.new_customers.trim()
+  if (nc) {
+    const n = Number(nc)
+    if (isNaN(n) || n < 0 || !Number.isInteger(n)) errs.new_customers = '0以上の整数を入力してください'
+  }
+
+  const rc = storeForm.repeat_customers.trim()
+  if (rc) {
+    const n = Number(rc)
+    if (isNaN(n) || n < 0 || !Number.isInteger(n)) errs.repeat_customers = '0以上の整数を入力してください'
+  }
+
+  staffRows.forEach((row, idx) => {
+    const rs = row.sales.trim()
+    const rv = row.visits.trim()
+    if (rs) {
+      const n = Number(rs)
+      if (isNaN(n) || n <= 0) errs[`staff_${idx}_sales`] = '売上は1以上の数値を入力してください'
+    }
+    if (rv) {
+      const n = Number(rv)
+      if (isNaN(n) || n <= 0 || !Number.isInteger(n)) errs[`staff_${idx}_visits`] = '客数は1以上の整数を入力してください'
+    }
+  })
+
+  return errs
+}
+
+// ──────────────────────────────────────────────
+// 型・定数
 // ──────────────────────────────────────────────
 type StoreForm = {
   sales: string
@@ -89,13 +151,6 @@ type StoreForm = {
   memo: string
 }
 
-type StaffRow = {
-  staff_id: string
-  name: string
-  sales: string
-  visits: string
-}
-
 const EMPTY_STORE_FORM: StoreForm = {
   sales: '', visits: '', next_visit_count: '',
   new_customers: '', repeat_customers: '',
@@ -104,14 +159,17 @@ const EMPTY_STORE_FORM: StoreForm = {
 
 const AVAIL_LABELS = ['1 少ない', '2', '3 普通', '4', '5 多い']
 
-const INPUT_CLASS =
-  'w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-4 text-lg focus:outline-none focus:border-[#D4AF37]/50 placeholder:text-[#8B94A7]/50'
+const BASE_INPUT = 'w-full bg-[#0B1220] border text-white rounded-xl p-4 text-lg focus:outline-none placeholder:text-[#8B94A7]/50'
 const LABEL_CLASS = 'block text-sm text-[#8B94A7] mb-1'
 
 const RESULT_LABEL: Record<string, string> = {
   improved: '✅ 改善した',
   unchanged: '➡️ 変化なし',
   worsened: '⬇️ 悪化した',
+}
+
+function inputCls(errKey: string, errors: Record<string, string>): string {
+  return `${BASE_INPUT} ${errors[errKey] ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-[#D4AF37]/50'}`
 }
 
 // ──────────────────────────────────────────────
@@ -138,6 +196,7 @@ export default function WeeklyInputForm({
   const [fetching, setFetching] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
   const [diagnosis, setDiagnosis] = useState<DiagnosisResult | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   // 前週アクション検証フォーム
   const [prevResultStatus, setPrevResultStatus] = useState<'improved' | 'unchanged' | 'worsened'>('improved')
@@ -150,6 +209,7 @@ export default function WeeklyInputForm({
     if (!sid) return
     setFetching(true)
     setDiagnosis(null)
+    setErrors({})
     setPrevSaved(false)
     const result = await fetchWeeklyData(sid, week)
 
@@ -190,14 +250,25 @@ export default function WeeklyInputForm({
 
   function updateStoreForm(field: keyof StoreForm, value: string | number | null) {
     setStoreForm((prev) => ({ ...prev, [field]: value }))
+    if (errors[field as string]) setErrors((prev) => { const n = { ...prev }; delete n[field as string]; return n })
   }
 
   function updateStaffRow(index: number, field: 'sales' | 'visits', value: string) {
     setStaffRows((prev) => { const next = [...prev]; next[index] = { ...next[index], [field]: value }; return next })
+    const errKey = `staff_${index}_${field}`
+    if (errors[errKey]) setErrors((prev) => { const n = { ...prev }; delete n[errKey]; return n })
   }
 
   async function handleSave() {
     if (!storeId) return
+
+    const errs = validateForm(storeForm, staffRows)
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs)
+      topRef.current?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+    setErrors({})
     setSaveState('saving')
 
     const sales = toInt(storeForm.sales)
@@ -260,41 +331,28 @@ export default function WeeklyInputForm({
           <p className="text-[#E6ECF5] text-base font-bold mb-3">{prevAction!.action_title}</p>
           <div className="grid grid-cols-3 gap-2 mb-3">
             {(['improved', 'unchanged', 'worsened'] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => setPrevResultStatus(v)}
-                className={`py-2 rounded-xl text-xs font-bold transition ${prevResultStatus === v ? 'bg-[#D4AF37] text-black' : 'bg-[#0B1220] text-[#8B94A7] border border-white/10'}`}
-              >
+              <button key={v} onClick={() => setPrevResultStatus(v)}
+                className={`py-2 rounded-xl text-xs font-bold transition ${prevResultStatus === v ? 'bg-[#D4AF37] text-black' : 'bg-[#0B1220] text-[#8B94A7] border border-white/10'}`}>
                 {RESULT_LABEL[v]}
               </button>
             ))}
           </div>
-          <textarea
-            value={prevResultNote}
-            onChange={(e) => setPrevResultNote(e.target.value)}
-            placeholder="メモ（任意）"
-            rows={2}
-            className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-3 text-sm mb-3 focus:outline-none focus:border-[#D4AF37]/50 resize-none"
-          />
+          <textarea value={prevResultNote} onChange={(e) => setPrevResultNote(e.target.value)}
+            placeholder="メモ（任意）" rows={2}
+            className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-3 text-sm mb-3 focus:outline-none focus:border-[#D4AF37]/50 resize-none" />
           <div className="mb-3">
             <p className="text-[#8B94A7] text-xs mb-2">来週のアクション</p>
             <div className="grid grid-cols-2 gap-2">
               {(['continue', 'switch'] as const).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setPrevNextDecision(v)}
-                  className={`py-2 rounded-xl text-xs font-bold transition ${prevNextDecision === v ? 'bg-[#D4AF37] text-black' : 'bg-[#0B1220] text-[#8B94A7] border border-white/10'}`}
-                >
+                <button key={v} onClick={() => setPrevNextDecision(v)}
+                  className={`py-2 rounded-xl text-xs font-bold transition ${prevNextDecision === v ? 'bg-[#D4AF37] text-black' : 'bg-[#0B1220] text-[#8B94A7] border border-white/10'}`}>
                   {v === 'continue' ? '🔁 継続する' : '🔄 変更する'}
                 </button>
               ))}
             </div>
           </div>
-          <button
-            onClick={handlePrevActionSave}
-            disabled={prevSaving}
-            className="w-full py-3 bg-[#D4AF37] text-black font-bold rounded-xl text-sm hover:opacity-90 transition disabled:opacity-50"
-          >
+          <button onClick={handlePrevActionSave} disabled={prevSaving}
+            className="w-full py-3 bg-[#D4AF37] text-black font-bold rounded-xl text-sm hover:opacity-90 transition disabled:opacity-50">
             {prevSaving ? '保存中...' : '記録する'}
           </button>
         </div>
@@ -309,12 +367,17 @@ export default function WeeklyInputForm({
           </div>
           <p className="text-[#E6ECF5] font-bold text-lg mb-2">{diagnosis.issue}</p>
           <p className="text-[#D4AF37] text-sm mb-4">{diagnosis.action}</p>
-          <a
-            href={`/actions/confirm?storeId=${storeId}`}
-            className="inline-block text-sm px-5 py-3 bg-[#D4AF37] text-black font-bold rounded-xl hover:opacity-90 transition"
-          >
+          <a href={`/actions/confirm?storeId=${storeId}`}
+            className="inline-block text-sm px-5 py-3 bg-[#D4AF37] text-black font-bold rounded-xl hover:opacity-90 transition">
             🎯 改善アクションを決める →
           </a>
+        </div>
+      )}
+
+      {/* 全体エラー */}
+      {errors.noData && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+          <p className="text-red-400 text-sm">{errors.noData}</p>
         </div>
       )}
 
@@ -323,7 +386,8 @@ export default function WeeklyInputForm({
         {!hideStoreSelect ? (
           <div>
             <label className={LABEL_CLASS}>店舗</label>
-            <select value={storeId} onChange={handleStoreChange} className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:border-[#D4AF37]/50">
+            <select value={storeId} onChange={handleStoreChange}
+              className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:border-[#D4AF37]/50">
               <option value="">-- 店舗を選択 --</option>
               {stores.map((s) => <option key={s.id} value={s.id}>{s.store_name}</option>)}
             </select>
@@ -337,7 +401,8 @@ export default function WeeklyInputForm({
         <div>
           <label className={LABEL_CLASS}>対象週（日曜日）</label>
           <p className="text-[#8B94A7] text-xs mb-2">この週の日曜日を選択してください</p>
-          <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:border-[#D4AF37]/50" />
+          <input type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)}
+            className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:border-[#D4AF37]/50" />
         </div>
       </div>
 
@@ -351,11 +416,17 @@ export default function WeeklyInputForm({
             <div className="space-y-4">
               <div>
                 <label className={LABEL_CLASS}>週売上（円）</label>
-                <input type="number" value={storeForm.sales} onChange={(e) => updateStoreForm('sales', e.target.value)} placeholder="例: 350000" className={INPUT_CLASS} min="0" />
+                <input type="number" inputMode="numeric" min="1" value={storeForm.sales}
+                  onChange={(e) => updateStoreForm('sales', e.target.value)}
+                  placeholder="例: 350000" className={inputCls('sales', errors)} />
+                {errors.sales && <p className="text-red-400 text-xs mt-1">{errors.sales}</p>}
               </div>
               <div>
                 <label className={LABEL_CLASS}>週客数（人）</label>
-                <input type="number" value={storeForm.visits} onChange={(e) => updateStoreForm('visits', e.target.value)} placeholder="例: 35" className={INPUT_CLASS} min="0" />
+                <input type="number" inputMode="numeric" min="1" value={storeForm.visits}
+                  onChange={(e) => updateStoreForm('visits', e.target.value)}
+                  placeholder="例: 35" className={inputCls('visits', errors)} />
+                {errors.visits && <p className="text-red-400 text-xs mt-1">{errors.visits}</p>}
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -368,15 +439,24 @@ export default function WeeklyInputForm({
               </div>
               <div>
                 <label className={LABEL_CLASS}>次回予約件数（件）</label>
-                <input type="number" value={storeForm.next_visit_count} onChange={(e) => updateStoreForm('next_visit_count', e.target.value)} placeholder="例: 20" className={INPUT_CLASS} min="0" />
+                <input type="number" inputMode="numeric" min="0" value={storeForm.next_visit_count}
+                  onChange={(e) => updateStoreForm('next_visit_count', e.target.value)}
+                  placeholder="例: 20" className={inputCls('next_visit_count', errors)} />
+                {errors.next_visit_count && <p className="text-red-400 text-xs mt-1">{errors.next_visit_count}</p>}
               </div>
               <div>
                 <label className={LABEL_CLASS}>新規客数（人）</label>
-                <input type="number" value={storeForm.new_customers} onChange={(e) => updateStoreForm('new_customers', e.target.value)} placeholder="例: 5" className={INPUT_CLASS} min="0" />
+                <input type="number" inputMode="numeric" min="0" value={storeForm.new_customers}
+                  onChange={(e) => updateStoreForm('new_customers', e.target.value)}
+                  placeholder="例: 5" className={inputCls('new_customers', errors)} />
+                {errors.new_customers && <p className="text-red-400 text-xs mt-1">{errors.new_customers}</p>}
               </div>
               <div>
                 <label className={LABEL_CLASS}>再来客数（人）</label>
-                <input type="number" value={storeForm.repeat_customers} onChange={(e) => updateStoreForm('repeat_customers', e.target.value)} placeholder="例: 30" className={INPUT_CLASS} min="0" />
+                <input type="number" inputMode="numeric" min="0" value={storeForm.repeat_customers}
+                  onChange={(e) => updateStoreForm('repeat_customers', e.target.value)}
+                  placeholder="例: 30" className={inputCls('repeat_customers', errors)} />
+                {errors.repeat_customers && <p className="text-red-400 text-xs mt-1">{errors.repeat_customers}</p>}
               </div>
               <div>
                 <label className={LABEL_CLASS}>空き状況</label>
@@ -385,7 +465,8 @@ export default function WeeklyInputForm({
                     const val = i + 1
                     const active = storeForm.availability_score === val
                     return (
-                      <button key={val} type="button" onClick={() => updateStoreForm('availability_score', active ? null : val)}
+                      <button key={val} type="button"
+                        onClick={() => updateStoreForm('availability_score', active ? null : val)}
                         className={`py-3 text-sm font-medium rounded-lg transition active:scale-[0.98] ${active ? 'bg-[#D4AF37] text-black font-bold' : 'bg-[#0B1220] border border-white/10 text-[#8B94A7]'}`}>
                         {label}
                       </button>
@@ -395,7 +476,9 @@ export default function WeeklyInputForm({
               </div>
               <div>
                 <label className={LABEL_CLASS}>メモ（任意）</label>
-                <textarea value={storeForm.memo} onChange={(e) => updateStoreForm('memo', e.target.value)} rows={3} placeholder="気づいたこと、特記事項など" className={`${INPUT_CLASS} resize-none`} />
+                <textarea value={storeForm.memo} onChange={(e) => updateStoreForm('memo', e.target.value)}
+                  rows={3} placeholder="気づいたこと、特記事項など"
+                  className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-4 text-lg focus:outline-none focus:border-[#D4AF37]/50 placeholder:text-[#8B94A7]/50 resize-none" />
               </div>
             </div>
           </div>
@@ -410,11 +493,17 @@ export default function WeeklyInputForm({
                   <div className="space-y-3">
                     <div>
                       <label className={LABEL_CLASS}>週売上（円）</label>
-                      <input type="number" value={row.sales} onChange={(e) => updateStaffRow(idx, 'sales', e.target.value)} placeholder="例: 80000" className={INPUT_CLASS} min="0" />
+                      <input type="number" inputMode="numeric" min="1" value={row.sales}
+                        onChange={(e) => updateStaffRow(idx, 'sales', e.target.value)}
+                        placeholder="例: 80000" className={inputCls(`staff_${idx}_sales`, errors)} />
+                      {errors[`staff_${idx}_sales`] && <p className="text-red-400 text-xs mt-1">{errors[`staff_${idx}_sales`]}</p>}
                     </div>
                     <div>
                       <label className={LABEL_CLASS}>週客数（人）</label>
-                      <input type="number" value={row.visits} onChange={(e) => updateStaffRow(idx, 'visits', e.target.value)} placeholder="例: 10" className={INPUT_CLASS} min="0" />
+                      <input type="number" inputMode="numeric" min="1" value={row.visits}
+                        onChange={(e) => updateStaffRow(idx, 'visits', e.target.value)}
+                        placeholder="例: 10" className={inputCls(`staff_${idx}_visits`, errors)} />
+                      {errors[`staff_${idx}_visits`] && <p className="text-red-400 text-xs mt-1">{errors[`staff_${idx}_visits`]}</p>}
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
