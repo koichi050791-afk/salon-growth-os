@@ -91,30 +91,6 @@ function MetricInner({
 }
 
 // ──────────────────────────────────────────────
-// 生産性バッジ（週次）
-// ──────────────────────────────────────────────
-type ProdStatus = 'good' | 'warning' | 'danger' | 'none'
-
-function getProdStatus(productivity: number | null, target: number | null): ProdStatus {
-  if (productivity === null) return 'none'
-  if (target === null) return 'none'
-  const r = productivity / target
-  if (r >= 1.0) return 'good'
-  if (r >= 0.9) return 'warning'
-  return 'danger'
-}
-
-const PROD_BADGE_CLASS: Record<ProdStatus, string> = {
-  good:    'bg-emerald-900/30 text-emerald-400',
-  warning: 'bg-amber-900/30 text-amber-400',
-  danger:  'bg-red-900/30 text-red-400',
-  none:    'bg-[#1E293B] text-[#8B94A7]',
-}
-const PROD_BADGE_LABEL: Record<ProdStatus, string> = {
-  good: '良好', warning: '注意', danger: '要改善', none: '未入力',
-}
-
-// ──────────────────────────────────────────────
 // 月次生産性バッジ
 // ──────────────────────────────────────────────
 const MONTHLY_PROD_BADGE_CLASS: Record<'success' | 'warning' | 'danger' | 'none', string> = {
@@ -170,7 +146,6 @@ export default function DashboardClient({
   const weeklyTargetSales = data?.config?.target_sales != null ? Math.round(data.config.target_sales / 4.3) : null
   const weeklyTargetVisits = data?.config?.target_visits != null ? Math.round(data.config.target_visits / 4.3) : null
   const weeklyTargetUnitPrice = data?.config?.target_unit_price ?? null
-  const targetProductivity = data?.config?.target_productivity ?? null
 
   const sales = data?.thisWeek?.sales ?? null
   const visits = data?.thisWeek?.visits ?? null
@@ -178,10 +153,6 @@ export default function DashboardClient({
   const prevSales = data?.lastWeek?.sales ?? null
   const prevVisits = data?.lastWeek?.visits ?? null
   const prevUnitPrice = prevSales !== null && (data?.lastWeek?.visits ?? 0) > 0 ? Math.round(prevSales / data!.lastWeek!.visits!) : null
-
-  const totalLaborHours = data?.thisWeek?.total_labor_hours ?? null
-  const productivity = sales !== null ? calcStoreProdactivity(sales, totalLaborHours) : null
-  const prodStatus = getProdStatus(productivity, targetProductivity)
 
   // 月次生産性
   const monthlySales = data?.monthlySales ?? null
@@ -281,19 +252,6 @@ export default function DashboardClient({
               <MetricInner label="週売上" value={fmtYen(sales)} diff={diffPctStr(sales, prevSales)} target={weeklyTargetSales !== null ? `週目標 ${fmtYen(weeklyTargetSales)}` : null} />
               <MetricInner label="週客数" value={fmtNum(visits, '人')} diff={diffPctStr(visits, prevVisits)} target={weeklyTargetVisits !== null ? `週目標 ${fmtNum(weeklyTargetVisits, '人')}` : null} />
               <MetricInner label="客単価" value={fmtYen(unitPrice)} diff={diffPctStr(unitPrice, prevUnitPrice)} target={weeklyTargetUnitPrice !== null ? `目標 ${fmtYen(weeklyTargetUnitPrice)}` : null} />
-            </div>
-            {/* 店舗生産性カード */}
-            <div className="bg-[#0B1220] rounded-xl p-3 border border-white/5 mb-3">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-[#8B94A7] text-xs">店舗生産性</p>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${PROD_BADGE_CLASS[prodStatus]}`}>
-                  {PROD_BADGE_LABEL[prodStatus]}
-                </span>
-              </div>
-              <p className="text-[#E6ECF5] text-2xl font-bold tracking-tight">{formatProductivity(productivity)}</p>
-              {targetProductivity !== null && (
-                <p className="text-xs text-[#8B94A7] mt-0.5">目標 {formatProductivity(targetProductivity)}</p>
-              )}
             </div>
             {/* 月次生産性カード */}
             <div className="bg-[#0B1220] rounded-xl p-3 border border-white/5">
