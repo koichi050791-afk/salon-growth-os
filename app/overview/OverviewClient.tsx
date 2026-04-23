@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchOverviewData } from './actions'
 import type { OverviewData, StoreOverview } from './actions'
+import { calcStoreProdactivity, formatProductivity } from '@/lib/calculations'
 
 // ──────────────────────────────────────────────
 // ヘルパー
@@ -100,6 +101,7 @@ type Derived = {
   sales: number | null
   visits: number | null
   unitPrice: number | null
+  productivity: number | null
   weeklyTargetSales: number | null
   weeklyTargetVisits: number | null
   weeklyTargetUnitPrice: number | null
@@ -129,6 +131,8 @@ function derive(s: StoreOverview, weekStart: string): Derived {
   const visitsStatus = getStatus(visits, weeklyTargetVisits)
   const unitPriceStatus = getStatus(unitPrice, weeklyTargetUnitPrice)
 
+  const productivity = sales !== null ? calcStoreProdactivity(sales, s.thisWeek?.total_labor_hours ?? null) : null
+
   let cause: CauseType = 'no_data'
   if (sales !== null) {
     if (salesStatus === 'good') { cause = 'achieved' }
@@ -143,7 +147,7 @@ function derive(s: StoreOverview, weekStart: string): Derived {
   }
 
   return {
-    sales, visits, unitPrice,
+    sales, visits, unitPrice, productivity,
     weeklyTargetSales, weeklyTargetVisits, weeklyTargetUnitPrice,
     salesStatus,
     salesPct: fmtPct(sales, weeklyTargetSales),
@@ -317,8 +321,8 @@ export default function OverviewClient() {
                         <DiffBadge val={d.visitsDiff} />
                       </div>
                       <div className="bg-[#0B1220] rounded-xl p-2.5">
-                        <p className="text-[#8B94A7] text-xs mb-0.5">週目標</p>
-                        <p className="text-[#E6ECF5] font-bold text-sm">{d.weeklyTargetSales !== null ? fmtYen(d.weeklyTargetSales) : '—'}</p>
+                        <p className="text-[#8B94A7] text-xs mb-0.5">生産性</p>
+                        <p className="text-[#E6ECF5] font-bold text-sm">{formatProductivity(d.productivity)}</p>
                       </div>
                     </div>
 

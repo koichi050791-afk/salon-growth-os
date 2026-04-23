@@ -21,6 +21,12 @@ function toInt(s: string): number | null {
   return isNaN(n) ? null : n
 }
 
+function toFloat(s: string): number | null {
+  if (!s.trim()) return null
+  const n = parseFloat(s)
+  return isNaN(n) || n < 0 ? null : n
+}
+
 function unitPrice(sales: string, visits: string): string {
   const s = toInt(sales)
   const v = toInt(visits)
@@ -79,7 +85,7 @@ function runDiagnosis(
 // ──────────────────────────────────────────────
 // バリデーション
 // ──────────────────────────────────────────────
-type StaffRow = { staff_id: string; name: string; sales: string; visits: string }
+type StaffRow = { staff_id: string; name: string; sales: string; visits: string; labor_hours: string }
 
 function validateForm(
   storeForm: StoreForm,
@@ -149,12 +155,14 @@ type StoreForm = {
   repeat_customers: string
   availability_score: number | null
   memo: string
+  total_labor_hours: string
 }
 
 const EMPTY_STORE_FORM: StoreForm = {
   sales: '', visits: '', next_visit_count: '',
   new_customers: '', repeat_customers: '',
   availability_score: null, memo: '',
+  total_labor_hours: '',
 }
 
 const AVAIL_LABELS = ['1 少ない', '2', '3 普通', '4', '5 多い']
@@ -223,6 +231,7 @@ export default function WeeklyInputForm({
         repeat_customers:   d.repeat_customers?.toString() ?? '',
         availability_score: d.availability_score ?? null,
         memo:               d.memo ?? '',
+        total_labor_hours:  d.total_labor_hours?.toString() ?? '',
       })
     } else {
       setStoreForm(EMPTY_STORE_FORM)
@@ -234,7 +243,13 @@ export default function WeeklyInputForm({
     setStaffRows(
       result.staff.map((s) => {
         const existing = result.staffInputs.find((i) => i.staff_id === s.id)
-        return { staff_id: s.id, name: s.name, sales: existing?.sales?.toString() ?? '', visits: existing?.visits?.toString() ?? '' }
+        return {
+          staff_id: s.id,
+          name: s.name,
+          sales: existing?.sales?.toString() ?? '',
+          visits: existing?.visits?.toString() ?? '',
+          labor_hours: existing?.labor_hours?.toString() ?? '',
+        }
       })
     )
     setFetching(false)
@@ -253,7 +268,7 @@ export default function WeeklyInputForm({
     if (errors[field as string]) setErrors((prev) => { const n = { ...prev }; delete n[field as string]; return n })
   }
 
-  function updateStaffRow(index: number, field: 'sales' | 'visits', value: string) {
+  function updateStaffRow(index: number, field: 'sales' | 'visits' | 'labor_hours', value: string) {
     setStaffRows((prev) => { const next = [...prev]; next[index] = { ...next[index], [field]: value }; return next })
     const errKey = `staff_${index}_${field}`
     if (errors[errKey]) setErrors((prev) => { const n = { ...prev }; delete n[errKey]; return n })
@@ -282,15 +297,24 @@ export default function WeeklyInputForm({
       repeat_customers: toInt(storeForm.repeat_customers),
       availability_score: storeForm.availability_score,
       memo: storeForm.memo || null,
+      total_labor_hours: toFloat(storeForm.total_labor_hours),
     }
 
     const staffPayloads = staffRows
       .filter((r) => {
         const s = toInt(r.sales)
         const v = toInt(r.visits)
-        return (s !== null && s > 0) || (v !== null && v > 0)
+        const h = toFloat(r.labor_hours)
+        return (s !== null && s > 0) || (v !== null && v > 0) || (h !== null && h > 0)
       })
-      .map((r) => ({ store_id: storeId, staff_id: r.staff_id, week_start: weekStart, sales: toInt(r.sales), visits: toInt(r.visits) }))
+      .map((r) => ({
+        store_id: storeId,
+        staff_id: r.staff_id,
+        week_start: weekStart,
+        sales: toInt(r.sales),
+        visits: toInt(r.visits),
+        labor_hours: toFloat(r.labor_hours),
+      }))
 
     const { error } = await saveWeeklyInputs(storePayload, staffPayloads)
     if (error) {
@@ -475,6 +499,17 @@ export default function WeeklyInputForm({
                 </div>
               </div>
               <div>
+                <label className={LABEL_CLASS}>総労働時間（任意）</label>
+                <p className="text-[#8B94A7] text-xs mb-2">スタッフ全員の合計稼働時間</p>
+                <div className="flex items-center gap-2">
+                  <input type="number" step="0.1" min="0" value={storeForm.total_labor_hours}
+                    onChange={(e) => updateStoreForm('total_labor_hours', e.target.value)}
+                    placeholder="例：120.5"
+                    className={`flex-1 ${BASE_INPUT} border-white/10 focus:border-[#D4AF37]/50`} />
+                  <span className="text-[#8B94A7] text-sm whitespace-nowrap">時間</span>
+                </div>
+              </div>
+              <div>
                 <label className={LABEL_CLASS}>メモ（任意）</label>
                 <textarea value={storeForm.memo} onChange={(e) => updateStoreForm('memo', e.target.value)}
                   rows={3} placeholder="気づいたこと、特記事項など"
@@ -512,6 +547,16 @@ export default function WeeklyInputForm({
                       </div>
                       <div className="bg-[#0B1220]/50 border border-white/5 rounded-xl p-4">
                         <span className="text-[#D4AF37] text-base font-bold">{unitPrice(row.sales, row.visits)}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className={LABEL_CLASS}>労働時間（任意）</label>
+                      <div className="flex items-center gap-2">
+                        <input type="number" step="0.1" min="0" value={row.labor_hours}
+                          onChange={(e) => updateStaffRow(idx, 'labor_hours', e.target.value)}
+                          placeholder="例：40.0"
+                          className={`flex-1 ${BASE_INPUT} border-white/10 focus:border-[#D4AF37]/50`} />
+                        <span className="text-[#8B94A7] text-sm whitespace-nowrap">時間</span>
                       </div>
                     </div>
                   </div>

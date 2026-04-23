@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchStaffListData } from './actions'
 import type { Store } from '@/lib/types/db'
+import { calcStaffProductivity, formatProductivity } from '@/lib/calculations'
 
 // ──────────────────────────────────────────────
 // ヘルパー
@@ -62,6 +63,8 @@ type StaffCard = {
   isAlert: boolean
   isFirstEntry: boolean
   trend: TrendComment
+  laborHours: number | null
+  productivity: number | null
 }
 
 // ──────────────────────────────────────────────
@@ -106,7 +109,10 @@ export default function StaffListClient({
       const isFirstEntry = prevSales === null && prevVisits === null
       const trend = getTrendComment(salesDiff, unitPriceDiff, visitsDiff, isFirstEntry)
 
-      return { id: s.id, name: s.name, sales, visits, unitPrice, prevSales, prevVisits, prevUnitPrice, salesDiff, visitsDiff, unitPriceDiff, isAlert, isFirstEntry, trend }
+      const laborHours = thisInput?.labor_hours ?? null
+      const productivity = calcStaffProductivity(sales, laborHours)
+
+      return { id: s.id, name: s.name, sales, visits, unitPrice, prevSales, prevVisits, prevUnitPrice, salesDiff, visitsDiff, unitPriceDiff, isAlert, isFirstEntry, trend, laborHours, productivity }
     })
 
     setCards(built)
@@ -172,37 +178,43 @@ export default function StaffListClient({
                 {c.sales === null && c.visits === null ? (
                   <p className="text-[#8B94A7] text-sm">今週のデータ未入力</p>
                 ) : (
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-[#0B1220] rounded-xl p-3">
-                      <p className="text-[#8B94A7] text-xs mb-1">週売上</p>
-                      <p className="text-[#E6ECF5] font-bold text-sm">{fmtYen(c.sales)}</p>
-                      {c.salesDiff !== null ? (
-                        <p className={`text-xs mt-0.5 ${c.salesDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {c.salesDiff >= 0 ? '↑' : '↓'} {c.salesDiff >= 0 ? '+' : ''}{c.salesDiff.toFixed(1)}%
-                        </p>
-                      ) : c.isFirstEntry ? (
-                        <p className="text-[#8B94A7] text-xs mt-0.5">初回</p>
-                      ) : null}
+                  <>
+                    <div className="grid grid-cols-3 gap-3 mb-3">
+                      <div className="bg-[#0B1220] rounded-xl p-3">
+                        <p className="text-[#8B94A7] text-xs mb-1">週売上</p>
+                        <p className="text-[#E6ECF5] font-bold text-sm">{fmtYen(c.sales)}</p>
+                        {c.salesDiff !== null ? (
+                          <p className={`text-xs mt-0.5 ${c.salesDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {c.salesDiff >= 0 ? '↑' : '↓'} {c.salesDiff >= 0 ? '+' : ''}{c.salesDiff.toFixed(1)}%
+                          </p>
+                        ) : c.isFirstEntry ? (
+                          <p className="text-[#8B94A7] text-xs mt-0.5">初回</p>
+                        ) : null}
+                      </div>
+                      <div className="bg-[#0B1220] rounded-xl p-3">
+                        <p className="text-[#8B94A7] text-xs mb-1">週客数</p>
+                        <p className="text-[#E6ECF5] font-bold text-sm">{fmtNum(c.visits, '人')}</p>
+                        {c.visitsDiff !== null && (
+                          <p className={`text-xs mt-0.5 ${c.visitsDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {c.visitsDiff >= 0 ? '↑' : '↓'} {c.visitsDiff >= 0 ? '+' : ''}{c.visitsDiff.toFixed(1)}%
+                          </p>
+                        )}
+                      </div>
+                      <div className="bg-[#0B1220] rounded-xl p-3">
+                        <p className="text-[#8B94A7] text-xs mb-1">客単価</p>
+                        <p className="text-[#E6ECF5] font-bold text-sm">{fmtYen(c.unitPrice)}</p>
+                        {c.unitPriceDiff !== null && (
+                          <p className={`text-xs mt-0.5 ${c.unitPriceDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {c.unitPriceDiff >= 0 ? '↑' : '↓'} {c.unitPriceDiff >= 0 ? '+' : ''}{c.unitPriceDiff.toFixed(1)}%
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-[#0B1220] rounded-xl p-3">
-                      <p className="text-[#8B94A7] text-xs mb-1">週客数</p>
-                      <p className="text-[#E6ECF5] font-bold text-sm">{fmtNum(c.visits, '人')}</p>
-                      {c.visitsDiff !== null && (
-                        <p className={`text-xs mt-0.5 ${c.visitsDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {c.visitsDiff >= 0 ? '↑' : '↓'} {c.visitsDiff >= 0 ? '+' : ''}{c.visitsDiff.toFixed(1)}%
-                        </p>
-                      )}
+                      <p className="text-[#8B94A7] text-xs mb-1">人時生産性</p>
+                      <p className="text-[#E6ECF5] font-bold text-sm">{formatProductivity(c.productivity)}</p>
                     </div>
-                    <div className="bg-[#0B1220] rounded-xl p-3">
-                      <p className="text-[#8B94A7] text-xs mb-1">客単価</p>
-                      <p className="text-[#E6ECF5] font-bold text-sm">{fmtYen(c.unitPrice)}</p>
-                      {c.unitPriceDiff !== null && (
-                        <p className={`text-xs mt-0.5 ${c.unitPriceDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {c.unitPriceDiff >= 0 ? '↑' : '↓'} {c.unitPriceDiff >= 0 ? '+' : ''}{c.unitPriceDiff.toFixed(1)}%
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
             ))

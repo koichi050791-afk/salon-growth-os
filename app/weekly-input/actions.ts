@@ -72,6 +72,7 @@ export type StoreInputPayload = {
   repeat_customers: number | null
   availability_score: number | null
   memo: string | null
+  total_labor_hours: number | null
 }
 
 export type StaffInputPayload = {
@@ -80,6 +81,7 @@ export type StaffInputPayload = {
   week_start: string
   sales: number | null
   visits: number | null
+  labor_hours: number | null
 }
 
 export async function saveWeeklyInputs(

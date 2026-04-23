@@ -268,6 +268,7 @@ export interface Database {
           repeat_customers: number | null
           availability_score: number | null
           memo: string | null
+          total_labor_hours: number | null
           created_at: string
           updated_at: string
         }
@@ -283,6 +284,7 @@ export interface Database {
           repeat_customers?: number | null
           availability_score?: number | null
           memo?: string | null
+          total_labor_hours?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -298,6 +300,7 @@ export interface Database {
           repeat_customers?: number | null
           availability_score?: number | null
           memo?: string | null
+          total_labor_hours?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -311,6 +314,7 @@ export interface Database {
           week_start: string
           sales: number | null
           visits: number | null
+          labor_hours: number | null
           created_at: string
           updated_at: string
         }
@@ -321,6 +325,7 @@ export interface Database {
           week_start: string
           sales?: number | null
           visits?: number | null
+          labor_hours?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -331,6 +336,7 @@ export interface Database {
           week_start?: string
           sales?: number | null
           visits?: number | null
+          labor_hours?: number | null
           created_at?: string
           updated_at?: string
         }

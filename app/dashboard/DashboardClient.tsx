@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { fetchDashboardData } from './actions'
 import type { Store } from '@/lib/types/db'
 import type { DashboardData, HistoryWeek } from './actions'
+import { calcStoreProdactivity, formatProductivity } from '@/lib/calculations'
 
 // ──────────────────────────────────────────────
 // ヘルパー
@@ -82,6 +83,30 @@ function MetricInner({
 }
 
 // ──────────────────────────────────────────────
+// 生産性バッジ
+// ──────────────────────────────────────────────
+type ProdStatus = 'good' | 'warning' | 'danger' | 'none'
+
+function getProdStatus(productivity: number | null, target: number | null): ProdStatus {
+  if (productivity === null) return 'none'
+  if (target === null) return 'none'
+  const r = productivity / target
+  if (r >= 1.0) return 'good'
+  if (r >= 0.9) return 'warning'
+  return 'danger'
+}
+
+const PROD_BADGE_CLASS: Record<ProdStatus, string> = {
+  good:    'bg-emerald-900/30 text-emerald-400',
+  warning: 'bg-amber-900/30 text-amber-400',
+  danger:  'bg-red-900/30 text-red-400',
+  none:    'bg-[#1E293B] text-[#8B94A7]',
+}
+const PROD_BADGE_LABEL: Record<ProdStatus, string> = {
+  good: '良好', warning: '注意', danger: '要改善', none: '未入力',
+}
+
+// ──────────────────────────────────────────────
 // メインコンポーネント
 // ──────────────────────────────────────────────
 export default function DashboardClient({
@@ -114,6 +139,7 @@ export default function DashboardClient({
   const weeklyTargetSales = data?.config?.target_sales != null ? Math.round(data.config.target_sales / 4.3) : null
   const weeklyTargetVisits = data?.config?.target_visits != null ? Math.round(data.config.target_visits / 4.3) : null
   const weeklyTargetUnitPrice = data?.config?.target_unit_price ?? null
+  const targetProductivity = data?.config?.target_productivity ?? null
 
   const sales = data?.thisWeek?.sales ?? null
   const visits = data?.thisWeek?.visits ?? null
@@ -121,6 +147,10 @@ export default function DashboardClient({
   const prevSales = data?.lastWeek?.sales ?? null
   const prevVisits = data?.lastWeek?.visits ?? null
   const prevUnitPrice = prevSales !== null && (data?.lastWeek?.visits ?? 0) > 0 ? Math.round(prevSales / data!.lastWeek!.visits!) : null
+
+  const totalLaborHours = data?.thisWeek?.total_labor_hours ?? null
+  const productivity = sales !== null ? calcStoreProdactivity(sales, totalLaborHours) : null
+  const prodStatus = getProdStatus(productivity, targetProductivity)
 
   const salesStatus = getStatus(sales, weeklyTargetSales)
   const visitsStatus = getStatus(visits, weeklyTargetVisits)
@@ -202,10 +232,23 @@ export default function DashboardClient({
               </div>
               <span className={`text-xs px-3 py-1 rounded-full font-bold ${BADGE_CLASS[salesStatus]}`}>{BADGE_LABEL[salesStatus]}</span>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-3 mb-3">
               <MetricInner label="週売上" value={fmtYen(sales)} diff={diffPctStr(sales, prevSales)} target={weeklyTargetSales !== null ? `週目標 ${fmtYen(weeklyTargetSales)}` : null} />
               <MetricInner label="週客数" value={fmtNum(visits, '人')} diff={diffPctStr(visits, prevVisits)} target={weeklyTargetVisits !== null ? `週目標 ${fmtNum(weeklyTargetVisits, '人')}` : null} />
               <MetricInner label="客単価" value={fmtYen(unitPrice)} diff={diffPctStr(unitPrice, prevUnitPrice)} target={weeklyTargetUnitPrice !== null ? `目標 ${fmtYen(weeklyTargetUnitPrice)}` : null} />
+            </div>
+            {/* 店舗生産性カード */}
+            <div className="bg-[#0B1220] rounded-xl p-3 border border-white/5">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[#8B94A7] text-xs">店舗生産性</p>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${PROD_BADGE_CLASS[prodStatus]}`}>
+                  {PROD_BADGE_LABEL[prodStatus]}
+                </span>
+              </div>
+              <p className="text-[#E6ECF5] text-2xl font-bold tracking-tight">{formatProductivity(productivity)}</p>
+              {targetProductivity !== null && (
+                <p className="text-xs text-[#8B94A7] mt-0.5">目標 {formatProductivity(targetProductivity)}</p>
+              )}
             </div>
           </div>
 
@@ -330,6 +373,13 @@ function HistorySection({ history }: { history: HistoryWeek[] }) {
         const trend = salesTrend(week.input?.sales ?? null, prevInput?.sales ?? null)
         const unitP = week.input?.sales != null && week.input?.visits != null && week.input.visits > 0
           ? Math.round(week.input.sales / week.input.visits) : null
+        const weekProductivity = week.input?.sales != null
+          ? calcStoreProdactivity(week.input.sales, week.input.total_labor_hours ?? null)
+          : null
+        const prevWeekProductivity = prevInput?.sales != null
+          ? calcStoreProdactivity(prevInput.sales, prevInput.total_labor_hours ?? null)
+          : null
+        const prodTrend = salesTrend(weekProductivity, prevWeekProductivity)
 
         return (
           <div key={week.weekStart} className="bg-[#111A2B] rounded-2xl p-4 border border-[#1E293B] mb-3">
@@ -358,6 +408,15 @@ function HistorySection({ history }: { history: HistoryWeek[] }) {
                     <p className="text-[#E6ECF5] text-sm">{fmtYenH(unitP)}</p>
                   </div>
                 </div>
+                {weekProductivity !== null && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-[#8B94A7] text-xs">生産性</p>
+                    <p className="text-[#E6ECF5] text-sm font-bold">{formatProductivity(weekProductivity)}</p>
+                    {prodTrend === 'up' && <span className="text-emerald-500 text-xs font-bold">↑</span>}
+                    {prodTrend === 'flat' && <span className="text-[#8B94A7] text-xs">→</span>}
+                    {prodTrend === 'down' && <span className="text-red-500 text-xs font-bold">↓</span>}
+                  </div>
+                )}
                 {week.action && (
                   <div className="pt-2 border-t border-white/5">
                     <p className="text-[#D4AF37] text-sm mb-1">{week.action.action_title}</p>

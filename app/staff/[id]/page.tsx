@@ -3,10 +3,12 @@ import { AuthGuard } from '@/lib/components/AuthGuard'
 import Navigation from '@/lib/components/Navigation'
 import { getStaffById } from '@/lib/repositories/staff'
 import { getRecentDailyRecords } from '@/lib/repositories/daily-records'
+import { getStaffInputsByDateRange } from '@/lib/repositories/weekly-staff-inputs'
 import { getActionLog } from '@/lib/repositories/action-logs'
 import { getServerProfile } from '@/lib/repositories/profiles'
 import type { DailyRecord } from '@/lib/types/db'
 import ActionLogClient from './ActionLogClient'
+import { calcStaffProductivity, formatProductivity } from '@/lib/calculations'
 
 type TrendStatus = 'good' | 'warning' | 'danger'
 
@@ -58,6 +60,12 @@ function getSundayISO(date: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
+function nWeeksAgo(weekStart: string, n: number): string {
+  const d = new Date(weekStart)
+  d.setDate(d.getDate() - 7 * n)
+  return d.toISOString().slice(0, 10)
+}
+
 type MetricDef = {
   key: string
   label: string
@@ -90,10 +98,18 @@ export default async function StaffDetailPage({
     redirect(`/dashboard?storeId=${profile.store_id}`)
   }
 
-  const { data: records } = await getRecentDailyRecords(staff.store_id, 4)
-
   const currentWeek = getSundayISO(new Date())
-  const { data: actionLog } = await getActionLog(staff.id, currentWeek)
+  const fourWeeksAgo = nWeeksAgo(currentWeek, 3)
+
+  const [recordsResult, weeklyInputsResult, actionLogResult] = await Promise.all([
+    getRecentDailyRecords(staff.store_id, 4),
+    getStaffInputsByDateRange(staff.id, fourWeeksAgo, currentWeek),
+    getActionLog(staff.id, currentWeek),
+  ])
+
+  const { data: records } = recordsResult
+  const weeklyInputs = weeklyInputsResult.data
+  const { data: actionLog } = actionLogResult
 
   const latest = records.length > 0 ? records[records.length - 1] : null
   const previous = records.length > 1 ? records.slice(0, -1) : []
@@ -122,6 +138,41 @@ export default async function StaffDetailPage({
 
   const todayAction = worstMetric ? (ACTION_MAP[worstMetric.def.key] ?? null) : null
   const actionForLog = todayAction ?? 'データを確認し、先週と何が違ったか振り返る'
+
+  // 週次人時生産性データ（最新4週、新しい順）
+  const weeklyProdData = [0, 1, 2, 3].map((i) => {
+    const ws = nWeeksAgo(currentWeek, i)
+    const input = weeklyInputs.find((w) => w.week_start === ws) ?? null
+    const prod = input ? calcStaffProductivity(input.sales, input.labor_hours) : null
+    return { weekStart: ws, prod }
+  })
+
+  const currentProd = weeklyProdData[0].prod
+  const prevProd = weeklyProdData[1].prod
+  const prevPrevProd = weeklyProdData[2].prod
+
+  // 2週連続トレンドコメント
+  let prodTrendComment: string | null = null
+  if (currentProd !== null && prevProd !== null && prevPrevProd !== null) {
+    if (currentProd > prevProd && prevProd > prevPrevProd) {
+      prodTrendComment = '人時生産性が上がっています。この調子を維持しましょう'
+    } else if (currentProd < prevProd && prevProd < prevPrevProd) {
+      prodTrendComment = '人時生産性が下がっています。施術時間の見直しを検討してみましょう'
+    }
+  }
+
+  function prodTrend(curr: number | null, prev: number | null): 'up' | 'flat' | 'down' | null {
+    if (curr === null || prev === null || prev === 0) return null
+    const pct = (curr - prev) / prev
+    if (pct > 0.05) return 'up'
+    if (pct < -0.05) return 'down'
+    return 'flat'
+  }
+
+  function fmtWeekLabel(iso: string): string {
+    const d = new Date(iso)
+    return `${d.getMonth() + 1}/${d.getDate()}週`
+  }
 
   return (
     <AuthGuard>
@@ -170,7 +221,50 @@ export default async function StaffDetailPage({
                     )}
                   </div>
                 ))}
+                {/* 今週の人時生産性 */}
+                <div className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
+                  <p className="text-[#8B94A7] text-xs mb-2">今週の人時生産性</p>
+                  <p className="text-[#E6ECF5] text-2xl font-bold tracking-tight mb-2">
+                    {formatProductivity(currentProd)}
+                  </p>
+                  <span className="inline-block text-xs px-2.5 py-1 rounded-full bg-white/5 text-[#8B94A7]">
+                    自分の推移
+                  </span>
+                </div>
               </div>
+            </div>
+          )}
+
+          {/* 人時生産性の推移 */}
+          {weeklyProdData.some((w) => w.prod !== null) && (
+            <div className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
+              <h2 className="text-[#8B94A7] text-xs font-medium mb-3 uppercase tracking-wide">人時生産性の推移</h2>
+              <div className="space-y-2">
+                {weeklyProdData.map((w, idx) => {
+                  const prevW = weeklyProdData[idx + 1] ?? null
+                  const trend = prodTrend(w.prod, prevW?.prod ?? null)
+                  return (
+                    <div key={w.weekStart} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                      <p className={`text-xs ${idx === 0 ? 'text-[#D4AF37] font-bold' : 'text-[#8B94A7]'}`}>
+                        {fmtWeekLabel(w.weekStart)}{idx === 0 ? '（今週）' : ''}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className={`text-sm font-bold ${idx === 0 ? 'text-[#E6ECF5]' : 'text-[#8B94A7]'}`}>
+                          {formatProductivity(w.prod)}
+                        </p>
+                        {trend === 'up' && <span className="text-emerald-500 text-xs font-bold">↑</span>}
+                        {trend === 'flat' && <span className="text-[#8B94A7] text-xs">→</span>}
+                        {trend === 'down' && <span className="text-red-500 text-xs font-bold">↓</span>}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              {prodTrendComment && (
+                <p className={`text-xs mt-3 ${prodTrendComment.includes('上がっています') ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {prodTrendComment}
+                </p>
+              )}
             </div>
           )}
 
