@@ -4,7 +4,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchOverviewData } from './actions'
 import type { OverviewData, StoreOverview } from './actions'
-import { calcStoreProdactivity, formatProductivity } from '@/lib/calculations'
+import {
+  calcMonthlyProductivity,
+  calcElapsedWorkingDays,
+  formatMonthlyProductivity,
+  getMonthlyProductivityStatus,
+} from '@/lib/calculations'
 
 // ──────────────────────────────────────────────
 // ヘルパー
@@ -67,6 +72,16 @@ const INPUT_BADGE_LABEL: Record<InputStatus, string> = {
   overdue:     '⚠️ 期限超過',
 }
 
+const MONTHLY_PROD_BADGE_CLASS: Record<'success' | 'warning' | 'danger' | 'none', string> = {
+  success: 'bg-emerald-900/30 text-emerald-400',
+  warning: 'bg-amber-900/30 text-amber-400',
+  danger:  'bg-red-900/30 text-red-400',
+  none:    'bg-[#1E293B] text-[#8B94A7]',
+}
+const MONTHLY_PROD_BADGE_LABEL: Record<'success' | 'warning' | 'danger' | 'none', string> = {
+  success: '優良', warning: '標準', danger: '危険', none: '未設定',
+}
+
 function fmtYen(val: number | null): string {
   if (val === null) return '—'
   return '¥' + val.toLocaleString('ja-JP')
@@ -101,7 +116,8 @@ type Derived = {
   sales: number | null
   visits: number | null
   unitPrice: number | null
-  productivity: number | null
+  monthlyProd: number | null
+  monthlyProdStatus: 'success' | 'warning' | 'danger' | 'none'
   weeklyTargetSales: number | null
   weeklyTargetVisits: number | null
   weeklyTargetUnitPrice: number | null
@@ -131,7 +147,13 @@ function derive(s: StoreOverview, weekStart: string): Derived {
   const visitsStatus = getStatus(visits, weeklyTargetVisits)
   const unitPriceStatus = getStatus(unitPrice, weeklyTargetUnitPrice)
 
-  const productivity = sales !== null ? calcStoreProdactivity(sales, s.thisWeek?.total_labor_hours ?? null) : null
+  const elapsedDays = calcElapsedWorkingDays(new Date())
+  const workingDays = s.config?.working_days ?? null
+  const activeStaffCount = s.config?.active_staff_count ?? null
+  const monthlyProd = s.monthlySales !== null
+    ? calcMonthlyProductivity(s.monthlySales, elapsedDays, workingDays, activeStaffCount)
+    : null
+  const monthlyProdStatus = getMonthlyProductivityStatus(monthlyProd)
 
   let cause: CauseType = 'no_data'
   if (sales !== null) {
@@ -147,7 +169,7 @@ function derive(s: StoreOverview, weekStart: string): Derived {
   }
 
   return {
-    sales, visits, unitPrice, productivity,
+    sales, visits, unitPrice, monthlyProd, monthlyProdStatus,
     weeklyTargetSales, weeklyTargetVisits, weeklyTargetUnitPrice,
     salesStatus,
     salesPct: fmtPct(sales, weeklyTargetSales),
@@ -321,8 +343,11 @@ export default function OverviewClient() {
                         <DiffBadge val={d.visitsDiff} />
                       </div>
                       <div className="bg-[#0B1220] rounded-xl p-2.5">
-                        <p className="text-[#8B94A7] text-xs mb-0.5">生産性</p>
-                        <p className="text-[#E6ECF5] font-bold text-sm">{formatProductivity(d.productivity)}</p>
+                        <p className="text-[#8B94A7] text-xs mb-0.5">月次生産性（暫定）</p>
+                        <p className="text-[#E6ECF5] font-bold text-sm">{formatMonthlyProductivity(d.monthlyProd)}</p>
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${MONTHLY_PROD_BADGE_CLASS[d.monthlyProdStatus]}`}>
+                          {MONTHLY_PROD_BADGE_LABEL[d.monthlyProdStatus]}
+                        </span>
                       </div>
                     </div>
 

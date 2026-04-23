@@ -1,7 +1,7 @@
 'use server'
 
 import { getActiveStores } from '@/lib/repositories/stores'
-import { getWeeklyStoreInput } from '@/lib/repositories/weekly-store-inputs'
+import { getWeeklyStoreInput, getStoreInputsByDateRange } from '@/lib/repositories/weekly-store-inputs'
 import { getMonthlyConfig } from '@/lib/repositories/monthly-configs'
 import type { Store, WeeklyStoreInput, MonthlyConfig } from '@/lib/types/db'
 
@@ -10,6 +10,7 @@ export type StoreOverview = {
   thisWeek: WeeklyStoreInput | null
   lastWeek: WeeklyStoreInput | null
   config: MonthlyConfig | null
+  monthlySales: number | null
 }
 
 export type OverviewData = {
@@ -28,19 +29,28 @@ export async function fetchOverviewData(weekStart: string): Promise<OverviewData
     const { data: stores } = await getActiveStores()
     const lastWeekStart = prevWeekISO(weekStart)
     const month = weekStart.slice(0, 7)
+    const monthStart = weekStart.slice(0, 8) + '01'
 
     const overviews = await Promise.all(
       stores.map(async (store): Promise<StoreOverview> => {
-        const [thisWeek, lastWeek, configResult] = await Promise.all([
+        const [thisWeek, lastWeek, configResult, monthlyInputsResult] = await Promise.all([
           getWeeklyStoreInput(store.id, weekStart),
           getWeeklyStoreInput(store.id, lastWeekStart),
           getMonthlyConfig(store.id, month),
+          getStoreInputsByDateRange(store.id, monthStart, weekStart),
         ])
+        const monthlySalesArr = monthlyInputsResult.data
+          .map((i) => i.sales)
+          .filter((s): s is number => s !== null)
+        const monthlySales = monthlySalesArr.length > 0
+          ? monthlySalesArr.reduce((a, b) => a + b, 0)
+          : null
         return {
           store,
           thisWeek: thisWeek ?? null,
           lastWeek: lastWeek ?? null,
           config: configResult.data,
+          monthlySales,
         }
       })
     )
