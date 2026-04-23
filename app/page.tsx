@@ -1,13 +1,19 @@
 import Link from 'next/link'
 import { getActiveStores } from '@/lib/repositories/stores'
 import { getLatestMonthlyConfig } from '@/lib/repositories/monthly-configs'
-import { getWeeklyStoreInput } from '@/lib/repositories/weekly-store-inputs'
+import { getWeeklyStoreInput, getStoreInputsByDateRange } from '@/lib/repositories/weekly-store-inputs'
 import { getServerProfile } from '@/lib/repositories/profiles'
 import { getLatestImprovementAction } from '@/lib/repositories/improvement-actions'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import Navigation from '@/lib/components/Navigation'
 import HomeActionCard from './HomeActionCard'
 import type { WeeklyStoreInput, MonthlyConfig } from '@/lib/types/db'
+import {
+  calcMonthlyProductivity,
+  calcElapsedWorkingDays,
+  formatMonthlyProductivity,
+  getMonthlyProductivityStatus,
+} from '@/lib/calculations'
 
 const WEEKLY_WEEKS = 4.3
 
@@ -56,17 +62,20 @@ export default async function Home() {
     ? (stores.find((s) => s.id === profile.store_id) ?? stores[0])
     : stores[0]
 
+  const today = new Date()
   const thisWeekStart = getSundayISO()
   const lastWeekStart = prevWeekISO(thisWeekStart)
+  const monthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`
 
-  const [thisWeek, lastWeek, configResult, latestAction] = mainStore
+  const [thisWeek, lastWeek, configResult, latestAction, monthlyInputsResult] = mainStore
     ? await Promise.all([
         getWeeklyStoreInput(mainStore.id, thisWeekStart),
         getWeeklyStoreInput(mainStore.id, lastWeekStart),
         getLatestMonthlyConfig(mainStore.id),
         getLatestImprovementAction(mainStore.id),
+        getStoreInputsByDateRange(mainStore.id, monthStart, thisWeekStart),
       ])
-    : ([null, null, { data: null }, null] as const)
+    : [null, null, { data: null }, null, { data: [], error: null }]
 
   const config = (configResult as { data: MonthlyConfig | null }).data ?? null
   const weeklyTargetSales = config?.target_sales != null ? Math.round(config.target_sales / WEEKLY_WEEKS) : null
@@ -86,7 +95,18 @@ export default async function Home() {
   const prevRepeatRate = prevNextVisitCount !== null && prevVisits !== null && prevVisits > 0
     ? Math.round((prevNextVisitCount / prevVisits) * 100) : null
 
-  const today = new Date()
+  const monthlyInputs = (monthlyInputsResult as { data: WeeklyStoreInput[] }).data ?? []
+  const monthlySalesArr = monthlyInputs.map((i) => i.sales).filter((s): s is number => s !== null)
+  const monthlySalesVal = monthlySalesArr.length > 0 ? monthlySalesArr.reduce((a, b) => a + b, 0) : null
+  const elapsedDays = calcElapsedWorkingDays(today)
+  const workingDays = config?.working_days ?? null
+  const activeStaffCount = config?.active_staff_count ?? null
+  const monthlyProd = monthlySalesVal !== null
+    ? calcMonthlyProductivity(monthlySalesVal, elapsedDays, workingDays, activeStaffCount)
+    : null
+  const monthlyProdStatus = getMonthlyProductivityStatus(monthlyProd)
+  const monthlyConfigMissing = workingDays === null || activeStaffCount === null
+
   const dateLabel = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
   const hasData = thisWeek !== null
 
@@ -142,6 +162,11 @@ export default async function Home() {
                       diff={diffPct(unitPrice, prevUnitPrice)} />
                     <MetricCard label="次回予約率" value={repeatRate !== null ? `${repeatRate}%` : '—'}
                       diff={diffPct(repeatRate, prevRepeatRate)} />
+                    <MonthlyProdCard
+                      value={formatMonthlyProductivity(monthlyProd)}
+                      status={monthlyProdStatus}
+                      missing={monthlyConfigMissing}
+                    />
                   </div>
                 )}
               </div>
@@ -181,6 +206,37 @@ function MetricCard({
       ) : (
         <p className="text-[#8B94A7] text-xs mt-1">-</p>
       )}
+    </div>
+  )
+}
+
+const MONTHLY_PROD_BADGE_CLASS: Record<'success' | 'warning' | 'danger' | 'none', string> = {
+  success: 'bg-emerald-900/30 text-emerald-400',
+  warning: 'bg-amber-900/30 text-amber-400',
+  danger:  'bg-red-900/30 text-red-400',
+  none:    'bg-[#1E293B] text-[#8B94A7]',
+}
+const MONTHLY_PROD_BADGE_LABEL: Record<'success' | 'warning' | 'danger' | 'none', string> = {
+  success: '優良', warning: '標準', danger: '危険', none: '未設定',
+}
+
+function MonthlyProdCard({
+  value, status, missing,
+}: {
+  value: string
+  status: 'success' | 'warning' | 'danger' | 'none'
+  missing: boolean
+}) {
+  return (
+    <div className="col-span-2 bg-[#0B1220] rounded-xl p-3 border border-white/5">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[#8B94A7] text-xs">月次生産性（暫定）</p>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${MONTHLY_PROD_BADGE_CLASS[status]}`}>
+          {MONTHLY_PROD_BADGE_LABEL[status]}
+        </span>
+      </div>
+      <p className="text-[#E6ECF5] text-2xl font-bold">{value}</p>
+      {missing && <p className="text-[#8B94A7] text-xs mt-1">月次設定を確認</p>}
     </div>
   )
 }
