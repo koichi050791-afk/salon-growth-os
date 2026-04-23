@@ -140,6 +140,8 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
                     <Row label="目標来店数" value={fmt(c.target_visits, '件')} />
                     <Row label="目標生産性" value={fmt(c.target_productivity)} />
                     <Row label="目標再来率" value={c.target_repeat_rate !== null ? `${c.target_repeat_rate}%` : '—'} />
+                    <Row label="営業日数"   value={c.working_days !== null ? `${c.working_days}日` : '—'} />
+                    <Row label="稼働スタッフ" value={c.active_staff_count !== null ? `${c.active_staff_count}人` : '—'} />
                     {c.memo && <Row label="メモ" value={c.memo} />}
                   </div>
                 </div>
@@ -191,6 +193,16 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
                   <div>
                     <label className={LABEL_CLASS}>メモ</label>
                     <textarea name="memo" defaultValue={editingConfig?.memo ?? ''} rows={2} className={INPUT_CLASS} />
+                  </div>
+                  <div>
+                    <label className={LABEL_CLASS}>月の営業日数</label>
+                    <p className="text-[#8B94A7] text-xs mb-1">月曜定休を除いた営業日数を入力してください</p>
+                    <input type="number" name="working_days" defaultValue={editingConfig?.working_days ?? ''} min="1" max="31" placeholder="例：26" className={INPUT_CLASS} />
+                  </div>
+                  <div>
+                    <label className={LABEL_CLASS}>稼働スタッフ人数</label>
+                    <p className="text-[#8B94A7] text-xs mb-1">今月実際に稼働するスタッフの人数</p>
+                    <input type="number" name="active_staff_count" defaultValue={editingConfig?.active_staff_count ?? ''} min="1" placeholder="例：4" className={INPUT_CLASS} />
                   </div>
                 </div>
 

@@ -107,6 +107,8 @@ export interface Database {
           target_productivity: number | null
           target_repeat_rate: number | null
           memo: string | null
+          working_days: number | null
+          active_staff_count: number | null
           created_at: string
           updated_at: string
         }
@@ -120,6 +122,8 @@ export interface Database {
           target_productivity?: number | null
           target_repeat_rate?: number | null
           memo?: string | null
+          working_days?: number | null
+          active_staff_count?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -133,6 +137,8 @@ export interface Database {
           target_productivity?: number | null
           target_repeat_rate?: number | null
           memo?: string | null
+          working_days?: number | null
+          active_staff_count?: number | null
           created_at?: string
           updated_at?: string
         }

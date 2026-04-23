@@ -5,7 +5,15 @@ import { useRouter } from 'next/navigation'
 import { fetchDashboardData } from './actions'
 import type { Store } from '@/lib/types/db'
 import type { DashboardData, HistoryWeek } from './actions'
-import { calcStoreProdactivity, formatProductivity } from '@/lib/calculations'
+import {
+  calcStoreProdactivity,
+  calcStaffProductivity,
+  formatProductivity,
+  calcElapsedWorkingDays,
+  calcMonthlyProductivity,
+  formatMonthlyProductivity,
+  getMonthlyProductivityStatus,
+} from '@/lib/calculations'
 
 // ──────────────────────────────────────────────
 // ヘルパー
@@ -83,7 +91,7 @@ function MetricInner({
 }
 
 // ──────────────────────────────────────────────
-// 生産性バッジ
+// 生産性バッジ（週次）
 // ──────────────────────────────────────────────
 type ProdStatus = 'good' | 'warning' | 'danger' | 'none'
 
@@ -104,6 +112,29 @@ const PROD_BADGE_CLASS: Record<ProdStatus, string> = {
 }
 const PROD_BADGE_LABEL: Record<ProdStatus, string> = {
   good: '良好', warning: '注意', danger: '要改善', none: '未入力',
+}
+
+// ──────────────────────────────────────────────
+// 月次生産性バッジ
+// ──────────────────────────────────────────────
+const MONTHLY_PROD_BADGE_CLASS: Record<'success' | 'warning' | 'danger' | 'none', string> = {
+  success: 'bg-emerald-900/30 text-emerald-400',
+  warning: 'bg-amber-900/30 text-amber-400',
+  danger:  'bg-red-900/30 text-red-400',
+  none:    'bg-[#1E293B] text-[#8B94A7]',
+}
+const MONTHLY_PROD_BADGE_LABEL: Record<'success' | 'warning' | 'danger' | 'none', string> = {
+  success: '優良', warning: '標準', danger: '危険', none: '未設定',
+}
+
+// ──────────────────────────────────────────────
+// スタッフ人時生産性バッジ
+// ──────────────────────────────────────────────
+function getStaffProdBadge(prod: number | null, hasLaborHours: boolean): { cls: string; label: string } {
+  if (!hasLaborHours || prod === null) return { cls: 'bg-[#1E293B] text-[#8B94A7]', label: '—' }
+  if (prod >= 5500) return { cls: 'bg-emerald-900/30 text-emerald-400', label: '優良' }
+  if (prod >= 3501) return { cls: 'bg-amber-900/30 text-amber-400', label: '標準' }
+  return { cls: 'bg-red-900/30 text-red-400', label: '危険' }
 }
 
 // ──────────────────────────────────────────────
@@ -152,6 +183,17 @@ export default function DashboardClient({
   const productivity = sales !== null ? calcStoreProdactivity(sales, totalLaborHours) : null
   const prodStatus = getProdStatus(productivity, targetProductivity)
 
+  // 月次生産性
+  const monthlySales = data?.monthlySales ?? null
+  const elapsedDays = calcElapsedWorkingDays(new Date())
+  const workingDays = data?.config?.working_days ?? null
+  const activeStaffCount = data?.config?.active_staff_count ?? null
+  const monthlyProd = monthlySales !== null
+    ? calcMonthlyProductivity(monthlySales, elapsedDays, workingDays, activeStaffCount)
+    : null
+  const monthlyProdStatus = getMonthlyProductivityStatus(monthlyProd)
+  const monthlyConfigMissing = workingDays === null || activeStaffCount === null
+
   const salesStatus = getStatus(sales, weeklyTargetSales)
   const visitsStatus = getStatus(visits, weeklyTargetVisits)
   const unitPriceStatus = getStatus(unitPrice, weeklyTargetUnitPrice)
@@ -189,7 +231,10 @@ export default function DashboardClient({
     const prevStaffSales = lastInput2?.sales ?? null
     const salesDiff = staffSales !== null && prevStaffSales !== null && prevStaffSales > 0 ? ((staffSales - prevStaffSales) / prevStaffSales) * 100 : null
     const isAlert = salesDiff !== null && salesDiff <= -20
-    return { s, staffSales, staffVisits, staffUnit, salesDiff, prevStaffSales, isAlert }
+    const staffLaborHours = thisInput?.labor_hours ?? null
+    const staffProductivity = calcStaffProductivity(staffSales, staffLaborHours)
+    const staffProdBadge = getStaffProdBadge(staffProductivity, staffLaborHours !== null)
+    return { s, staffSales, staffVisits, staffUnit, salesDiff, prevStaffSales, isAlert, staffProductivity, staffProdBadge }
   })
 
   return (
@@ -238,7 +283,7 @@ export default function DashboardClient({
               <MetricInner label="客単価" value={fmtYen(unitPrice)} diff={diffPctStr(unitPrice, prevUnitPrice)} target={weeklyTargetUnitPrice !== null ? `目標 ${fmtYen(weeklyTargetUnitPrice)}` : null} />
             </div>
             {/* 店舗生産性カード */}
-            <div className="bg-[#0B1220] rounded-xl p-3 border border-white/5">
+            <div className="bg-[#0B1220] rounded-xl p-3 border border-white/5 mb-3">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-[#8B94A7] text-xs">店舗生産性</p>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${PROD_BADGE_CLASS[prodStatus]}`}>
@@ -248,6 +293,22 @@ export default function DashboardClient({
               <p className="text-[#E6ECF5] text-2xl font-bold tracking-tight">{formatProductivity(productivity)}</p>
               {targetProductivity !== null && (
                 <p className="text-xs text-[#8B94A7] mt-0.5">目標 {formatProductivity(targetProductivity)}</p>
+              )}
+            </div>
+            {/* 月次生産性カード */}
+            <div className="bg-[#0B1220] rounded-xl p-3 border border-white/5">
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <p className="text-[#8B94A7] text-xs">月次生産性</p>
+                  <p className="text-[#8B94A7] text-xs opacity-60">1人あたり月間予測売上</p>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${MONTHLY_PROD_BADGE_CLASS[monthlyProdStatus]}`}>
+                  {MONTHLY_PROD_BADGE_LABEL[monthlyProdStatus]}
+                </span>
+              </div>
+              <p className="text-[#E6ECF5] text-2xl font-bold tracking-tight">{formatMonthlyProductivity(monthlyProd)}</p>
+              {monthlyConfigMissing && (
+                <p className="text-xs text-[#8B94A7] mt-1">月次設定から営業日数・スタッフ人数を入力してください</p>
               )}
             </div>
           </div>
@@ -265,7 +326,7 @@ export default function DashboardClient({
           {staffCards.length > 0 && (
             <div>
               <h2 className="text-[#E6ECF5] text-lg font-semibold mb-3">👤 スタッフ別</h2>
-              {staffCards.map(({ s, staffSales, staffVisits, staffUnit, salesDiff, prevStaffSales, isAlert }) => (
+              {staffCards.map(({ s, staffSales, staffVisits, staffUnit, salesDiff, prevStaffSales, isAlert, staffProductivity, staffProdBadge }) => (
                 <div key={s.id} className={`bg-[#111A2B] rounded-2xl p-4 mb-3 border ${isAlert ? 'border-red-500/30' : 'border-white/5'}`}>
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[#E6ECF5] font-bold">{s.name}</p>
@@ -274,25 +335,36 @@ export default function DashboardClient({
                   {staffSales === null && staffVisits === null ? (
                     <p className="text-[#8B94A7] text-sm">今週のデータがありません</p>
                   ) : (
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-[#0B1220] rounded-xl p-3">
-                        <p className="text-[#8B94A7] text-xs mb-1">週売上</p>
-                        <p className="text-[#E6ECF5] font-bold text-sm">{fmtYen(staffSales)}</p>
-                        {salesDiff !== null ? (
-                          <p className={`text-xs mt-0.5 ${salesDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{salesDiff >= 0 ? '↑' : '↓'} {salesDiff >= 0 ? '+' : ''}{salesDiff.toFixed(1)}%</p>
-                        ) : prevStaffSales === null ? (
-                          <p className="text-[#8B94A7] text-xs mt-0.5">初回</p>
-                        ) : null}
+                    <>
+                      <div className="grid grid-cols-3 gap-3 mb-3">
+                        <div className="bg-[#0B1220] rounded-xl p-3">
+                          <p className="text-[#8B94A7] text-xs mb-1">週売上</p>
+                          <p className="text-[#E6ECF5] font-bold text-sm">{fmtYen(staffSales)}</p>
+                          {salesDiff !== null ? (
+                            <p className={`text-xs mt-0.5 ${salesDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{salesDiff >= 0 ? '↑' : '↓'} {salesDiff >= 0 ? '+' : ''}{salesDiff.toFixed(1)}%</p>
+                          ) : prevStaffSales === null ? (
+                            <p className="text-[#8B94A7] text-xs mt-0.5">初回</p>
+                          ) : null}
+                        </div>
+                        <div className="bg-[#0B1220] rounded-xl p-3">
+                          <p className="text-[#8B94A7] text-xs mb-1">週客数</p>
+                          <p className="text-[#E6ECF5] font-bold text-sm">{fmtNum(staffVisits, '人')}</p>
+                        </div>
+                        <div className="bg-[#0B1220] rounded-xl p-3">
+                          <p className="text-[#8B94A7] text-xs mb-1">客単価</p>
+                          <p className="text-[#E6ECF5] font-bold text-sm">{fmtYen(staffUnit)}</p>
+                        </div>
                       </div>
-                      <div className="bg-[#0B1220] rounded-xl p-3">
-                        <p className="text-[#8B94A7] text-xs mb-1">週客数</p>
-                        <p className="text-[#E6ECF5] font-bold text-sm">{fmtNum(staffVisits, '人')}</p>
+                      <div className="bg-[#0B1220] rounded-xl p-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-[#8B94A7] text-xs mb-0.5">人時生産性</p>
+                          <p className="text-[#E6ECF5] font-bold text-sm">{formatProductivity(staffProductivity)}</p>
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${staffProdBadge.cls}`}>
+                          {staffProdBadge.label}
+                        </span>
                       </div>
-                      <div className="bg-[#0B1220] rounded-xl p-3">
-                        <p className="text-[#8B94A7] text-xs mb-1">客単価</p>
-                        <p className="text-[#E6ECF5] font-bold text-sm">{fmtYen(staffUnit)}</p>
-                      </div>
-                    </div>
+                    </>
                   )}
                 </div>
               ))}

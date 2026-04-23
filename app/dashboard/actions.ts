@@ -21,6 +21,7 @@ export type DashboardData = {
   staffList: Staff[]
   config: MonthlyConfig | null
   history: HistoryWeek[]
+  monthlySales: number | null
   error: string | null
 }
 
@@ -44,8 +45,9 @@ export async function fetchDashboardData(
     const lastWeekStart = prevWeekISO(weekStart)
     const fourWeeksAgoISO = nWeeksAgoISO(weekStart, 3)
     const month = weekStart.slice(0, 7)
+    const monthStart = weekStart.slice(0, 8) + '01'
 
-    const [staffResult, thisWeek, lastWeek, thisWeekStaffResult, lastWeekStaffResult, configResult, historyInputs, historyActions] =
+    const [staffResult, thisWeek, lastWeek, thisWeekStaffResult, lastWeekStaffResult, configResult, historyInputs, historyActions, monthlyInputsResult] =
       await Promise.all([
         getActiveStaffByStore(storeId),
         getWeeklyStoreInput(storeId, weekStart),
@@ -55,6 +57,7 @@ export async function fetchDashboardData(
         getMonthlyConfig(storeId, month),
         getStoreInputsByDateRange(storeId, fourWeeksAgoISO, weekStart),
         getRecentImprovementActions(storeId, 4),
+        getStoreInputsByDateRange(storeId, monthStart, weekStart),
       ])
 
     // 直近4週分をマージ
@@ -65,6 +68,14 @@ export async function fetchDashboardData(
       return { weekStart: ws, input, action }
     })
 
+    // 月累計売上
+    const monthlySalesArr = monthlyInputsResult.data
+      .map((i) => i.sales)
+      .filter((s): s is number => s !== null)
+    const monthlySales = monthlySalesArr.length > 0
+      ? monthlySalesArr.reduce((a, b) => a + b, 0)
+      : null
+
     return {
       thisWeek: thisWeek ?? null,
       lastWeek: lastWeek ?? null,
@@ -73,6 +84,7 @@ export async function fetchDashboardData(
       staffList: staffResult.data,
       config: configResult.data,
       history,
+      monthlySales,
       error: null,
     }
   } catch (e) {
@@ -84,6 +96,7 @@ export async function fetchDashboardData(
       staffList: [],
       config: null,
       history: [],
+      monthlySales: null,
       error: String(e),
     }
   }
