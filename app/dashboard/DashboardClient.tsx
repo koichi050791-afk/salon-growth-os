@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { fetchDashboardData } from './actions'
+import { fetchDashboardData, fetchLatestWeekStart } from './actions'
 import type { Store } from '@/lib/types/db'
 import type { DashboardData, HistoryWeek } from './actions'
 import {
@@ -116,13 +116,16 @@ function getStaffProdBadge(prod: number | null, hasLaborHours: boolean): { cls: 
 // メインコンポーネント
 // ──────────────────────────────────────────────
 export default function DashboardClient({
-  stores, initialStoreId, hideStoreSelect = false,
+  stores, initialStoreId, initialWeekStart, hideStoreSelect = false,
 }: {
-  stores: Store[]; initialStoreId: string; hideStoreSelect?: boolean
+  stores: Store[]
+  initialStoreId: string
+  initialWeekStart: string | null
+  hideStoreSelect?: boolean
 }) {
   const router = useRouter()
   const [storeId, setStoreId] = useState(initialStoreId)
-  const [weekStart, setWeekStart] = useState(getSundayISO())
+  const [weekStart, setWeekStart] = useState(initialWeekStart ?? getSundayISO())
   const [data, setData] = useState<DashboardData | null>(null)
   const [fetching, setFetching] = useState(false)
 
@@ -136,10 +139,14 @@ export default function DashboardClient({
 
   useEffect(() => { loadData(storeId, weekStart) }, [storeId, weekStart, loadData])
 
-  function handleStoreChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  async function handleStoreChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const val = e.target.value
     setStoreId(val)
     router.replace(val ? `/dashboard?storeId=${val}` : '/dashboard')
+    if (val) {
+      const latest = await fetchLatestWeekStart(val)
+      setWeekStart(latest ?? getSundayISO())
+    }
   }
 
   const weeklyTargetSales = data?.config?.target_sales != null ? Math.round(data.config.target_sales / 4.3) : null

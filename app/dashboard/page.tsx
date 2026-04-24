@@ -1,8 +1,8 @@
-import { redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import Navigation from '@/lib/components/Navigation'
 import { getActiveStores } from '@/lib/repositories/stores'
 import { getServerProfile } from '@/lib/repositories/profiles'
+import { getLatestWeeklyStoreInput } from '@/lib/repositories/weekly-store-inputs'
 import DashboardClient from './DashboardClient'
 
 export default async function DashboardPage({
@@ -13,16 +13,12 @@ export default async function DashboardPage({
   const { storeId } = await searchParams
   const profile = await getServerProfile()
 
-  // manager は自店舗のみ
   const isOwner = profile?.role === 'owner'
   const isManager = profile?.role === 'manager'
   const managedStoreId = isManager ? (profile?.store_id ?? null) : null
 
-  // viewer はダッシュボードをそのまま表示（RLSがデータを制限）
-
   const { data: allStores } = await getActiveStores()
 
-  // owner は全店舗、manager は自店舗のみ
   const stores = isOwner
     ? allStores
     : isManager && managedStoreId
@@ -32,6 +28,9 @@ export default async function DashboardPage({
   const initialStoreId = isManager && managedStoreId
     ? managedStoreId
     : (storeId ?? '')
+
+  const latestInput = initialStoreId ? await getLatestWeeklyStoreInput(initialStoreId) : null
+  const initialWeekStart = latestInput?.week_start ?? null
 
   return (
     <AuthGuard>
@@ -46,6 +45,7 @@ export default async function DashboardPage({
           <DashboardClient
             stores={stores}
             initialStoreId={initialStoreId}
+            initialWeekStart={initialWeekStart}
             hideStoreSelect={isManager}
           />
         </div>

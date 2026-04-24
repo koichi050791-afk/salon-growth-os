@@ -22,6 +22,23 @@ export async function getWeeklyStoreInput(
   return data
 }
 
+export async function getLatestWeeklyStoreInput(
+  storeId: string
+): Promise<WeeklyStoreInput | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('weekly_store_inputs')
+    .select('*')
+    .eq('store_id', storeId)
+    .order('week_start', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (error?.code === 'PGRST116') return null
+  if (error) throw new Error(error.message)
+  return data
+}
+
 export async function upsertWeeklyStoreInput(
   data: WeeklyStoreInputInsert
 ): Promise<WeeklyStoreInput> {

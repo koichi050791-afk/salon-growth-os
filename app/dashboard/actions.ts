@@ -1,7 +1,7 @@
 'use server'
 
 import { getActiveStaffByStore } from '@/lib/repositories/staff'
-import { getWeeklyStoreInput, getStoreInputsByDateRange } from '@/lib/repositories/weekly-store-inputs'
+import { getWeeklyStoreInput, getLatestWeeklyStoreInput, getStoreInputsByDateRange } from '@/lib/repositories/weekly-store-inputs'
 import { getWeeklyStaffInputs } from '@/lib/repositories/weekly-staff-inputs'
 import { getMonthlyConfig } from '@/lib/repositories/monthly-configs'
 import { getRecentImprovementActions } from '@/lib/repositories/improvement-actions'
@@ -36,6 +36,15 @@ function nWeeksAgoISO(weekStart: string, n: number): string {
   const d = new Date(weekStart)
   d.setDate(d.getDate() - 7 * n)
   return d.toISOString().slice(0, 10)
+}
+
+export async function fetchLatestWeekStart(storeId: string): Promise<string | null> {
+  try {
+    const input = await getLatestWeeklyStoreInput(storeId)
+    return input?.week_start ?? null
+  } catch {
+    return null
+  }
 }
 
 export async function fetchDashboardData(
