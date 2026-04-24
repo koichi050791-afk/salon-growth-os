@@ -142,6 +142,7 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
                     <Row label="目標再来率" value={c.target_repeat_rate !== null ? `${c.target_repeat_rate}%` : '—'} />
                     <Row label="営業日数"   value={c.working_days !== null ? `${c.working_days}日` : '—'} />
                     <Row label="稼働スタッフ" value={c.active_staff_count !== null ? `${c.active_staff_count}人` : '—'} />
+                    <Row label="月の総週数" value={c.total_weeks !== null ? `${c.total_weeks}週` : '—'} />
                     {c.memo && <Row label="メモ" value={c.memo} />}
                   </div>
                 </div>
@@ -203,6 +204,11 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
                     <label className={LABEL_CLASS}>稼働スタッフ人数</label>
                     <p className="text-[#8B94A7] text-xs mb-1">今月実際に稼働するスタッフの人数</p>
                     <input type="number" name="active_staff_count" defaultValue={editingConfig?.active_staff_count ?? ''} min="1" placeholder="例：4" className={INPUT_CLASS} />
+                  </div>
+                  <div>
+                    <label className={LABEL_CLASS}>月の総週数</label>
+                    <p className="text-[#8B94A7] text-xs mb-1">その月の営業週数（4または5）</p>
+                    <input type="number" name="total_weeks" defaultValue={editingConfig?.total_weeks ?? ''} min="4" max="5" placeholder="例：4" className={INPUT_CLASS} />
                   </div>
                 </div>
 

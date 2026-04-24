@@ -36,6 +36,7 @@ export async function saveMonthlyConfig(
     memo: (formData.get('memo') as string) || null,
     working_days: toNumber(formData.get('working_days')),
     active_staff_count: toNumber(formData.get('active_staff_count')),
+    total_weeks: toNumber(formData.get('total_weeks')),
   })
 
   if (error) {
