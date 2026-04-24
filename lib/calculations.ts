@@ -14,18 +14,29 @@ export function formatProductivity(value: number | null): string {
   return `¥${value.toLocaleString()}/h`
 }
 
+/**
+ * 月次生産性を計算する（週次ベース）
+ * 月間予測売上 = （月累計売上 ÷ 入力済み週数）× 月の総週数
+ * 月次生産性 = 月間予測売上 ÷ 稼働スタッフ人数
+ *
+ * @param monthlySales 月累計売上（入力済み週の合計・円）
+ * @param completedWeeks 入力済みの週数（整数）
+ * @param totalWeeks 月の総週数（monthly_configsのtotal_weeks）
+ * @param activeStaffCount 稼働スタッフ人数（monthly_configsのactive_staff_count）
+ * @returns 月次生産性（円）または null
+ */
 export function calcMonthlyProductivity(
   monthlySales: number,
-  elapsedWorkingDays: number,
-  totalWorkingDays: number | null | undefined,
+  completedWeeks: number,
+  totalWeeks: number | null | undefined,
   activeStaffCount: number | null | undefined
 ): number | null {
   if (!monthlySales || monthlySales <= 0) return null
-  if (!elapsedWorkingDays || elapsedWorkingDays <= 0) return null
-  if (!totalWorkingDays || totalWorkingDays <= 0) return null
+  if (!completedWeeks || completedWeeks <= 0) return null
+  if (!totalWeeks || totalWeeks <= 0) return null
   if (!activeStaffCount || activeStaffCount <= 0) return null
 
-  const projectedMonthlySales = (monthlySales / elapsedWorkingDays) * totalWorkingDays
+  const projectedMonthlySales = (monthlySales / completedWeeks) * totalWeeks
   return Math.round(projectedMonthlySales / activeStaffCount)
 }
 
@@ -49,7 +60,7 @@ export function formatMonthlyProductivity(value: number | null): string {
   return `¥${value.toLocaleString()}`
 }
 
-export function getMonthlyProductivityStatus(value: number | null): 'danger' | 'warning' | 'success' | 'none' {
+export function getMonthlyProductivityStatus(value: number | null): 'success' | 'warning' | 'danger' | 'none' {
   if (value === null) return 'none'
   if (value < 900000) return 'danger'
   if (value < 1000000) return 'warning'
