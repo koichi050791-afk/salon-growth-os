@@ -6,7 +6,6 @@ import { fetchOverviewData } from './actions'
 import type { OverviewData, StoreOverview } from './actions'
 import {
   calcMonthlyProductivity,
-  calcElapsedWorkingDays,
   formatMonthlyProductivity,
   getMonthlyProductivityStatus,
 } from '@/lib/calculations'
@@ -147,11 +146,10 @@ function derive(s: StoreOverview, weekStart: string): Derived {
   const visitsStatus = getStatus(visits, weeklyTargetVisits)
   const unitPriceStatus = getStatus(unitPrice, weeklyTargetUnitPrice)
 
-  const elapsedDays = calcElapsedWorkingDays(new Date())
-  const workingDays = s.config?.working_days ?? null
+  const totalWeeks = s.config?.total_weeks ?? null
   const activeStaffCount = s.config?.active_staff_count ?? null
   const monthlyProd = s.monthlySales !== null
-    ? calcMonthlyProductivity(s.monthlySales, elapsedDays, workingDays, activeStaffCount)
+    ? calcMonthlyProductivity(s.monthlySales, s.completedWeeks, totalWeeks, activeStaffCount)
     : null
   const monthlyProdStatus = getMonthlyProductivityStatus(monthlyProd)
 

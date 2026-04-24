@@ -11,6 +11,7 @@ export type StoreOverview = {
   lastWeek: WeeklyStoreInput | null
   config: MonthlyConfig | null
   monthlySales: number | null
+  completedWeeks: number
 }
 
 export type OverviewData = {
@@ -45,12 +46,14 @@ export async function fetchOverviewData(weekStart: string): Promise<OverviewData
         const monthlySales = monthlySalesArr.length > 0
           ? monthlySalesArr.reduce((a, b) => a + b, 0)
           : null
+        const completedWeeks = monthlySalesArr.length
         return {
           store,
           thisWeek: thisWeek ?? null,
           lastWeek: lastWeek ?? null,
           config: configResult.data,
           monthlySales,
+          completedWeeks,
         }
       })
     )

@@ -22,6 +22,7 @@ export type DashboardData = {
   config: MonthlyConfig | null
   history: HistoryWeek[]
   monthlySales: number | null
+  completedWeeks: number
   error: string | null
 }
 
@@ -68,13 +69,14 @@ export async function fetchDashboardData(
       return { weekStart: ws, input, action }
     })
 
-    // 月累計売上
+    // 月累計売上・入力済み週数
     const monthlySalesArr = monthlyInputsResult.data
       .map((i) => i.sales)
       .filter((s): s is number => s !== null)
     const monthlySales = monthlySalesArr.length > 0
       ? monthlySalesArr.reduce((a, b) => a + b, 0)
       : null
+    const completedWeeks = monthlySalesArr.length
 
     return {
       thisWeek: thisWeek ?? null,
@@ -85,6 +87,7 @@ export async function fetchDashboardData(
       config: configResult.data,
       history,
       monthlySales,
+      completedWeeks,
       error: null,
     }
   } catch (e) {
@@ -97,6 +100,7 @@ export async function fetchDashboardData(
       config: null,
       history: [],
       monthlySales: null,
+      completedWeeks: 0,
       error: String(e),
     }
   }

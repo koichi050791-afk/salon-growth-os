@@ -10,7 +10,6 @@ import HomeActionCard from './HomeActionCard'
 import type { WeeklyStoreInput, MonthlyConfig } from '@/lib/types/db'
 import {
   calcMonthlyProductivity,
-  calcElapsedWorkingDays,
   formatMonthlyProductivity,
   getMonthlyProductivityStatus,
 } from '@/lib/calculations'
@@ -98,14 +97,14 @@ export default async function Home() {
   const monthlyInputs = (monthlyInputsResult as { data: WeeklyStoreInput[] }).data ?? []
   const monthlySalesArr = monthlyInputs.map((i) => i.sales).filter((s): s is number => s !== null)
   const monthlySalesVal = monthlySalesArr.length > 0 ? monthlySalesArr.reduce((a, b) => a + b, 0) : null
-  const elapsedDays = calcElapsedWorkingDays(today)
-  const workingDays = config?.working_days ?? null
+  const completedWeeks = monthlySalesArr.length
+  const totalWeeks = config?.total_weeks ?? null
   const activeStaffCount = config?.active_staff_count ?? null
   const monthlyProd = monthlySalesVal !== null
-    ? calcMonthlyProductivity(monthlySalesVal, elapsedDays, workingDays, activeStaffCount)
+    ? calcMonthlyProductivity(monthlySalesVal, completedWeeks, totalWeeks, activeStaffCount)
     : null
   const monthlyProdStatus = getMonthlyProductivityStatus(monthlyProd)
-  const monthlyConfigMissing = workingDays === null || activeStaffCount === null
+  const monthlyConfigMissing = totalWeeks === null || activeStaffCount === null
 
   const dateLabel = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
   const hasData = thisWeek !== null
@@ -236,7 +235,7 @@ function MonthlyProdCard({
         </span>
       </div>
       <p className="text-[#E6ECF5] text-2xl font-bold">{value}</p>
-      {missing && <p className="text-[#8B94A7] text-xs mt-1">月次設定を確認</p>}
+      {missing && <p className="text-[#8B94A7] text-xs mt-1">月次設定から週数を入力してください</p>}
     </div>
   )
 }

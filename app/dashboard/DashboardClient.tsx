@@ -9,7 +9,6 @@ import {
   calcStoreProdactivity,
   calcStaffProductivity,
   formatProductivity,
-  calcElapsedWorkingDays,
   calcMonthlyProductivity,
   formatMonthlyProductivity,
   getMonthlyProductivityStatus,
@@ -154,16 +153,16 @@ export default function DashboardClient({
   const prevVisits = data?.lastWeek?.visits ?? null
   const prevUnitPrice = prevSales !== null && (data?.lastWeek?.visits ?? 0) > 0 ? Math.round(prevSales / data!.lastWeek!.visits!) : null
 
-  // 月次生産性
+  // 月次生産性（週次ベース）
   const monthlySales = data?.monthlySales ?? null
-  const elapsedDays = calcElapsedWorkingDays(new Date())
-  const workingDays = data?.config?.working_days ?? null
+  const completedWeeks = data?.completedWeeks ?? 0
+  const totalWeeks = data?.config?.total_weeks ?? null
   const activeStaffCount = data?.config?.active_staff_count ?? null
   const monthlyProd = monthlySales !== null
-    ? calcMonthlyProductivity(monthlySales, elapsedDays, workingDays, activeStaffCount)
+    ? calcMonthlyProductivity(monthlySales, completedWeeks, totalWeeks, activeStaffCount)
     : null
   const monthlyProdStatus = getMonthlyProductivityStatus(monthlyProd)
-  const monthlyConfigMissing = workingDays === null || activeStaffCount === null
+  const monthlyConfigMissing = totalWeeks === null || activeStaffCount === null
 
   const salesStatus = getStatus(sales, weeklyTargetSales)
   const visitsStatus = getStatus(visits, weeklyTargetVisits)
@@ -266,7 +265,7 @@ export default function DashboardClient({
               </div>
               <p className="text-[#E6ECF5] text-2xl font-bold tracking-tight">{formatMonthlyProductivity(monthlyProd)}</p>
               {monthlyConfigMissing && (
-                <p className="text-xs text-[#8B94A7] mt-1">月次設定から営業日数・スタッフ人数を入力してください</p>
+                <p className="text-xs text-[#8B94A7] mt-1">月次設定から週数・スタッフ人数を入力してください</p>
               )}
             </div>
           </div>
