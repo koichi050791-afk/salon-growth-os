@@ -109,6 +109,7 @@ export interface Database {
           memo: string | null
           working_days: number | null
           active_staff_count: number | null
+          total_weeks: number | null
           created_at: string
           updated_at: string
         }
@@ -124,6 +125,7 @@ export interface Database {
           memo?: string | null
           working_days?: number | null
           active_staff_count?: number | null
+          total_weeks?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -139,6 +141,7 @@ export interface Database {
           memo?: string | null
           working_days?: number | null
           active_staff_count?: number | null
+          total_weeks?: number | null
           created_at?: string
           updated_at?: string
         }
