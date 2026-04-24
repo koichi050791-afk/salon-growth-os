@@ -25,18 +25,40 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
   const router = useRouter()
   const [state, formAction, pending] = useActionState(saveMonthlyConfig, initialState)
   const [editingConfig, setEditingConfig] = useState<MonthlyConfig | null | undefined>(undefined)
+  const [copyDefaults, setCopyDefaults] = useState<Partial<MonthlyConfig> | null>(null)
+  const [copyKey, setCopyKey] = useState(0)
   const prevStateRef = useRef(initialState)
 
   useEffect(() => {
     if (state !== prevStateRef.current && state.success) {
       router.refresh()
       setEditingConfig(undefined)
+      setCopyDefaults(null)
     }
     prevStateRef.current = state
   }, [state, router])
 
+  function handleCopyPrevMonth() {
+    const now = new Date()
+    const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()
+    const prevMonthNum = now.getMonth() === 0 ? 12 : now.getMonth()
+    const prevMonthStr = `${prevYear}-${String(prevMonthNum).padStart(2, '0')}`
+
+    const prevConfig = configs.find((c) => c.target_month === prevMonthStr)
+    if (!prevConfig) {
+      alert(`前月（${prevMonthStr}）のデータが見つかりませんでした`)
+      return
+    }
+
+    setCopyDefaults(prevConfig)
+    setCopyKey((k) => k + 1)
+    setEditingConfig(null)
+  }
+
   const defaultMonth = new Date().toISOString().slice(0, 7)
   const latestConfig = configs[0] ?? null
+
+  const formDefaults = editingConfig ?? copyDefaults
 
   return (
     <div className="space-y-4">
@@ -48,6 +70,7 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
           onChange={(e) => {
             const val = e.target.value
             setEditingConfig(undefined)
+            setCopyDefaults(null)
             router.push(val ? `/monthly-config?storeId=${val}` : '/monthly-config')
           }}
           className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-3 focus:outline-none focus:border-[#D4AF37]/50"
@@ -110,12 +133,20 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
           {/* 一覧ヘッダー */}
           <div className="flex items-center justify-between">
             <h2 className="text-[#E6ECF5] font-semibold">月次基準値一覧</h2>
-            <button
-              onClick={() => setEditingConfig(null)}
-              className="bg-[#D4AF37] text-black text-sm px-4 py-2 rounded-xl font-bold hover:opacity-90 transition active:scale-[0.98]"
-            >
-              ＋ 新規追加
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopyPrevMonth}
+                className="text-sm px-3 py-2 bg-[#111A2B] border border-[#D4AF37]/30 rounded-xl text-[#D4AF37] hover:opacity-90 transition active:scale-[0.98]"
+              >
+                前月をコピー
+              </button>
+              <button
+                onClick={() => { setEditingConfig(null); setCopyDefaults(null); setCopyKey((k) => k + 1) }}
+                className="bg-[#D4AF37] text-black text-sm px-4 py-2 rounded-xl font-bold hover:opacity-90 transition active:scale-[0.98]"
+              >
+                ＋ 新規追加
+              </button>
+            </div>
           </div>
 
           {/* 一覧 */}
@@ -132,7 +163,7 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
                 >
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[#E6ECF5] font-bold">{c.target_month}</p>
-                    <button onClick={() => setEditingConfig(c)} className="text-[#D4AF37] text-sm hover:opacity-70 transition">編集</button>
+                    <button onClick={() => { setEditingConfig(c); setCopyDefaults(null) }} className="text-[#D4AF37] text-sm hover:opacity-70 transition">編集</button>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <Row label="目標売上"   value={fmt(c.target_sales, '円')} />
@@ -157,12 +188,16 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
                 <h3 className="text-[#E6ECF5] font-bold">
                   {editingConfig === null ? '新規追加' : `${editingConfig.target_month} を編集`}
                 </h3>
-                <button type="button" onClick={() => setEditingConfig(undefined)} className="text-[#8B94A7] hover:text-[#E6ECF5] text-sm transition">
+                <button
+                  type="button"
+                  onClick={() => { setEditingConfig(undefined); setCopyDefaults(null) }}
+                  className="text-[#8B94A7] hover:text-[#E6ECF5] text-sm transition"
+                >
                   ✕ 閉じる
                 </button>
               </div>
 
-              <form key={editingConfig === null ? 'new' : editingConfig.id} action={formAction} className="space-y-4">
+              <form key={editingConfig === null ? `new-${copyKey}` : editingConfig.id} action={formAction} className="space-y-4">
                 <input type="hidden" name="store_id" value={selectedStoreId} />
 
                 <div>
@@ -173,42 +208,42 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className={LABEL_CLASS}>目標売上（円）</label>
-                    <input type="number" name="target_sales" defaultValue={editingConfig?.target_sales ?? ''} min="0" className={INPUT_CLASS} />
+                    <input type="number" name="target_sales" defaultValue={formDefaults?.target_sales ?? ''} min="0" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>目標客単価（円）</label>
-                    <input type="number" name="target_unit_price" defaultValue={editingConfig?.target_unit_price ?? ''} min="0" className={INPUT_CLASS} />
+                    <input type="number" name="target_unit_price" defaultValue={formDefaults?.target_unit_price ?? ''} min="0" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>目標来店数</label>
-                    <input type="number" name="target_visits" defaultValue={editingConfig?.target_visits ?? ''} min="0" className={INPUT_CLASS} />
+                    <input type="number" name="target_visits" defaultValue={formDefaults?.target_visits ?? ''} min="0" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>目標生産性</label>
-                    <input type="number" name="target_productivity" defaultValue={editingConfig?.target_productivity ?? ''} min="0" step="0.01" className={INPUT_CLASS} />
+                    <input type="number" name="target_productivity" defaultValue={formDefaults?.target_productivity ?? ''} min="0" step="0.01" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>目標再来率（%）</label>
-                    <input type="number" name="target_repeat_rate" defaultValue={editingConfig?.target_repeat_rate ?? ''} min="0" max="100" step="0.1" className={INPUT_CLASS} />
+                    <input type="number" name="target_repeat_rate" defaultValue={formDefaults?.target_repeat_rate ?? ''} min="0" max="100" step="0.1" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>メモ</label>
-                    <textarea name="memo" defaultValue={editingConfig?.memo ?? ''} rows={2} className={INPUT_CLASS} />
+                    <textarea name="memo" defaultValue={formDefaults?.memo ?? ''} rows={2} className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>月の営業日数</label>
                     <p className="text-[#8B94A7] text-xs mb-1">月曜定休を除いた営業日数を入力してください</p>
-                    <input type="number" name="working_days" defaultValue={editingConfig?.working_days ?? ''} min="1" max="31" placeholder="例：26" className={INPUT_CLASS} />
+                    <input type="number" name="working_days" defaultValue={formDefaults?.working_days ?? ''} min="1" max="31" placeholder="例：26" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>稼働スタッフ人数</label>
                     <p className="text-[#8B94A7] text-xs mb-1">今月実際に稼働するスタッフの人数</p>
-                    <input type="number" name="active_staff_count" defaultValue={editingConfig?.active_staff_count ?? ''} min="1" placeholder="例：4" className={INPUT_CLASS} />
+                    <input type="number" name="active_staff_count" defaultValue={formDefaults?.active_staff_count ?? ''} min="1" placeholder="例：4" className={INPUT_CLASS} />
                   </div>
                   <div>
                     <label className={LABEL_CLASS}>月の総週数</label>
                     <p className="text-[#8B94A7] text-xs mb-1">その月の営業週数（4または5）</p>
-                    <input type="number" name="total_weeks" defaultValue={editingConfig?.total_weeks ?? ''} min="4" max="5" placeholder="例：4" className={INPUT_CLASS} />
+                    <input type="number" name="total_weeks" defaultValue={formDefaults?.total_weeks ?? ''} min="4" max="5" placeholder="例：4" className={INPUT_CLASS} />
                   </div>
                 </div>
 
@@ -227,7 +262,7 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
                     className="flex-1 bg-[#D4AF37] text-black py-4 rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-50 transition active:scale-[0.98]">
                     {pending ? '保存中...' : '保存する'}
                   </button>
-                  <button type="button" onClick={() => setEditingConfig(undefined)}
+                  <button type="button" onClick={() => { setEditingConfig(undefined); setCopyDefaults(null) }}
                     className="px-4 py-4 bg-[#111A2B] border border-[#D4AF37]/30 rounded-xl text-sm text-[#D4AF37] hover:opacity-70 transition">
                     キャンセル
                   </button>
