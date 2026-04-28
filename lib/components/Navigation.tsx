@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { href: '/weekly-input',  icon: '➕', label: '入力' },
   { href: '/actions',       icon: '🎯', label: '改善' },
   { href: '/overview',      icon: '🏢', label: '全店' },
-  { href: '/monthly-config', icon: '⚙️', label: '設定' },
+  { href: '/summary',       icon: '📈', label: 'サマリー' },
 ]
 
 export default function Navigation() {
