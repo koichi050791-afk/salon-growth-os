@@ -16,7 +16,7 @@ export default async function SummaryPage() {
 
   if (!profile?.store_id) redirect('/login')
 
-  const { weeklyData, actionData } = await fetchSummaryData(profile.store_id)
+  const { weeklyData, actionData, staffData } = await fetchSummaryData(profile.store_id)
 
-  return <SummaryClient weeklyData={weeklyData} actionData={actionData} />
+  return <SummaryClient weeklyData={weeklyData} actionData={actionData} staffData={staffData} />
 }
