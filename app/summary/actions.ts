@@ -13,10 +13,21 @@ export async function fetchSummaryData(storeId: string) {
 
   const { data: actionData } = await supabase
     .from('improvement_actions')
-    .select('week_start, status, result_status')
+    .select('week_start, action_title, status, result_status')
     .eq('store_id', storeId)
     .order('week_start', { ascending: true })
     .limit(8)
 
-  return { weeklyData: weeklyData ?? [], actionData: actionData ?? [] }
+  const { data: staffData } = await supabase
+    .from('weekly_staff_inputs')
+    .select('week_start, staff_id, sales, labor_hours')
+    .eq('store_id', storeId)
+    .order('week_start', { ascending: true })
+    .limit(32)
+
+  return {
+    weeklyData: weeklyData ?? [],
+    actionData: actionData ?? [],
+    staffData: staffData ?? []
+  }
 }
