@@ -3,6 +3,7 @@
 import { getActiveStores } from '@/lib/repositories/stores'
 import { getWeeklyStoreInput, getStoreInputsByDateRange } from '@/lib/repositories/weekly-store-inputs'
 import { getMonthlyConfig } from '@/lib/repositories/monthly-configs'
+import { calcProratedMonthlySales } from '@/lib/calculations'
 import type { Store, WeeklyStoreInput, MonthlyConfig } from '@/lib/types/db'
 
 export type StoreOverview = {
@@ -30,7 +31,11 @@ export async function fetchOverviewData(weekStart: string): Promise<OverviewData
     const { data: stores } = await getActiveStores()
     const lastWeekStart = prevWeekISO(weekStart)
     const month = weekStart.slice(0, 7)
-    const monthStart = weekStart.slice(0, 8) + '01'
+
+    // 月初の7日前（前月末にまたがる週を取得するため）
+    const monthFetchStart = new Date(weekStart.slice(0, 8) + '01')
+    monthFetchStart.setDate(monthFetchStart.getDate() - 7)
+    const monthFetchStartISO = monthFetchStart.toISOString().slice(0, 10)
 
     const overviews = await Promise.all(
       stores.map(async (store): Promise<StoreOverview> => {
@@ -38,15 +43,23 @@ export async function fetchOverviewData(weekStart: string): Promise<OverviewData
           getWeeklyStoreInput(store.id, weekStart),
           getWeeklyStoreInput(store.id, lastWeekStart),
           getMonthlyConfig(store.id, month),
-          getStoreInputsByDateRange(store.id, monthStart, weekStart),
+          getStoreInputsByDateRange(store.id, monthFetchStartISO, weekStart),
         ])
-        const monthlySalesArr = monthlyInputsResult.data
-          .map((i) => i.sales)
-          .filter((s): s is number => s !== null)
-        const monthlySales = monthlySalesArr.length > 0
-          ? monthlySalesArr.reduce((a, b) => a + b, 0)
-          : null
-        const completedWeeks = monthlySalesArr.length
+
+        // 按分方式で月累計売上を計算
+        const monthlySales = calcProratedMonthlySales(monthlyInputsResult.data, month)
+
+        const completedWeeks = monthlyInputsResult.data.filter((w) => {
+          if (w.sales === null) return false
+          const weekStartDate = new Date(w.week_start)
+          const weekEndDate = new Date(weekStartDate)
+          weekEndDate.setDate(weekEndDate.getDate() + 6)
+          const [year, m] = month.split('-').map(Number)
+          const monthStart = new Date(year, m - 1, 1)
+          const monthEnd = new Date(year, m, 0)
+          return weekEndDate >= monthStart && weekStartDate <= monthEnd
+        }).length
+
         return {
           store,
           thisWeek: thisWeek ?? null,
