@@ -5,6 +5,7 @@ import { getWeeklyStoreInput, getLatestWeeklyStoreInput, getStoreInputsByDateRan
 import { getWeeklyStaffInputs } from '@/lib/repositories/weekly-staff-inputs'
 import { getMonthlyConfig } from '@/lib/repositories/monthly-configs'
 import { getRecentImprovementActions } from '@/lib/repositories/improvement-actions'
+import { calcProratedMonthlySales } from '@/lib/calculations'
 import type { WeeklyStoreInput, WeeklyStaffInput, Staff, MonthlyConfig, ImprovementAction } from '@/lib/types/db'
 
 export type HistoryWeek = {
@@ -55,7 +56,11 @@ export async function fetchDashboardData(
     const lastWeekStart = prevWeekISO(weekStart)
     const fourWeeksAgoISO = nWeeksAgoISO(weekStart, 3)
     const month = weekStart.slice(0, 7)
-    const monthStart = weekStart.slice(0, 8) + '01'
+
+    // 月初の7日前（前月末にまたがる週を取得するため）
+    const monthFetchStart = new Date(weekStart.slice(0, 8) + '01')
+    monthFetchStart.setDate(monthFetchStart.getDate() - 7)
+    const monthFetchStartISO = monthFetchStart.toISOString().slice(0, 10)
 
     const [staffResult, thisWeek, lastWeek, thisWeekStaffResult, lastWeekStaffResult, configResult, historyInputs, historyActions, monthlyInputsResult] =
       await Promise.all([
@@ -67,7 +72,7 @@ export async function fetchDashboardData(
         getMonthlyConfig(storeId, month),
         getStoreInputsByDateRange(storeId, fourWeeksAgoISO, weekStart),
         getRecentImprovementActions(storeId, 4),
-        getStoreInputsByDateRange(storeId, monthStart, weekStart),
+        getStoreInputsByDateRange(storeId, monthFetchStartISO, weekStart),
       ])
 
     // 直近4週分をマージ
@@ -78,14 +83,19 @@ export async function fetchDashboardData(
       return { weekStart: ws, input, action }
     })
 
-    // 月累計売上・入力済み週数
-    const monthlySalesArr = monthlyInputsResult.data
-      .map((i) => i.sales)
-      .filter((s): s is number => s !== null)
-    const monthlySales = monthlySalesArr.length > 0
-      ? monthlySalesArr.reduce((a, b) => a + b, 0)
-      : null
-    const completedWeeks = monthlySalesArr.length
+    // 月累計売上・入力済み週数（按分方式）
+    const monthlySales = calcProratedMonthlySales(monthlyInputsResult.data, month)
+
+    const completedWeeks = monthlyInputsResult.data.filter((w) => {
+      if (w.sales === null) return false
+      const weekStartDate = new Date(w.week_start)
+      const weekEndDate = new Date(weekStartDate)
+      weekEndDate.setDate(weekEndDate.getDate() + 6)
+      const [year, m] = month.split('-').map(Number)
+      const monthStart = new Date(year, m - 1, 1)
+      const monthEnd = new Date(year, m, 0)
+      return weekEndDate >= monthStart && weekStartDate <= monthEnd
+    }).length
 
     return {
       thisWeek: thisWeek ?? null,
