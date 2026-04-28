@@ -67,7 +67,11 @@ export function diagnoseIssue(
   }
 
   const avail = thisWeek.availability_score ?? 0
-  if (avail >= 4) {
+  const weeklyTarget = config != null && config.target_sales != null ? config.target_sales / WEEKLY_WEEKS : 0
+  const salesActual = thisWeek.sales ?? 0
+  const salesAchievementRate = weeklyTarget > 0 ? salesActual / weeklyTarget : 1
+
+  if (avail >= 4 && salesAchievementRate < 0.9) {
     return buildResult('availability', '予約の空き時間が多い（平日集客が弱い）', prevIssueType)
   }
 
