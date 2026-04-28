@@ -12,6 +12,7 @@ import {
   calcMonthlyProductivity,
   formatMonthlyProductivity,
   getMonthlyProductivityStatus,
+  calcProratedMonthlySales,
 } from '@/lib/calculations'
 
 const WEEKLY_WEEKS = 4.3
@@ -64,7 +65,12 @@ export default async function Home() {
   const today = new Date()
   const thisWeekStart = getSundayISO()
   const lastWeekStart = prevWeekISO(thisWeekStart)
-  const monthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`
+  const currentMonth = today.toISOString().slice(0, 7) // YYYY-MM形式
+
+  // 月初の7日前（前月末にまたがる週を取得するため）
+  const monthFetchStart = new Date(today.getFullYear(), today.getMonth(), 1)
+  monthFetchStart.setDate(monthFetchStart.getDate() - 7)
+  const monthFetchStartISO = monthFetchStart.toISOString().slice(0, 10)
 
   const [thisWeek, lastWeek, configResult, latestAction, monthlyInputsResult] = mainStore
     ? await Promise.all([
@@ -72,7 +78,7 @@ export default async function Home() {
         getWeeklyStoreInput(mainStore.id, lastWeekStart),
         getLatestMonthlyConfig(mainStore.id),
         getLatestImprovementAction(mainStore.id),
-        getStoreInputsByDateRange(mainStore.id, monthStart, thisWeekStart),
+        getStoreInputsByDateRange(mainStore.id, monthFetchStartISO, thisWeekStart),
       ])
     : [null, null, { data: null }, null, { data: [], error: null }]
 
@@ -95,9 +101,20 @@ export default async function Home() {
     ? Math.round((prevNextVisitCount / prevVisits) * 100) : null
 
   const monthlyInputs = (monthlyInputsResult as { data: WeeklyStoreInput[] }).data ?? []
-  const monthlySalesArr = monthlyInputs.map((i) => i.sales).filter((s): s is number => s !== null)
-  const monthlySalesVal = monthlySalesArr.length > 0 ? monthlySalesArr.reduce((a, b) => a + b, 0) : null
-  const completedWeeks = monthlySalesArr.length
+
+  // 按分方式で月累計売上を計算
+  const monthlySalesVal = calcProratedMonthlySales(monthlyInputs, currentMonth)
+  const completedWeeks = monthlyInputs.filter((w) => {
+    if (w.sales === null) return false
+    const weekStartDate = new Date(w.week_start)
+    const weekEndDate = new Date(weekStartDate)
+    weekEndDate.setDate(weekEndDate.getDate() + 6)
+    const [year, m] = currentMonth.split('-').map(Number)
+    const monthStart = new Date(year, m - 1, 1)
+    const monthEnd = new Date(year, m, 0)
+    return weekEndDate >= monthStart && weekStartDate <= monthEnd
+  }).length
+
   const totalWeeks = config?.total_weeks ?? null
   const activeStaffCount = config?.active_staff_count ?? null
   const monthlyProd = monthlySalesVal !== null
