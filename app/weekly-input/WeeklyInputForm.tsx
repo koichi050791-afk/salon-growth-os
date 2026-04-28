@@ -75,7 +75,10 @@ function runDiagnosis(
     if (ratio < 0.9) return { status: 'warning', issue: '売上が目標の70〜90%', action: 'カラー前にケア提案を1回必ず入れる' }
   }
 
-  if ((availabilityScore ?? 0) >= 4) {
+  const weeklyTarget = config?.target_sales != null ? config.target_sales / 4.3 : 0
+  const salesAchievementRate = weeklyTarget > 0 && sales !== null ? sales / weeklyTarget : 1
+
+  if ((availabilityScore ?? 0) >= 4 && salesAchievementRate < 0.9) {
     return { status: 'warning', issue: '空き枠が多い：平日集客に余地あり', action: '平日限定クーポンをLINEで配信する' }
   }
 
@@ -126,6 +129,10 @@ function validateForm(
   if (rc) {
     const n = Number(rc)
     if (isNaN(n) || n < 0 || !Number.isInteger(n)) errs.repeat_customers = '0以上の整数を入力してください'
+  }
+
+  if (storeForm.availability_score === null || storeForm.availability_score === undefined) {
+    errs.availability_score = '空き状況を選択してください'
   }
 
   staffRows.forEach((row, idx) => {
@@ -483,7 +490,9 @@ export default function WeeklyInputForm({
                 {errors.repeat_customers && <p className="text-red-400 text-xs mt-1">{errors.repeat_customers}</p>}
               </div>
               <div>
-                <label className={LABEL_CLASS}>空き状況</label>
+                <label className={LABEL_CLASS}>
+                  空き状況<span className="text-red-400 text-xs ml-1">※必須</span>
+                </label>
                 <div className="grid grid-cols-5 gap-2">
                   {AVAIL_LABELS.map((label, i) => {
                     const val = i + 1
@@ -497,6 +506,9 @@ export default function WeeklyInputForm({
                     )
                   })}
                 </div>
+                {errors.availability_score && (
+                  <p className="text-red-400 text-xs mt-1">{errors.availability_score}</p>
+                )}
               </div>
               <div>
                 <label className={LABEL_CLASS}>総労働時間（任意）</label>
