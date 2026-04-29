@@ -148,6 +148,20 @@ function validateForm(
     }
   })
 
+  // 店舗売上とスタッフ売上合計の整合チェック
+  if (s && staffRows.length > 0) {
+    const storeSales = Number(s)
+    const staffTotal = staffRows.reduce((sum, row) => {
+      const n = Number(row.sales.trim())
+      return sum + (isNaN(n) ? 0 : n)
+    }, 0)
+    if (!isNaN(storeSales) && storeSales > 0 && staffTotal > 0) {
+      if (storeSales !== staffTotal) {
+        errs.sales = `店舗売上（${storeSales.toLocaleString()}円）とスタッフ売上合計（${staffTotal.toLocaleString()}円）が一致しません`
+      }
+    }
+  }
+
   return errs
 }
 
