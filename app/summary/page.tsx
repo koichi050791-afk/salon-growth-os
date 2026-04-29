@@ -14,9 +14,9 @@ export default async function SummaryPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.store_id) redirect('/login')
+  const storeId = profile?.store_id ?? '3347ffa3-d37b-4d02-83f1-bad34c678b64'
 
-  const { weeklyData, actionData, staffData } = await fetchSummaryData(profile.store_id)
+  const { weeklyData, actionData, staffData } = await fetchSummaryData(storeId)
 
   return <SummaryClient weeklyData={weeklyData} actionData={actionData} staffData={staffData} />
 }
