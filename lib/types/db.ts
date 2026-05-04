@@ -351,6 +351,132 @@ export interface Database {
         }
         Relationships: []
       }
+      monthly_reports: {
+        Row: {
+          id: string
+          store_id: string
+          year_month: string
+          staff_count: number | null
+          total_sales: number | null
+          tech_sales: number | null
+          retail_sales: number | null
+          tech_unit_price: number | null
+          tech_customer_count: number | null
+          new_customer_count: number | null
+          discount_rate: number | null
+          last_year_total_sales: number | null
+          last_year_tech_sales: number | null
+          last_year_retail_sales: number | null
+          target_total_sales: number | null
+          target_tech_sales: number | null
+          target_retail_sales: number | null
+          color_count: number | null
+          perm_count: number | null
+          straight_count: number | null
+          treatment_count: number | null
+          spa_count: number | null
+          machine_count: number | null
+          new_customer_visit: number | null
+          new_customer_repeat: number | null
+          new_repeat_rate: number | null
+          existing_customer_visit: number | null
+          existing_customer_repeat: number | null
+          existing_repeat_rate: number | null
+          repeat_rate_3m: number | null
+          repeat_rate_6m: number | null
+          adopted_actions: Json
+          promoted_staff: string | null
+          product_requests: string | null
+          notes: string | null
+          submitted_by: string | null
+          submitted_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          year_month: string
+          staff_count?: number | null
+          total_sales?: number | null
+          tech_sales?: number | null
+          retail_sales?: number | null
+          tech_unit_price?: number | null
+          tech_customer_count?: number | null
+          new_customer_count?: number | null
+          discount_rate?: number | null
+          last_year_total_sales?: number | null
+          last_year_tech_sales?: number | null
+          last_year_retail_sales?: number | null
+          target_total_sales?: number | null
+          target_tech_sales?: number | null
+          target_retail_sales?: number | null
+          color_count?: number | null
+          perm_count?: number | null
+          straight_count?: number | null
+          treatment_count?: number | null
+          spa_count?: number | null
+          machine_count?: number | null
+          new_customer_visit?: number | null
+          new_customer_repeat?: number | null
+          new_repeat_rate?: number | null
+          existing_customer_visit?: number | null
+          existing_customer_repeat?: number | null
+          existing_repeat_rate?: number | null
+          repeat_rate_3m?: number | null
+          repeat_rate_6m?: number | null
+          adopted_actions?: Json
+          promoted_staff?: string | null
+          product_requests?: string | null
+          notes?: string | null
+          submitted_by?: string | null
+          submitted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          store_id?: string
+          year_month?: string
+          staff_count?: number | null
+          total_sales?: number | null
+          tech_sales?: number | null
+          retail_sales?: number | null
+          tech_unit_price?: number | null
+          tech_customer_count?: number | null
+          new_customer_count?: number | null
+          discount_rate?: number | null
+          last_year_total_sales?: number | null
+          last_year_tech_sales?: number | null
+          last_year_retail_sales?: number | null
+          target_total_sales?: number | null
+          target_tech_sales?: number | null
+          target_retail_sales?: number | null
+          color_count?: number | null
+          perm_count?: number | null
+          straight_count?: number | null
+          treatment_count?: number | null
+          spa_count?: number | null
+          machine_count?: number | null
+          new_customer_visit?: number | null
+          new_customer_repeat?: number | null
+          new_repeat_rate?: number | null
+          existing_customer_visit?: number | null
+          existing_customer_repeat?: number | null
+          existing_repeat_rate?: number | null
+          repeat_rate_3m?: number | null
+          repeat_rate_6m?: number | null
+          adopted_actions?: Json
+          promoted_staff?: string | null
+          product_requests?: string | null
+          notes?: string | null
+          submitted_by?: string | null
+          submitted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       improvement_actions: {
         Row: {
           id: string
@@ -453,6 +579,10 @@ export type WeeklyStaffInputUpdate = Database['public']['Tables']['weekly_staff_
 export type ImprovementAction = Database['public']['Tables']['improvement_actions']['Row']
 export type ImprovementActionInsert = Database['public']['Tables']['improvement_actions']['Insert']
 export type ImprovementActionUpdate = Database['public']['Tables']['improvement_actions']['Update']
+
+export type MonthlyReport = Database['public']['Tables']['monthly_reports']['Row']
+export type MonthlyReportInsert = Database['public']['Tables']['monthly_reports']['Insert']
+export type MonthlyReportUpdate = Database['public']['Tables']['monthly_reports']['Update']
 
 export type RepositoryResult<T> = {
   data: T | null

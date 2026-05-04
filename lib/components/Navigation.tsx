@@ -5,11 +5,11 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 
 const NAV_ITEMS = [
-  { href: '/',              icon: '🏠', label: 'ホーム' },
-  { href: '/weekly-input',  icon: '➕', label: '入力' },
-  { href: '/actions',       icon: '🎯', label: '改善' },
-  { href: '/overview',      icon: '🏢', label: '全店' },
-  { href: '/summary',       icon: '📈', label: 'サマリー' },
+  { href: '/',                  icon: '🏠', label: 'ホーム' },
+  { href: '/weekly-input',      icon: '➕', label: '入力' },
+  { href: '/actions',           icon: '🎯', label: '改善' },
+  { href: '/overview',          icon: '🏢', label: '全店' },
+  { href: '/monthly-report',    icon: '📋', label: '月報' },
 ]
 
 export default function Navigation() {

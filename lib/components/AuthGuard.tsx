@@ -14,16 +14,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, router])
 
-  if (loading) {
+  if (loading || !user) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <p className="text-slate-500 text-sm">読み込み中...</p>
+      <div className="min-h-screen bg-[#0B1220] flex items-center justify-center">
+        <p className="text-[#8B94A7] text-sm">読み込み中...</p>
       </div>
     )
-  }
-
-  if (!user) {
-    return null
   }
 
   return <>{children}</>

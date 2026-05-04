@@ -9,7 +9,6 @@ const supabase = createClient()
 export type UserProfile = {
   role: 'owner' | 'manager' | 'viewer'
   storeId: string | null
-  displayName: string | null
 }
 
 interface AuthContextType {
@@ -27,7 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 async function fetchProfile(userId: string): Promise<UserProfile | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('role, store_id, display_name')
+    .select('role, store_id')
     .eq('id', userId)
     .single()
 
@@ -36,7 +35,6 @@ async function fetchProfile(userId: string): Promise<UserProfile | null> {
   return {
     role: data.role as 'owner' | 'manager' | 'viewer',
     storeId: data.store_id ?? null,
-    displayName: data.display_name ?? null,
   }
 }
 
@@ -46,25 +44,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      if (currentUser) {
-        const p = await fetchProfile(currentUser.id)
-        setProfile(p)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) {
+        setUser(null)
+        setLoading(false)
       }
-      setLoading(false)
+      // 認証済みの場合は onAuthStateChange の SIGNED_IN で user/profile/loading をまとめて更新
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       const currentUser = session?.user ?? null
       setUser(currentUser)
-      if (currentUser) {
+      if (event === 'SIGNED_IN' && currentUser) {
         const p = await fetchProfile(currentUser.id)
         setProfile(p)
-      } else {
+      } else if (!currentUser) {
         setProfile(null)
       }
+      setLoading(false)
     })
 
     return () => subscription.unsubscribe()

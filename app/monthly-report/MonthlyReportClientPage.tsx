@@ -67,10 +67,10 @@ export default function MonthlyReportClientPage() {
         setStoreId(selectedStore.id)
         setStoreName(selectedStore.store_name)
 
-        const { report: reportData, error: reportError } = await fetchMonthlyReport(
-          selectedStore.id,
-          yearMonth
-        )
+        const [{ report: reportData, error: reportError }] = await Promise.all([
+          fetchMonthlyReport(selectedStore.id, yearMonth),
+          // storeId 確定後に並列化できるクエリはここに追加
+        ])
 
         if (cancelled) return
 
