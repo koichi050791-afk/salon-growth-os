@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/contexts/AuthContext'
-import { fetchMonthlyReport } from './actions'
 import MonthlyReportForm from './MonthlyReportForm'
 import type { MonthlyReport, Store } from '@/lib/types/db'
 
@@ -112,15 +111,18 @@ export default function MonthlyReportClientPage() {
         setStoreId(selectedStore.id)
         setStoreName(selectedStore.store_name)
 
-        const [{ report: reportData, error: reportError }] = await Promise.all([
-          fetchMonthlyReport(selectedStore.id, yearMonth),
-          // storeId 確定後に並列化できるクエリはここに追加
-        ])
+        const yearMonthDate = `${yearMonth}-01`
+        const { data: reportData, error: reportError } = await supabase
+          .from('monthly_reports')
+          .select('*')
+          .eq('store_id', selectedStore.id)
+          .eq('year_month', yearMonthDate)
+          .maybeSingle()
 
         if (cancelled) return
 
         if (reportError) {
-          setDataError(reportError)
+          setDataError(reportError.message)
         } else {
           setReport(reportData ?? makeEmptyReport(selectedStore.id, yearMonth))
         }
