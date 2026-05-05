@@ -82,11 +82,14 @@ export default function MonthlyReportClientPage() {
 
       try {
         const supabase = createClient()
-        const { data: storesData, error: storesError } = await supabase
-          .from('stores')
-          .select('*')
-          .eq('is_active', true)
-          .order('store_name')
+
+        const [
+          { data: storesData, error: storesError },
+          { data: allReports }
+        ] = await Promise.all([
+          supabase.from('stores').select('*').eq('is_active', true).order('store_name'),
+          supabase.from('monthly_reports').select('*').eq('year_month', `${yearMonth}-01`)
+        ])
 
         if (cancelled) return
 
@@ -111,21 +114,8 @@ export default function MonthlyReportClientPage() {
         setStoreId(selectedStore.id)
         setStoreName(selectedStore.store_name)
 
-        const yearMonthDate = `${yearMonth}-01`
-        const { data: reportData, error: reportError } = await supabase
-          .from('monthly_reports')
-          .select('*')
-          .eq('store_id', selectedStore.id)
-          .eq('year_month', yearMonthDate)
-          .maybeSingle()
-
-        if (cancelled) return
-
-        if (reportError) {
-          setDataError(reportError.message)
-        } else {
-          setReport(reportData ?? makeEmptyReport(selectedStore.id, yearMonth))
-        }
+        const reportData = allReports?.find((r) => r.store_id === selectedStore.id) ?? null
+        setReport(reportData ?? makeEmptyReport(selectedStore.id, yearMonth))
       } catch {
         if (!cancelled) {
           setDataError('データの取得中にエラーが発生しました。再度お試しください。')

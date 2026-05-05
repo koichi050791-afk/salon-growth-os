@@ -1,4 +1,3 @@
-import { Suspense } from 'react'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import Navigation from '@/lib/components/Navigation'
 import MonthlyReportClientPage from './MonthlyReportClientPage'
@@ -14,15 +13,7 @@ export default function MonthlyReportPage() {
             <h1 className="text-xl font-bold text-[#E6ECF5]">📋 月次報告書</h1>
             <OwnerLink />
           </div>
-          <Suspense
-            fallback={
-              <div className="text-center py-8">
-                <p className="text-[#8B94A7] text-sm">読み込み中...</p>
-              </div>
-            }
-          >
-            <MonthlyReportClientPage />
-          </Suspense>
+          <MonthlyReportClientPage />
         </div>
       </div>
     </AuthGuard>
