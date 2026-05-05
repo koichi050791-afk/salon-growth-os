@@ -4,13 +4,58 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/contexts/AuthContext'
-import { fetchMonthlyReport, createEmptyReport } from './actions'
+import { fetchMonthlyReport } from './actions'
 import MonthlyReportForm from './MonthlyReportForm'
 import type { MonthlyReport, Store } from '@/lib/types/db'
 
 function getCurrentYearMonth(): string {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+}
+
+function makeEmptyReport(storeId: string, yearMonth: string): MonthlyReport {
+  const now = new Date().toISOString()
+  return {
+    id: '',
+    store_id: storeId,
+    year_month: `${yearMonth}-01`,
+    staff_count: null,
+    total_sales: null,
+    tech_sales: null,
+    retail_sales: null,
+    tech_unit_price: null,
+    tech_customer_count: null,
+    new_customer_count: null,
+    discount_rate: null,
+    last_year_total_sales: null,
+    last_year_tech_sales: null,
+    last_year_retail_sales: null,
+    target_total_sales: null,
+    target_tech_sales: null,
+    target_retail_sales: null,
+    color_count: null,
+    perm_count: null,
+    straight_count: null,
+    treatment_count: null,
+    spa_count: null,
+    machine_count: null,
+    new_customer_visit: null,
+    new_customer_repeat: null,
+    new_repeat_rate: null,
+    existing_customer_visit: null,
+    existing_customer_repeat: null,
+    existing_repeat_rate: null,
+    repeat_rate_3m: null,
+    repeat_rate_6m: null,
+    adopted_actions: [],
+    promoted_staff: null,
+    product_requests: null,
+    notes: null,
+    submitted_by: null,
+    submitted_at: null,
+    created_at: now,
+    updated_at: now,
+  }
 }
 
 export default function MonthlyReportClientPage() {
@@ -77,7 +122,7 @@ export default function MonthlyReportClientPage() {
         if (reportError) {
           setDataError(reportError)
         } else {
-          setReport(reportData ?? await createEmptyReport(selectedStore.id, yearMonth))
+          setReport(reportData ?? makeEmptyReport(selectedStore.id, yearMonth))
         }
       } catch {
         if (!cancelled) {

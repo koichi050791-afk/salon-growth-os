@@ -1,13 +1,59 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { saveMonthlyReport, submitMonthlyReport, fetchMonthlyReport, createEmptyReport } from './actions'
+import { saveMonthlyReport, submitMonthlyReport, fetchMonthlyReport } from './actions'
 import type { MonthlyReport } from '@/lib/types/db'
 import type { ReportFormData } from './actions'
 
 // ──────────────────────────────────────────────
 // ヘルパー
 // ──────────────────────────────────────────────
+function makeEmptyReport(storeId: string, yearMonth: string): MonthlyReport {
+  const now = new Date().toISOString()
+  return {
+    id: '',
+    store_id: storeId,
+    year_month: `${yearMonth}-01`,
+    staff_count: null,
+    total_sales: null,
+    tech_sales: null,
+    retail_sales: null,
+    tech_unit_price: null,
+    tech_customer_count: null,
+    new_customer_count: null,
+    discount_rate: null,
+    last_year_total_sales: null,
+    last_year_tech_sales: null,
+    last_year_retail_sales: null,
+    target_total_sales: null,
+    target_tech_sales: null,
+    target_retail_sales: null,
+    color_count: null,
+    perm_count: null,
+    straight_count: null,
+    treatment_count: null,
+    spa_count: null,
+    machine_count: null,
+    new_customer_visit: null,
+    new_customer_repeat: null,
+    new_repeat_rate: null,
+    existing_customer_visit: null,
+    existing_customer_repeat: null,
+    existing_repeat_rate: null,
+    repeat_rate_3m: null,
+    repeat_rate_6m: null,
+    adopted_actions: [],
+    promoted_staff: null,
+    product_requests: null,
+    notes: null,
+    submitted_by: null,
+    submitted_at: null,
+    created_at: now,
+    updated_at: now,
+  }
+}
+
+
 function toInt(s: string): number | null {
   if (!s.trim()) return null
   const n = parseInt(s.replace(/,/g, ''), 10)
@@ -218,7 +264,7 @@ export default function MonthlyReportForm({
     setCurrentYearMonth(newYearMonth)
     setLoadingMonth(true)
     const { report: newReport } = await fetchMonthlyReport(storeId, newYearMonth)
-    const r = newReport ?? await createEmptyReport(storeId, newYearMonth)
+    const r = newReport ?? makeEmptyReport(storeId, newYearMonth)
     setReport(r)
     setForm(reportToForm(r))
     setLoadingMonth(false)
