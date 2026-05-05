@@ -34,6 +34,13 @@ function unitPrice(sales: string, visits: string): string {
   return '¥' + Math.round(s / v).toLocaleString('ja-JP')
 }
 
+function laborProductivity(sales: string, laborHours: string): string {
+  const s = toInt(sales)
+  const h = toFloat(laborHours)
+  if (s === null || h === null || h === 0) return '—'
+  return '¥' + Math.round(s / h).toLocaleString('ja-JP')
+}
+
 // ──────────────────────────────────────────────
 // 診断ロジック
 // ──────────────────────────────────────────────
@@ -583,6 +590,15 @@ export default function WeeklyInputForm({
                           placeholder="例：40.0"
                           className={`flex-1 ${BASE_INPUT} border-white/10 focus:border-[#D4AF37]/50`} />
                         <span className="text-[#8B94A7] text-sm whitespace-nowrap">時間</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <label className="text-sm text-[#8B94A7]">人時生産性</label>
+                        <span className="bg-[#D4AF37]/10 text-[#D4AF37] text-xs rounded-full px-2 py-0.5">自動算出</span>
+                      </div>
+                      <div className="bg-[#0B1220]/50 border border-white/5 rounded-xl p-4">
+                        <span className="text-[#D4AF37] text-base font-bold">{laborProductivity(row.sales, row.labor_hours)}</span>
                       </div>
                     </div>
                   </div>

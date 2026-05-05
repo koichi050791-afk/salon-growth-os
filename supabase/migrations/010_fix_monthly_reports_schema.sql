@@ -1,0 +1,32 @@
+-- monthly_reports を 006_add_monthly_reports.sql の想定スキーマに揃える
+-- CREATE TABLE IF NOT EXISTS が既存テーブルをスキップしたため不足していたカラムを追加
+
+ALTER TABLE monthly_reports
+  ADD COLUMN IF NOT EXISTS staff_count           int,
+  ADD COLUMN IF NOT EXISTS tech_unit_price        int,
+  ADD COLUMN IF NOT EXISTS new_customer_count     int,
+  ADD COLUMN IF NOT EXISTS discount_rate          numeric(5,2),
+  ADD COLUMN IF NOT EXISTS last_year_total_sales  int,
+  ADD COLUMN IF NOT EXISTS last_year_tech_sales   int,
+  ADD COLUMN IF NOT EXISTS last_year_retail_sales int,
+  ADD COLUMN IF NOT EXISTS target_total_sales     int,
+  ADD COLUMN IF NOT EXISTS target_tech_sales      int,
+  ADD COLUMN IF NOT EXISTS target_retail_sales    int,
+  ADD COLUMN IF NOT EXISTS color_count            int,
+  ADD COLUMN IF NOT EXISTS perm_count             int,
+  ADD COLUMN IF NOT EXISTS straight_count         int,
+  ADD COLUMN IF NOT EXISTS treatment_count        int,
+  ADD COLUMN IF NOT EXISTS spa_count              int,
+  ADD COLUMN IF NOT EXISTS machine_count          int,
+  ADD COLUMN IF NOT EXISTS new_customer_visit     int,
+  ADD COLUMN IF NOT EXISTS new_customer_repeat    int,
+  ADD COLUMN IF NOT EXISTS new_repeat_rate        numeric(5,2),
+  ADD COLUMN IF NOT EXISTS existing_customer_visit   int,
+  ADD COLUMN IF NOT EXISTS existing_customer_repeat  int,
+  ADD COLUMN IF NOT EXISTS existing_repeat_rate      numeric(5,2),
+  ADD COLUMN IF NOT EXISTS repeat_rate_3m         numeric(5,2),
+  ADD COLUMN IF NOT EXISTS repeat_rate_6m         numeric(5,2),
+  ADD COLUMN IF NOT EXISTS adopted_actions        jsonb DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS promoted_staff         text,
+  ADD COLUMN IF NOT EXISTS product_requests       text,
+  ADD COLUMN IF NOT EXISTS notes                  text;

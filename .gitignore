@@ -43,3 +43,5 @@ next-env.d.ts
 # local binaries and claude config
 supabase.exe
 .claude/
+
+.vercel
