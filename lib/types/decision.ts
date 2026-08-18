@@ -9,6 +9,8 @@ export type DecisionContextFieldKey = 'consultationConcern'
 
 export type DecisionCaptureKey = DecisionContextFieldKey | DecisionCaptureFieldKey
 
+export type DecisionCoreFieldKey = Exclude<DecisionCaptureKey, 'professionalHypothesis'>
+
 export type DecisionFieldRole =
   | 'context'
   | 'customer_truth'
@@ -47,13 +49,13 @@ export type DecisionCaptureBoundary = {
   canonicalSource: DecisionCanonicalSource
   canonicalSourceLabel: string
   appStorage: 'none'
-  appRole: 'local_capture_projection'
+  appRole: 'non_canonical_prototype'
   piiPolicy: 'no_customer_pii'
-  duplicateInputPolicy: 'copy_to_canonical_only'
+  operatingFlow: 'ikeda_to_chatgpt_to_canonical_owner'
 }
 
 export type DecisionCaptureCompleteness = {
   knownCoreCount: number
   totalCoreCount: number
-  unknownCoreKeys: DecisionCaptureFieldKey[]
+  unknownCoreKeys: DecisionCoreFieldKey[]
 }

@@ -2,8 +2,8 @@ import type {
   DecisionCaptureBoundary,
   DecisionCaptureCompleteness,
   DecisionCaptureDraft,
-  DecisionCaptureFieldKey,
   DecisionCaptureKey,
+  DecisionCoreFieldKey,
   DecisionFieldDefinition,
   DecisionFieldProjection,
 } from '@/lib/types/decision'
@@ -12,9 +12,9 @@ export const DECISION_CAPTURE_BOUNDARY: DecisionCaptureBoundary = {
   canonicalSource: 'airtable',
   canonicalSourceLabel: 'Airtable Decision table',
   appStorage: 'none',
-  appRole: 'local_capture_projection',
+  appRole: 'non_canonical_prototype',
   piiPolicy: 'no_customer_pii',
-  duplicateInputPolicy: 'copy_to_canonical_only',
+  operatingFlow: 'ikeda_to_chatgpt_to_canonical_owner',
 }
 
 export const DECISION_CAPTURE_FIELDS: DecisionFieldDefinition[] = [
@@ -25,10 +25,10 @@ export const DECISION_CAPTURE_FIELDS: DecisionFieldDefinition[] = [
     airtableField: '今回の相談',
     role: 'context',
     canonicalSource: 'airtable',
-    isCoreDecisionField: false,
+    isCoreDecisionField: true,
     placeholder: '例: 広がりが気になる。朝のセット時間を短くしたい。',
     boundaryNote: '相談内容は文脈です。未確認の背景は足さない。',
-    issue13Linkage: null,
+    issue13Linkage: 'Outcome can later be compared with the original concern.',
     issue14RetrievalRole: 'future retrieval can use this as a concern/theme cue',
   },
   {
@@ -51,7 +51,7 @@ export const DECISION_CAPTURE_FIELDS: DecisionFieldDefinition[] = [
     airtableField: 'Professional Hypothesis',
     role: 'professional_hypothesis',
     canonicalSource: 'airtable',
-    isCoreDecisionField: true,
+    isCoreDecisionField: false,
     placeholder: '原因推定、解釈、予測を書く。未確認なら空欄でよい。',
     boundaryNote: '仮説は事実ではない。Customer Truth に昇格させない。',
     issue13Linkage: 'Validation may support, weaken, or revise this hypothesis.',
@@ -59,8 +59,8 @@ export const DECISION_CAPTURE_FIELDS: DecisionFieldDefinition[] = [
   },
   {
     key: 'chosenDecision',
-    label: 'Chosen Decision',
-    shortLabel: '選んだ判断',
+    label: 'Chosen Decision / 今回の判断',
+    shortLabel: '今回の判断',
     airtableField: '選んだ方法',
     role: 'chosen_decision',
     canonicalSource: 'airtable',
@@ -140,7 +140,7 @@ export function getDecisionCaptureCompleteness(
   const core = projections.filter((projection) => projection.definition.isCoreDecisionField)
   const unknownCoreKeys = core
     .filter((projection) => projection.state === 'unknown')
-    .map((projection) => projection.definition.key as DecisionCaptureFieldKey)
+    .map((projection) => projection.definition.key as DecisionCoreFieldKey)
 
   return {
     knownCoreCount: core.length - unknownCoreKeys.length,
@@ -156,6 +156,8 @@ export function buildDecisionCaptureClipboardText(
 
   return [
     'Decision OS v0.1',
+    'Prototype role: non-canonical development aid',
+    'Normal operating flow: Ikeda -> ChatGPT -> canonical owner',
     `Canonical source: ${DECISION_CAPTURE_BOUNDARY.canonicalSourceLabel}`,
     'Salon Growth OS storage: none',
     '',
@@ -166,7 +168,9 @@ export function buildDecisionCaptureClipboardText(
     ]),
     'Boundary',
     '- Customer Truth and Professional Hypothesis are separate.',
+    '- Professional Hypothesis is optional in v0.1 and is not part of the core 5.',
     '- Missing information remains unknown/null.',
+    '- This snapshot is for structure review, not a required daily input path.',
     '- Do not add customer PII to Salon Growth OS, GitHub, fixtures, logs, or screenshots.',
   ].join('\n')
 }

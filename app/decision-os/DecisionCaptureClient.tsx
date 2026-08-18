@@ -53,19 +53,19 @@ export default function DecisionCaptureClient() {
       <div className="bg-[#111A2B] rounded-2xl p-4 border border-[#D4AF37]/30">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[#D4AF37] text-xs font-bold">Airtable capture helper</p>
-            <h2 className="text-[#E6ECF5] text-xl font-bold mt-1">Decision 5項目</h2>
+            <p className="text-[#D4AF37] text-xs font-bold">Non-canonical prototype</p>
+            <h2 className="text-[#E6ECF5] text-xl font-bold mt-1">Decision core 5</h2>
           </div>
           <span className="shrink-0 rounded-full bg-[#D4AF37]/10 px-3 py-1 text-xs font-bold text-[#D4AF37]">
             {completeness.knownCoreCount}/{completeness.totalCoreCount}
           </span>
         </div>
         <p className="text-[#8B94A7] text-sm mt-3">
-          ここでは保存しません。Customer Truth と Professional Hypothesis を分けたまま、Airtable の Decision に移すための一時メモです。
+          これは日常入力画面ではありません。Decision 構造と field contract を検証するための prototype です。通常運用は 池田 → ChatGPT → canonical owner です。
         </p>
         {!coreReady && (
           <p className="text-[#8B94A7] text-xs mt-3 rounded-xl border border-white/10 bg-[#0B1220] px-3 py-2">
-            まだ core field は unknown です。分からない項目は空欄/null のままで扱います。
+            core 5 はまだ unknown です。分からない項目は空欄/null のまま扱い、補完しません。
           </p>
         )}
       </div>
@@ -114,7 +114,7 @@ export default function DecisionCaptureClient() {
           onClick={copyDraft}
           className="rounded-xl bg-[#D4AF37] px-4 py-3 text-sm font-bold text-black transition hover:opacity-90"
         >
-          コピー
+          構造メモをコピー
         </button>
         <button
           type="button"
@@ -127,7 +127,7 @@ export default function DecisionCaptureClient() {
 
       {copyState === 'copied' && (
         <p className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-400">
-          Airtable 転記用のテキストをコピーしました。
+          prototype 検証用の構造メモをコピーしました。
         </p>
       )}
       {copyState === 'error' && (

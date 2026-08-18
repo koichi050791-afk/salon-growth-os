@@ -201,10 +201,6 @@ export default async function Home() {
                   className="text-center text-sm py-3 px-4 bg-[#111A2B] border border-white/10 rounded-xl text-[#E6ECF5] hover:opacity-90 transition">
                   ⚙️ 月次設定
                 </Link>
-                <Link href="/decision-os"
-                  className="text-center text-sm py-3 px-4 bg-[#111A2B] border border-[#D4AF37]/30 rounded-xl text-[#D4AF37] hover:opacity-90 transition">
-                  Decision OS
-                </Link>
               </div>
             </>
           )}

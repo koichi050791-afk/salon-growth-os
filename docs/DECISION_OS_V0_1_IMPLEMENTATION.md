@@ -22,12 +22,13 @@ Date: 2026-08-18
 
 Issue #12 needs a Decision capture contract, not a new persistence layer. The added contract defines:
 
+- Consultation / concern
 - Customer Truth
-- Professional Hypothesis
 - Chosen Decision
 - Not Chosen
 - Next Observation
-- optional consultation/concern context
+
+Professional Hypothesis is defined separately because it must not be mixed into Customer Truth, but it is optional/non-core in v0.1.
 
 Each field carries Airtable mapping, canonical source, unknown state, and later #13/#14 linkage notes.
 
@@ -35,7 +36,13 @@ Each field carries Airtable mapping, canonical source, unknown state, and later 
 
 Airtable remains the canonical customer/visit/Decision/Future Plan layer.
 
-Salon Growth OS v0.1 only provides a local, non-persistent capture helper. It does not write Supabase, Notion, GitHub, or Airtable. The user copies the structured text into Airtable or continues through ChatGPT to the canonical system.
+Salon Growth OS v0.1 only provides a local, non-persistent prototype/development aid for validating the Decision structure and UI contract. It does not write Supabase, Notion, GitHub, or Airtable.
+
+The normal operating flow remains:
+
+Ikeda -> ChatGPT -> canonical owner
+
+The route must not become a standard daily workflow of entering data into Salon Growth OS and then re-entering it into Airtable.
 
 ## Migration decision
 
@@ -46,6 +53,7 @@ No Supabase migration is required for Issue #12. Adding a Supabase Decision tabl
 - Do not enter real customer names, phone numbers, emails, face photos, or detailed identifiers into this repository, fixtures, logs, screenshots, or tests.
 - The UI stores draft text only in local React state and does not persist it.
 - Missing fields remain unknown/null; the helper does not fill them.
+- The Home shortcut was removed so this prototype is not promoted as Ikeda's daily input route.
 
 ## Extension path
 

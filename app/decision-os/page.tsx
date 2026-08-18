@@ -6,7 +6,7 @@ import DecisionCaptureClient from './DecisionCaptureClient'
 
 export const metadata: Metadata = {
   title: 'Decision OS v0.1 | Salon Growth OS',
-  description: 'Airtable canonical Decision capture helper',
+  description: 'Non-canonical Decision OS prototype',
 }
 
 export default function DecisionOsPage() {
@@ -19,9 +19,9 @@ export default function DecisionOsPage() {
         <main className="mx-auto max-w-lg space-y-4 px-4 py-6">
           <header>
             <p className="text-[#D4AF37] text-xs font-bold">Decision OS v0.1</p>
-            <h1 className="text-lg font-semibold text-[#E6ECF5]">Decision capture</h1>
+            <h1 className="text-lg font-semibold text-[#E6ECF5]">Decision structure prototype</h1>
             <p className="text-[#8B94A7] text-xs mt-1">
-              顧客 Decision の canonical source は Airtable。Salon Growth OS には保存しません。
+              non-canonical development aid。日常入力導線ではなく、Decision構造とUIの検証用です。
             </p>
           </header>
 
@@ -32,6 +32,7 @@ export default function DecisionOsPage() {
             <div className="mt-3 space-y-2 text-sm">
               <BoundaryRow label="Canonical" value={DECISION_CAPTURE_BOUNDARY.canonicalSourceLabel} />
               <BoundaryRow label="Storage" value="none / local browser state only" />
+              <BoundaryRow label="Flow" value="Ikeda -> ChatGPT -> canonical owner" />
               <BoundaryRow label="PII" value="real names, contacts, photos, and detailed identifiers stay out" />
               <BoundaryRow label="Notion" value="Strategic Decision Log only, not customer salon Decisions" />
             </div>
@@ -39,6 +40,9 @@ export default function DecisionOsPage() {
 
           <section className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
             <h2 className="text-[#E6ECF5] text-base font-bold">Later linkage</h2>
+            <p className="mt-2 text-xs text-[#8B94A7]">
+              Professional Hypothesis remains optional and separate from the core 5. Outcome and retrieval should attach later only after field validation.
+            </p>
             <div className="mt-3 space-y-3">
               {coreFields.map((field) => (
                 <div key={field.key} className="border-t border-white/10 pt-3 first:border-t-0 first:pt-0">
