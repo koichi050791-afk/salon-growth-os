@@ -1,71 +1,119 @@
-# Codex implementation backlog — v0.1
+# Codex implementation backlog — Ikeda Salon OS v0.1
 
-This backlog captures implementation candidates that should only be built after the operating need is validated. The order reflects current value, reversibility, and data availability.
+Status: 2026-08-18
 
-## P0 — Operating foundation
+This backlog is subordinate to `IKEDA_OS_V0_1.md`, `IKEDA_OS_ROADMAP.md`, and the active GitHub Issues. Build order follows field value, reversibility, and the no-duplicate-input rule.
 
-### 1. Daily brief data adapter
-Goal: expose a small server-side interface that can assemble the data needed for a daily operating brief without creating duplicate manual input.
+## P0 — CURRENT
 
-Acceptance criteria:
-- Returns current date, store, latest weekly KPI data, latest improvement action, and missing-data flags.
-- Does not invent appointment/customer data.
-- Keeps data access behind repository functions.
-- Has a clear empty state when source data is absent.
+### 1. Issue #2 — Active experiment tracking surface
+Status: **ready for Codex implementation**.
 
-Status: candidate — validate exact Calendar / booking source first.
+Goal:
+Represent the learning chain:
 
-### 2. Experiment tracking surface
-Goal: make one active experiment visible next to weekly KPIs so operating changes can be evaluated instead of forgotten.
+hypothesis → observation → result → interpretation → unresolved question → next check.
 
-Acceptance criteria:
-- Shows hypothesis, observation metric, start date, and status.
-- Separates observed result from interpretation.
-- Does not declare causality from one day / one observation.
-- Uses existing data model where possible; schema change requires explicit issue approval.
+Confirmed decisions:
+- reuse `improvement_actions`
+- no new `experiments` table
+- add nullable `hypothesis`, `observation_metrics`, `interpretation`, `unresolved_question`
+- keep `HomeActionCard`
+- add `ActiveExperimentCard`
+- explicit empty/error states
+- no causal claim from one observation
+- no customer PII
 
-Status: candidate.
+Implementation branch: `codex/experiment-tracking-v0.1`.
 
-## P1 — Learning loop
+## P1 — AFTER ISSUE #2 FIELD USE
 
-### 3. Case-to-learning handoff (non-PII only)
-Goal: let the management OS reference anonymized learning signals from treatment Cases without storing customer records here.
+### 2. Issue #3 — Ikeda operating cockpit
+Status: **defined; do not implement before Issue #2 is used and reviewed**.
 
-Acceptance criteria:
-- No customer names or personally identifiable information.
-- Stores only aggregate / anonymized learning signals.
-- Makes source type explicit: observation / hypothesis / validated knowledge.
-- Can be disabled without affecting core KPI features.
+Goal:
+Reframe Home from generic store dashboard to personal management / learning cockpit.
 
-Status: discovery first.
+Primary mobile hierarchy:
+1. current state
+2. monthly ¥1.3M target progress
+3. current operating focus
+4. active experiment
+5. KPI pulse
+6. learning / unresolved question
+7. minimum shortcuts
 
-### 4. Weekly review generator input model
-Goal: structure the exact data required for ChatGPT to produce a weekly operating review.
+Avoid broad rewrites. De-emphasize legacy multi-store/staff surfaces before deleting schema.
 
-Acceptance criteria:
-- KPI changes, active experiment, notable observations, and unresolved questions are available from one server function.
-- Missing data is explicit.
-- No LLM dependency is required inside the app for v0.1.
+### 3. Issue #4 — Weekly review assembly model
+Status: **defined**.
 
-Status: candidate.
+Goal:
+Expose one server-side review payload for ChatGPT/review workflows without adding an LLM dependency inside the app.
 
-## P2 — Later, only after validation
+Must separate:
+- KPI facts
+- observations
+- interpretation
+- unresolved questions
+- missing-data flags
 
-### 5. My Hair OS bridge
-Do not implement customer-facing My Hair OS inside this repository.
-If integration is later required, define a narrow API / export boundary with explicit consent and privacy rules.
+Reuse Issue #2 experiment data.
 
-### 6. Booking integration
-Do not build until a reliable source exists (e.g. supported export, Calendar sync, or documented API). Do not create a second manual booking ledger.
+## P2 — DISCOVERY
 
-### 7. Product analytics
-Only add product analytics after a real user-facing workflow exists and there is a concrete question to measure.
+### 4. Issue #5 — Non-PII Case → Learning bridge
+Status: **discovery only**.
 
-## Not in scope now
+Goal:
+Define the narrowest handoff from Drive/Sheets Case facts and Notion Knowledge into anonymized management learning signals.
 
-- Real customer CRM
-- Customer consultation notes
-- Customer photos
-- Direct publishing automation
-- Automatic causal recommendations from single-day data
-- New paid SaaS dependencies without explicit approval
+Do not implement storage/sync until canonical Case ID, allowed fields, update/version behavior, and read/write direction are validated.
+
+### 5. Source-of-truth adapter decision
+Status: **observe first**.
+
+Current Experiment v0.1 may temporarily use a dual representation for validation, but Ikeda must not manually maintain both Notion and Salon Growth OS.
+
+After field use choose one:
+- display adapter with Notion canonical,
+- Salon Growth OS canonical for active management experiment,
+- or another explicitly documented single-owner model.
+
+See `SOURCE_OF_TRUTH_CONTRACT.md`.
+
+## P3 — ONLY WHEN A REAL SOURCE EXISTS
+
+### 6. KPI / Sheets adapter
+Only if it removes duplicate entry and preserves Sheets as canonical primary facts.
+
+### 7. Daily brief assembly
+Do not make this a booking/calendar project by default. Build only after exact source data and user need are validated. Missing appointment data must remain explicit.
+
+### 8. Calendar context
+Use Google Calendar only where actual calendar events materially improve the operating view. Never create a second booking ledger.
+
+## Deferred / out of scope
+
+- customer CRM inside this repository
+- customer names / phone / email / photos / detailed appointment histories
+- My Hair OS customer-facing implementation
+- full Airtable customer timeline UI
+- generic multi-store SaaS expansion
+- direct social publishing automation
+- automatic AI causal recommendations
+- product analytics without a concrete product question
+- new paid SaaS dependencies without explicit approval
+
+## Build gate
+
+Before starting any new Codex issue, confirm:
+
+1. Does it solve an observed operating problem?
+2. Does it reduce work or improve decision/learning quality?
+3. Is there a canonical source for the required data?
+4. Does it avoid duplicate manual input?
+5. Is the smallest version reversible?
+6. Can it be implemented without customer PII?
+
+If the answer is unclear, return to discovery instead of coding.
