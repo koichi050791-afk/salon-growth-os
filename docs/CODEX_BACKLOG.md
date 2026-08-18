@@ -1,4 +1,4 @@
-# Codex implementation backlog — Ikeda Salon OS v0.1
+# Codex implementation backlog — Ikeda Salon Learning OS v0.1
 
 Status: 2026-08-18
 

@@ -4,11 +4,11 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# Salon Growth OS — Codex operating rules
+# Ikeda Salon Learning OS — Codex operating rules
 
 ## Product role
 
-This repository is the **management / growth / learning side** of 池田航一｜美容師OS. It is for KPI visibility, operating reviews, experiments, learning, and management decisions.
+This repository is the **management / learning implementation side** of 池田航一｜美容師OS. It is for KPI visibility, operating reviews, experiments, learning, and management decisions.
 
 Do not turn this repository into a customer chart, CRM, or My Hair OS. Customer timeline / Decision / Future Plan functionality belongs outside this repository.
 
@@ -36,7 +36,7 @@ Do not silently change product policy because a technical implementation is easi
 - Notion = higher-order meaning, hypothesis refinement, contradictions, decisions, Knowledge, and projects.
 - Airtable = customer timeline, visits, Decision, Future Plan.
 - GitHub = implementation decisions and code history.
-- Salon Growth OS = management / learning projection and operating UI.
+- Ikeda Salon Learning OS = management / learning projection and operating UI.
 
 Do not create a second human-maintained ledger when a canonical source already exists.
 

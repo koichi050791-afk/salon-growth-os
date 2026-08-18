@@ -1,10 +1,10 @@
-# Ikeda Salon OS — Product Roadmap
+# Ikeda Salon Learning OS — Product Roadmap
 
 As of 2026-08-18.
 
 ## Product role
 
-This repository is the management / growth / learning implementation layer of the wider 池田航一｜美容師OS.
+This repository is the management / learning implementation layer of the wider 池田航一｜美容師OS.
 
 It is not the customer CRM and it is not My Hair OS.
 
@@ -186,7 +186,7 @@ Rules:
 
 - real customer CRM inside this repository
 - customer names / phone / email / photos / detailed visit notes
-- full Airtable customer timeline UI inside Salon Growth OS
+- full Airtable customer timeline UI inside Ikeda Salon Learning OS
 - My Hair OS customer-facing experience
 - automatic social publishing
 - automatic AI recommendations in the app

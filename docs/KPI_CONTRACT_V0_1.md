@@ -1,4 +1,4 @@
-# Ikeda Salon OS — KPI Contract v0.1
+# Ikeda Salon Learning OS — KPI Contract v0.1
 
 Status: 2026-08-18
 
@@ -96,7 +96,7 @@ The current Sheet dashboard records:
 - difference: ¥1,600
 - status: 要確認
 
-Salon Growth OS must surface a reconciliation warning instead of choosing one figure silently.
+Ikeda Salon Learning OS must surface a reconciliation warning instead of choosing one figure silently.
 
 ## KPI interpretation rules
 

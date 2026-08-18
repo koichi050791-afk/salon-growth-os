@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Salon Growth OS",
-  description: "美容室の生産性向上ツール",
+  title: "Ikeda Salon Learning OS",
+  description: "美容師の意思決定と学習を支える運用OS",
 };
 
 export default function RootLayout({

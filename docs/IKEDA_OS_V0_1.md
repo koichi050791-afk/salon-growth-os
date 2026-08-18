@@ -1,10 +1,10 @@
-# Ikeda Salon OS v0.1 — Product Specification
+# Ikeda Salon Learning OS v0.1 — Product Specification
 
 Status: 2026-08-18
 
 ## 1. Purpose
 
-Ikeda Salon OS is the management / growth implementation layer of the wider **池田航一｜美容師OS**.
+Ikeda Salon Learning OS is the management / learning implementation layer of the wider **池田航一｜美容師OS**.
 
 It is not a generic salon management SaaS, not a second CRM, and not My Hair OS.
 
@@ -37,7 +37,7 @@ The role split is fixed as follows.
 - **Lovable** = customer-facing My Hair OS UI prototypes
 - **Canva** = publishing assets and expression
 - **Google Calendar** = time axis only when an actual schedule exists
-- **Ikeda Salon OS** = management / growth cockpit that exposes the minimum information needed for decisions and learning
+- **Ikeda Salon Learning OS** = management / learning cockpit that exposes the minimum information needed for decisions and learning
 
 Ikeda should not manually maintain the same information in multiple tools.
 
@@ -45,7 +45,7 @@ Default operating flow:
 
 > Ikeda → ChatGPT → appropriate source / system
 
-Source systems hold facts. Ikeda Salon OS should read, organize, surface and connect learning where appropriate rather than becoming another duplicate input ledger.
+Source systems hold facts. Ikeda Salon Learning OS should read, organize, surface and connect learning where appropriate rather than becoming another duplicate input ledger.
 
 ---
 
@@ -63,11 +63,11 @@ The current ¥1.3M stability project is in a hop / observation phase. One day, o
 
 ## 4. Repository role and boundary
 
-Repository:
+Target repository slug after the Issue #16 in-place rename:
 
-`koichi050791-afk/salon-growth-os`
+`koichi050791-afk/ikeda-salon-learning-os`
 
-This repository is the **management / growth side** of the Ikeda OS.
+This repository is the **management / learning side** of the Ikeda OS.
 
 Existing capabilities include:
 

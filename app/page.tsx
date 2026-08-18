@@ -133,7 +133,7 @@ export default async function Home() {
         <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
           {/* ヘッダー */}
           <div>
-            <h1 className="text-lg font-semibold text-[#E6ECF5]">Salon Growth OS</h1>
+            <h1 className="text-lg font-semibold text-[#E6ECF5]">Ikeda Salon Learning OS</h1>
             <p className="text-[#8B94A7] text-xs mt-0.5">{dateLabel}</p>
           </div>
 

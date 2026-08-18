@@ -1,4 +1,4 @@
-# Legacy Feature Audit — Salon Growth OS → Ikeda Salon OS
+# Legacy Feature Audit — Salon Growth OS → Ikeda Salon Learning OS
 
 As of 2026-08-18.
 
@@ -196,7 +196,7 @@ Before creating any new input field, answer:
 
 1. Is this a fact, observation, hypothesis, interpretation, or validated knowledge?
 2. What system is the canonical source?
-3. Is Salon Growth OS reading it, deriving it, or owning it?
+3. Is Ikeda Salon Learning OS reading it, deriving it, or owning it?
 4. Will this create duplicate manual input?
 5. Does it contain customer PII?
 
