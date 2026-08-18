@@ -16,9 +16,11 @@ A field should have one canonical owner. Other systems may surface or transform 
 
 | Information | Canonical owner | Salon Growth OS role |
 |---|---|---|
-| KPI / primary operating facts | Google Drive / Sheets where available | consume / display / aggregate |
-| Treatment Case primary facts | Google Drive / Sheets | anonymized learning signal only |
-| Meaning / hypothesis / interpretation | Notion | surface management-relevant subset; do not silently overwrite Notion |
+| KPI / primary operating facts | Google Drive / Sheets | consume / display / aggregate |
+| Daily KPI log | Google Drive / Sheets `KPI日報` | read-only management projection |
+| Treatment Case primary facts | Google Drive / Sheets `施術ケース` | anonymized learning signal only |
+| Experiment primary record | Google Drive / Sheets `実験ログ` | read/display/operate on normalized projection |
+| Meaning / broader hypothesis development / interpretation | Notion | surface management-relevant subset; do not silently overwrite Notion |
 | Knowledge / promoted learning | Notion | reference/surface only |
 | Customer timeline / visit / Decision / Future Plan | Airtable | out of scope; no customer PII copy |
 | Issue / implementation decision / PR / code | GitHub | canonical implementation history |
@@ -28,27 +30,25 @@ A field should have one canonical owner. Other systems may surface or transform 
 
 ## Current experiment: EXP-0001
 
-Notion currently contains the active field experiment for the ¥1.3M stability project:
+The primary experiment record already exists in Google Sheets `実験ログ`:
 
-**必要性のあるケア提案と年末プラン共有は、次回予約と顧客理解の質に影響する**
+- Experiment ID: `EXP-0001`
+- start date: `2026-08-19`
+- status: `実施予定`
+- theme: `必要なケア提案＋年末へ向けた顧客プランニング`
+- hypothesis: 必要性のあるケア提案と年末から逆算した施術計画を明確にすると、顧客理解・次回予約・単価の質がどう変わるかを観察する
+- target: 8月後半の担当顧客
+- observation metrics: 提案実施数／受容数／次回予約／顧客の反応／自宅での扱いやすさ
+- unresolved caution: 一日で因果を断定しない
+- next check: 複数日・複数顧客で観察する
 
-Current state: 観察中.
+Notion also contains the same experiment as a higher-order project/hypothesis object. This is acceptable because the semantic role differs:
 
-Observation intent:
-- proposal performed or not
-- whether there was genuine customer need
-- customer response
-- accepted / not accepted
-- next-visit booking
-- later visit result
-- at-home manageability
+- Drive `実験ログ` = primary operating record / observation ledger
+- Notion = meaning, hypothesis refinement, contradiction, cross-Case learning, promotion toward Knowledge
+- Salon Growth OS = management display / operating cockpit
 
-Known caution:
-- care attachment and next-visit booking must not be treated as a simple causal pair
-- customer understanding and booking behavior are separate outcomes
-- customer conditions and communication style may moderate the result
-
-Next observation begins from 2026-08-19 for customers where the proposal is genuinely relevant.
+Do not require Ikeda to update all three manually.
 
 ## Mapping to Issue #2
 
@@ -59,28 +59,75 @@ Issue #2 extends `improvement_actions` with:
 - `interpretation`
 - `unresolved_question`
 
-For v0.1, these fields make the management UI capable of representing the experiment model. They do **not** establish Salon Growth OS as the permanent canonical owner of hypotheses.
+For v0.1 these fields allow the runtime UI to represent the experiment model. They do **not** make Supabase the permanent canonical source of the experiment.
 
-Until a supported adapter is designed, experiment content may be seeded manually for development/testing with synthetic or non-PII values. Do not create a second daily workflow where Ikeda must maintain the same hypothesis independently in Notion and Salon Growth OS.
+During the initial implementation, the runtime may contain a temporary local projection for EXP-0001 so the UI can be field-tested. This is a technical bridge only.
 
-## Handoff rule
+## Preferred future handoff
 
-Before production use of the Experiment surface, choose exactly one of these modes:
+### Mode A — Sheets → Salon Growth OS projection (preferred)
+Google Sheets `実験ログ` remains the canonical experiment record. A server-side adapter normalizes the active experiment for Salon Growth OS.
 
-### Mode A — Display adapter (preferred future state)
-Notion remains canonical for hypothesis/interpretation; Salon Growth OS reads or receives a normalized management projection.
+Benefits:
+- matches the existing no-direct-input workflow
+- keeps primary operating facts in Drive/Sheets
+- avoids forcing Ikeda to maintain a second experiment ledger
+- allows ChatGPT to continue updating Sheets from the conversational workflow
 
-### Mode B — Salon Growth OS operating record
-Salon Growth OS becomes canonical for the active management experiment and Notion stores only higher-order project meaning/Knowledge. If this mode is chosen, explicitly change the architecture docs and remove duplicate Notion experiment maintenance.
+### Mode B — Salon Growth OS canonical active experiment
+Allowed only if real use shows the app is clearly the natural place to update active experiments. If selected later:
+- architecture docs must be updated,
+- Sheets must stop being independently maintained for the same active fields,
+- synchronization direction must be explicit.
 
-### Mode C — Temporary manual pilot
-Allowed only for short field validation of Issue #2. The same experiment may be represented in both places temporarily, but Ikeda must not be expected to update both. ChatGPT handles synchronization when explicitly requested/available.
+### Mode C — Temporary local pilot
+Allowed for Issue #2 implementation validation only. Synthetic/non-PII seed data or a temporary EXP-0001 projection may exist in Supabase. It must not become a second human-maintained source.
 
-Current v0.1 status: **Mode C for implementation validation, with Mode A/B decision deferred until actual friction is observed.**
+Current v0.1 status: **Mode C for implementation validation, target Mode A unless field evidence supports Mode B.**
+
+## KPI source mapping
+
+Google Sheets `KPI日報` already records:
+
+- date
+- weekday
+- workday state
+- technical sales
+- visits
+- next-visit booking count
+- average ticket
+- next-visit booking rate
+- new / existing customer signals
+- referral / AI-search signals
+- available-time signal
+- menu / notes
+- observation notes
+
+Salon Growth OS should not create another daily KPI form if a reliable Sheets adapter can supply these facts.
+
+## Case source mapping
+
+Google Sheets `施術ケース` already records the primary Case structure, including:
+
+- Case ID
+- consultation
+- confirmed facts
+- cause hypothesis
+- compared options
+- selected method
+- intentionally non-selected method / reason
+- outcome / reaction
+- next-visit check
+- decision criteria
+- Knowledge candidate
+- publishing candidate
+
+Salon Growth OS must not copy full Case/customer records. Future Case-to-Learning integration should project only non-PII learning signals.
 
 ## Prohibited patterns
 
-- Ikeda manually updating the same experiment after every customer in both Notion and Salon Growth OS
+- Ikeda manually updating the same experiment in Sheets, Notion, and Salon Growth OS
+- creating another KPI daily-input workflow when Sheets is already the primary log
 - copying customer names, phone numbers, email, photos or identifiable visit histories into Salon Growth OS
 - creating another Case database inside Salon Growth OS
 - automatic causal classification from one observation
@@ -98,14 +145,15 @@ A future adapter is justified only if it:
 5. does not move customer PII into the management repository,
 6. is simpler than the manual workflow it replaces.
 
-## Decision checkpoint
+## Decision checkpoint after Issue #2
 
-After Issue #2 has been used in real operations, review:
+Review after real field use:
 
-- Where did the experiment get updated naturally?
-- Did duplicate maintenance occur?
-- Was Notion or Salon Growth OS the better operating surface?
-- Did ChatGPT need a structured export/read model?
-- Which fields changed frequently versus only during weekly review?
+- Did EXP-0001 naturally get updated through ChatGPT → Sheets?
+- Did the Salon Growth OS UI need write capability, or was display enough?
+- Which fields changed daily versus weekly?
+- Did the UI reduce thinking friction or merely duplicate Notion/Sheets?
+- Did any manual double maintenance occur?
+- Is a Sheets adapter now clearly justified?
 
 Use that evidence before implementing cross-system synchronization.
