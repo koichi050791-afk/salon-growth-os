@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { fetchActionsData, completeAction, skipAction } from './actions'
-import type { Store, ImprovementAction } from '@/lib/types/db'
+import type { Store } from '@/lib/types/db'
 import { issueLabel } from '@/lib/services/improvement-engine'
 import type { IssueType } from '@/lib/services/improvement-engine'
+import { runAfterCurrentEffect } from '@/lib/utils/deferred-effect'
 
 function fmtWeek(iso: string): string {
   const d = new Date(iso)
@@ -55,7 +56,7 @@ export default function ActionsClient({
     setFetching(false)
   }, [])
 
-  useEffect(() => { load(storeId) }, [storeId, load])
+  useEffect(() => runAfterCurrentEffect(() => { void load(storeId) }), [storeId, load])
 
   const latest = data?.latest ?? null
   const isActive = latest?.status === 'planned' || latest?.status === 'in_progress'

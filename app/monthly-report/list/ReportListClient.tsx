@@ -5,19 +5,9 @@ import Link from 'next/link'
 import { fetchReportList } from '../actions'
 import type { ReportListItem } from '../actions'
 
-function getCurrentYearMonth(): string {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-}
-
 function fmtYen(val: number | null): string {
   if (val === null) return '未入力'
   return '¥' + val.toLocaleString('ja-JP')
-}
-
-function fmtYearMonth(yearMonthDate: string): string {
-  const [y, m] = yearMonthDate.split('-')
-  return `${y}年${parseInt(m, 10)}月`
 }
 
 type Props = {

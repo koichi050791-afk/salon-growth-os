@@ -186,6 +186,16 @@ export type ReportListItem = {
   submitted_at: string | null
 }
 
+type ReportListRow = {
+  id: string
+  store_id: string
+  store_name?: string
+  year_month: string
+  total_sales: number | null
+  submitted_at: string | null
+  stores: { store_name: string } | null
+}
+
 export async function fetchReportList(yearMonth: string): Promise<{
   reports: ReportListItem[]
   error: string | null
@@ -200,7 +210,8 @@ export async function fetchReportList(yearMonth: string): Promise<{
 
   if (error) return { reports: [], error: error.message }
 
-  const reports: ReportListItem[] = (data ?? []).map((r: any) => ({
+  const rows = (data ?? []) as ReportListRow[]
+  const reports: ReportListItem[] = rows.map((r) => ({
     id: r.id,
     store_id: r.store_id,
     store_name: r.stores?.store_name ?? '',

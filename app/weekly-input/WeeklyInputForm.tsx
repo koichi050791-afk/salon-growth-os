@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchWeeklyData, saveWeeklyInputs, savePrevActionResult } from './actions'
 import type { Store, WeeklyStoreInput, MonthlyConfig, ImprovementAction } from '@/lib/types/db'
+import { runAfterCurrentEffect } from '@/lib/utils/deferred-effect'
 
 // ──────────────────────────────────────────────
 // ヘルパー
@@ -283,7 +284,7 @@ export default function WeeklyInputForm({
     setFetching(false)
   }, [])
 
-  useEffect(() => { loadData(storeId, weekStart) }, [storeId, weekStart, loadData])
+  useEffect(() => runAfterCurrentEffect(() => { void loadData(storeId, weekStart) }), [storeId, weekStart, loadData])
 
   function handleStoreChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const val = e.target.value

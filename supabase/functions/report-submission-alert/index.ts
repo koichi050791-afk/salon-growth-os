@@ -1,5 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+type UnsubmittedReport = {
+  id: string
+  store_id: string
+  stores: { store_name: string } | null
+}
+
 // 毎月6日 15:00 UTC（= 翌日 00:00 JST）に実行
 // Supabase Dashboard > Edge Functions > Schedules で設定: 0 15 6 * *
 //
@@ -75,7 +81,7 @@ Deno.serve(async () => {
   }
 
   // メール本文を組み立て
-  const storeList = (unsubmitted as any[])
+  const storeList = (unsubmitted as UnsubmittedReport[])
     .map((r) => `・${r.stores?.store_name ?? r.store_id}`)
     .join('\n')
 

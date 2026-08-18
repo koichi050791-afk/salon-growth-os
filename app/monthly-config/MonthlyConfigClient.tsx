@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { saveMonthlyConfig, type SaveState } from './actions'
 import type { Store, MonthlyConfig } from '@/lib/types/db'
+import { runAfterCurrentEffect } from '@/lib/utils/deferred-effect'
 
 type Props = {
   stores: Store[]
@@ -32,8 +33,12 @@ export default function MonthlyConfigClient({ stores, selectedStoreId, configs }
   useEffect(() => {
     if (state !== prevStateRef.current && state.success) {
       router.refresh()
-      setEditingConfig(undefined)
-      setCopyDefaults(null)
+      const cancelReset = runAfterCurrentEffect(() => {
+        setEditingConfig(undefined)
+        setCopyDefaults(null)
+      })
+      prevStateRef.current = state
+      return cancelReset
     }
     prevStateRef.current = state
   }, [state, router])

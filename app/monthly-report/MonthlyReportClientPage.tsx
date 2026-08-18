@@ -60,6 +60,9 @@ function makeEmptyReport(storeId: string, yearMonth: string): MonthlyReport {
 export default function MonthlyReportClientPage() {
   const { user, profile, loading: authLoading, isOwner } = useAuth()
   const searchParams = useSearchParams()
+  const userId = user?.id
+  const profileRole = profile?.role
+  const profileStoreId = profile?.storeId
 
   const yearMonth = searchParams.get('yearMonth') ?? getCurrentYearMonth()
   const storeIdParam = searchParams.get('storeId')
@@ -72,8 +75,7 @@ export default function MonthlyReportClientPage() {
   const [dataError, setDataError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (authLoading || !user || !profile) return
-    const currentProfile = profile
+    if (authLoading || !userId || !profileRole) return
     let cancelled = false
 
     async function loadData() {
@@ -100,10 +102,10 @@ export default function MonthlyReportClientPage() {
 
         setStores(storesData)
 
-        const isManager = currentProfile.role === 'manager'
+        const isManager = profileRole === 'manager'
         let selectedStoreId: string
-        if (isManager && currentProfile.storeId) {
-          selectedStoreId = currentProfile.storeId
+        if (isManager && profileStoreId) {
+          selectedStoreId = profileStoreId
         } else {
           selectedStoreId = storeIdParam
             ? (storesData.find((s) => s.id === storeIdParam)?.id ?? storesData[0].id)
@@ -129,7 +131,7 @@ export default function MonthlyReportClientPage() {
 
     loadData()
     return () => { cancelled = true }
-  }, [authLoading, user?.id, profile?.role, profile?.storeId, storeIdParam, yearMonth])
+  }, [authLoading, userId, profileRole, profileStoreId, storeIdParam, yearMonth])
 
   if (authLoading || loadingData) {
     return (
