@@ -8,139 +8,188 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Product role
 
-This repository is the **management / growth / learning side** of 池田航一｜美容師OS. It is for KPI visibility, operating reviews, experiments, learning, and management decisions.
+This repository is the management / growth / learning implementation side of 池田航一｜美容師OS.
 
-Do not turn this repository into a customer chart, CRM, or My Hair OS. Customer timeline / Decision / Future Plan functionality belongs outside this repository.
+The wider OS is now an **Experience Learning System** centered on professional Decisions:
 
-Read the architecture docs in `docs/` before implementing non-trivial features, especially:
+Observation → Hypothesis → Options → Decision → Action → Outcome → Next Observation → Learning
 
-- `IKEDA_OS_V0_1.md`
-- `SOURCE_OF_TRUTH_CONTRACT.md`
-- `KPI_CONTRACT_V0_1.md`
-- `EXPERIMENT_PROJECTION_V0_1.md`
-- `TECHNICAL_BOUNDARIES_V0_1.md`
-- `CODEX_BACKLOG.md`
+The product is not a CRM, universal database, integration hub, or generic salon SaaS.
+
+Highest-level test:
+
+> Does this improve Ikeda's next salon-work decision without materially increasing work time?
+
+Do not turn this repository into the customer chart or My Hair OS. Customer / Visit / Decision / Future Plan continuity belongs primarily in Airtable. Salon Growth OS may consume anonymized projections only where they are proven useful.
+
+## Current priority
+
+Use active GitHub Issues as the authority. As of 2026-08-18 the implementation/design sequence is:
+
+1. Issue #12 — Decision OS v0.1: validate the minimal Decision Learning Loop
+2. Issue #13 — Outcome + Next Observation lifecycle, after field validation
+3. Issue #14 — retrieve past Decisions at the moment of salon work
+4. Issue #5 — Decision → Learning bridge, discovery first
+5. Issue #8 — Asia/Tokyo correctness where runtime business-date logic is touched
+6. Issue #9 — quarantine legacy prescriptive engine before any new recommendation surface
+7. Issue #2 / #3 / #4 / #7 — deferred until field use proves value
+
+Do **not** implement Issue #2 merely because it was previously first in the roadmap.
+
+## Decision v0.1 operating model
+
+Only meaningful Decisions should be captured. Do not require all customers or all visits to be deeply documented.
+
+Minimum field model:
+1. consultation / customer concern
+2. confirmed facts — Customer Truth
+3. selected Decision
+4. deliberately not selected option / action
+5. Next Observation
+
+Target manual capture time: <= 3 minutes per meaningful Decision.
+
+Airtable already contains Customer / Visit / Decision / Future Plan and is the customer relational source. Do not create a second Decision store before proving a real gap.
+
+A nullable `Professional Hypothesis` field has been added to Airtable so confirmed facts and stylist interpretation can remain separate.
+
+Do not add Outcome / Prediction / Validation fields merely because they are conceptually attractive. Field-test first; add only what real use proves necessary.
 
 ## Human / AI responsibility split
 
-- ChatGPT: requirements, prioritization, product reasoning, operational interpretation, acceptance criteria, and implementation review.
-- Codex: implementation, refactoring, tests, migrations, CI fixes, and technical documentation.
-- GitHub: source of truth for issues, PRs, code, and implementation history.
-- Human user: final product and operational decision.
+- ChatGPT: single conversational entry point, classification, requirements, product reasoning, prioritization, comparison, review.
+- Codex: code implementation, refactoring, tests, migrations, CI fixes, technical docs.
+- GitHub: source of truth for issues, PRs, code, implementation history.
+- Human user: final operational/product decision.
 
 Do not silently change product policy because a technical implementation is easier.
 
 ## Source-of-truth boundaries
 
-- Google Drive / Sheets = canonical primary operating facts, KPI日報, 施術Case source data, and 実験ログ.
-- Notion = higher-order meaning, hypothesis refinement, contradictions, decisions, Knowledge, and projects.
-- Airtable = customer timeline, visits, Decision, Future Plan.
+- Airtable = customer / visit / customer-level Decision / Future Plan continuity.
+- Google Drive / Sheets = KPI and primary/source facts where currently used.
+- Notion = hypotheses, Knowledge Candidates, conditional Knowledge, projects, Strategic Decisions.
 - GitHub = implementation decisions and code history.
-- Salon Growth OS = management / learning projection and operating UI.
+- Salon Growth OS = management / growth / learning projection only.
 
-Do not create a second human-maintained ledger when a canonical source already exists.
+Every fact has one canonical owner. Other systems may reference, summarize, display, analyze, or derive; they should not become competing human-maintained copies.
 
-Temporary runtime projections are allowed only when an issue explicitly permits them and must be documented as non-canonical.
+Do not build universal two-way sync.
 
 ## Data and privacy boundary
 
-- Never commit real customer names, phone numbers, email addresses, face photos, appointment histories, consultation notes, or other personally identifiable salon customer data.
-- Never paste production secrets, API keys, tokens, Airtable PATs, Supabase service-role keys, or Google credentials into source, issues, fixtures, logs, or docs.
-- Use synthetic sample data in tests and screenshots.
-- Treat public GitHub content as public by default.
-- Keep customer-level PII out of this management repository and database.
+Never commit real customer names, phone numbers, emails, face photos, identifying appointment histories, consultation notes, or other customer PII.
+
+Never commit production secrets, tokens, API keys, service-role keys, Airtable PATs, or Google credentials.
+
+Use synthetic sample data in tests and screenshots. Treat public GitHub content as public.
+
+## Customer Truth / Professional Hypothesis discipline
+
+1. Customer Truth = what the customer actually said or what was directly confirmed.
+2. Professional Hypothesis = stylist interpretation, suspected cause, or working theory.
+3. Outcome = later observation; it is not automatically proof of the hypothesis.
+4. Missing information remains missing/null.
+5. AI must not fabricate or silently promote hypotheses into facts.
+6. One Decision, one customer, one day, or one experiment observation does not establish causality or Knowledge.
+7. Past Decision context must not be treated as current customer truth; preferences and conditions can change.
+
+## Knowledge discipline
+
+Knowledge is not a collection of answers. It is a set of **conditional judgment patterns**.
+
+Do not promote a single Decision directly to Knowledge.
+
+A mature Knowledge pattern should be able to represent:
+- conditions where it appears to hold,
+- conditions where it does not hold,
+- supporting Decisions / Outcomes,
+- counterexamples,
+- uncertainty / unresolved questions.
 
 ## Product policy guardrails
 
-The operating priority is:
+Operating priority:
 
 salon work → customer experience → repeat → next visit → referral → search → AI/search discovery → SNS → new acquisition.
 
-Do not introduce default logic that conflicts with this priority.
+Do not introduce default logic based on:
+- discount-first acquisition,
+- blanket coupons,
+- mandatory add-on proposals,
+- upsell incentives without customer need,
+- acquisition-first recommendations,
+- automatic causal conclusions from thin evidence.
 
-In particular, new Ikeda flows must not depend on or revive legacy recommendations such as:
+`lib/services/improvement-engine.ts` and related generic recommendation logic are legacy/review-before-use. New Decision OS flows must not depend on them unless a dedicated issue explicitly approves the dependency.
 
-- discount-first acquisition
-- blanket coupons
-- mandatory add-on proposals
-- upsell incentives without customer need
-- automatic acquisition-first recommendations
-- automatic causal conclusions from thin data
+## Next Observation principle
 
-`lib/services/improvement-engine.ts` and related generic recommendation logic are **legacy/review-before-use**. Do not call them from new Issue #2/#3/#4 surfaces unless a dedicated issue explicitly approves the dependency.
+Next booking is not modeled primarily as a revenue lock-in mechanism.
 
-Do not present legacy `issue_cause` output as causal truth.
+The preferred logic is:
 
-## Fact / observation / interpretation discipline
+Decision → what should change / what remains uncertain → when it should be checked → Next Observation → next visit when appropriate.
 
-1. Facts, observations, hypotheses, interpretations, and validated Knowledge must remain distinguishable.
-2. Missing values remain unknown/null. Never silently convert missing visits, booking data, capacity, or observations to zero.
-3. Aggregates should expose data coverage or reconciliation warnings when the underlying data is incomplete or inconsistent.
-4. One day, one customer, one post, or one experiment observation does not establish causality.
-5. UI must not fabricate missing experiment result or interpretation.
+The product should make the reason for the next visit clearer, not merely increase booking prompts.
 
 ## Business date and timezone
 
-All business-day, week, and month semantics for Ikeda OS are based on `Asia/Tokyo`.
+All business-day, week, and month semantics are based on `Asia/Tokyo`.
 
-Do not introduce new business-date logic using ad hoc `new Date()` + `toISOString()` slicing when server timezone could change the business date.
+Do not introduce ad hoc `new Date()` + `toISOString()` slicing for business-date logic where runtime timezone can shift the date.
 
-Use the shared Tokyo business-date boundary once Issue #8 provides it. Until then, avoid expanding date-boundary logic and flag any requirement that depends on it.
+Issue #8 defines the correction path. Until then, avoid expanding date-boundary logic unnecessarily.
 
-Date-only strings must be handled without implicit UTC/local drift.
+## Integration / adapter gate
+
+Do not build an adapter because a service can be connected.
+
+An adapter should proceed only when it:
+1. removes demonstrated duplicate work or improves retrieval at the moment of work,
+2. preserves one Source of Truth,
+3. has explicit missing/stale/error behavior,
+4. is simpler than the manual workflow it replaces.
+
+Read-only projections are preferred before write integration.
 
 ## Implementation principles
 
-1. Prefer reducing duplicate input over adding another input screen.
-2. Preserve the existing repository / service abstraction; inspect `lib/repositories`, database types, and migrations before changing data access.
-3. Keep source-specific access behind repository/adapter boundaries. UI components should consume normalized models rather than know whether data came from Supabase or Sheets.
-4. Avoid broad rewrites when a small, reversible change satisfies the requirement.
-5. Add loading, empty, error, permission, and where relevant stale/data-quality states for new data-driven UI.
-6. Do not introduce a new SaaS dependency unless the issue explicitly requires it.
-7. Keep mobile usability first for operational screens.
-8. Do not delete legacy tables/routes as part of unrelated feature work. Destructive cleanup requires a dedicated issue and explicit approval.
-
-## Current implementation order
-
-Use active GitHub Issues and `docs/CODEX_BACKLOG.md` as the authority.
-
-Current sequence:
-
-1. Issue #2 — Active Experiment Tracking
-2. Issue #8 — Asia/Tokyo business-date correctness
-3. Issue #9 — quarantine legacy prescriptive improvement engine
-4. Issue #3 — Ikeda operating cockpit, only after Issue #2 field use
-5. Issue #4 — Weekly review assembly model
-6. Issue #5 / #7 — discovery before integration implementation
-
-Do not skip discovery gates merely because a feature is technically easy to build.
+1. Inspect existing code and data model before proposing schema.
+2. Prefer the smallest reversible change.
+3. Prefer reducing duplicate input over adding screens.
+4. Preserve existing repository/service abstraction.
+5. Keep source-specific access behind adapters/repositories.
+6. Add loading/empty/error/data-quality states where relevant.
+7. Do not introduce new SaaS dependencies unless an issue explicitly requires them.
+8. Keep mobile usability first for operational surfaces.
+9. Do not delete legacy tables/routes as part of unrelated work.
+10. A documentation/projection/retrieval solution may be better than a new persistent store.
 
 ## Codex workflow
 
 For non-trivial work:
-
-1. Read the relevant issue and acceptance criteria.
-2. Read relevant architecture docs and this `AGENTS.md`.
+1. Read the relevant GitHub Issue and comments.
+2. Read this `AGENTS.md` and relevant docs.
 3. Inspect the existing implementation before proposing new schema or dependencies.
-4. State the smallest implementation plan in the PR description.
-5. Implement on a branch, not directly on `main`.
-6. Run relevant lint / typecheck / build / tests available in the repository.
+4. State the smallest implementation plan before coding.
+5. Work on a branch, not `main`.
+6. Run available lint / typecheck / build / tests.
 7. Open a Draft PR for review unless the issue says otherwise.
-8. Do not merge automatically unless explicitly requested.
+8. Do not merge automatically.
 
-If requirements conflict with existing code, data, product policy, or source ownership, surface the conflict instead of guessing.
+If requirements conflict with code, data ownership, privacy, or product policy, surface the conflict instead of guessing.
 
 ## Definition of done
 
-A feature is not done merely because the UI renders. It must:
-
+A change is not done because the UI renders. It must:
+- improve or validate the Decision Learning Loop,
 - satisfy the issue acceptance criteria,
-- preserve privacy boundaries,
-- preserve source-of-truth ownership,
-- handle empty/error/data-quality states,
-- avoid unnecessary duplicate data entry,
-- preserve fact-vs-interpretation separation,
-- respect Asia/Tokyo business-date semantics where relevant,
+- preserve privacy and Source of Truth,
+- preserve Customer Truth vs Professional Hypothesis separation,
+- avoid unnecessary duplicate input,
+- preserve uncertainty and missing states,
+- respect Asia/Tokyo semantics where relevant,
 - avoid legacy prescriptive recommendation leakage,
 - pass available checks,
-- and include a short note explaining what changed and what remains unverified.
+- document what remains unverified in real salon work.
