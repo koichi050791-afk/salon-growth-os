@@ -50,8 +50,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#0B1220] flex items-center justify-center px-4">
       <div className="w-full max-w-sm bg-[#111A2B] rounded-3xl p-8 border border-white/5 space-y-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-[#E6ECF5]">Salon Growth OS</h1>
-          <p className="text-[#8B94A7] mt-2 text-sm">美容室経営改善ツール</p>
+          <h1 className="text-2xl font-bold text-[#E6ECF5]">Ikeda Salon Learning OS</h1>
+          <p className="text-[#8B94A7] mt-2 text-sm">美容師の意思決定と学習OS</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

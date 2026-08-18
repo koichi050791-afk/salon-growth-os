@@ -1,16 +1,16 @@
-# Ikeda Salon OS — Experiment Projection Contract v0.1
+# Ikeda Salon Learning OS — Experiment Projection Contract v0.1
 
 Status: 2026-08-18
 
 ## Purpose
 
-Define how the active field experiment should appear in Salon Growth OS without changing the canonical source model.
+Define how the active field experiment should appear in Ikeda Salon Learning OS without changing the canonical source model.
 
 Canonical experiment record: Google Sheets `池田航一｜美容師OS データベース` → `実験ログ`.
 
 Semantic enrichment: Notion `仮説・実験` and `130万円安定達成プロジェクト`.
 
-Runtime projection: Salon Growth OS `ActiveExperimentCard`.
+Runtime projection: Ikeda Salon Learning OS `ActiveExperimentCard`.
 
 ## Active experiment
 

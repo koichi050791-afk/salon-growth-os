@@ -1,4 +1,4 @@
-# Ikeda Salon OS v0.1 — Technical Boundaries
+# Ikeda Salon Learning OS v0.1 — Technical Boundaries
 
 Status: 2026-08-18
 

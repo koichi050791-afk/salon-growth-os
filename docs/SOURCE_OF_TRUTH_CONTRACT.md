@@ -4,7 +4,7 @@ Status: 2026-08-18
 
 ## Purpose
 
-Prevent duplicate entry and ownership drift as Salon Growth OS evolves into the management / growth / learning layer of 池田航一｜美容師OS.
+Prevent duplicate entry and ownership drift as Ikeda Salon Learning OS evolves into the management / learning layer of 池田航一｜美容師OS.
 
 The governing rule is:
 
@@ -14,7 +14,7 @@ A field should have one canonical owner. Other systems may surface or transform 
 
 ## Canonical ownership
 
-| Information | Canonical owner | Salon Growth OS role |
+| Information | Canonical owner | Ikeda Salon Learning OS role |
 |---|---|---|
 | KPI / primary operating facts | Google Drive / Sheets | consume / display / aggregate |
 | Daily KPI log | Google Drive / Sheets `KPI日報` | read-only management projection |
@@ -24,7 +24,7 @@ A field should have one canonical owner. Other systems may surface or transform 
 | Knowledge / promoted learning | Notion | reference/surface only |
 | Customer timeline / visit / Decision / Future Plan | Airtable | out of scope; no customer PII copy |
 | Issue / implementation decision / PR / code | GitHub | canonical implementation history |
-| Runtime management UI | Salon Growth OS | display and operating interaction |
+| Runtime management UI | Ikeda Salon Learning OS | display and operating interaction |
 | Customer-facing My Hair OS | Lovable/prototype layer, later dedicated implementation | out of scope |
 | Schedule context | Google Calendar only when real events exist | optional context, never a second booking ledger |
 
@@ -46,7 +46,7 @@ Notion also contains the same experiment as a higher-order project/hypothesis ob
 
 - Drive `実験ログ` = primary operating record / observation ledger
 - Notion = meaning, hypothesis refinement, contradiction, cross-Case learning, promotion toward Knowledge
-- Salon Growth OS = management display / operating cockpit
+- Ikeda Salon Learning OS = management display / operating cockpit
 
 Do not require Ikeda to update all three manually.
 
@@ -65,8 +65,8 @@ During the initial implementation, the runtime may contain a temporary local pro
 
 ## Preferred future handoff
 
-### Mode A — Sheets → Salon Growth OS projection (preferred)
-Google Sheets `実験ログ` remains the canonical experiment record. A server-side adapter normalizes the active experiment for Salon Growth OS.
+### Mode A — Sheets → Ikeda Salon Learning OS projection (preferred)
+Google Sheets `実験ログ` remains the canonical experiment record. A server-side adapter normalizes the active experiment for Ikeda Salon Learning OS.
 
 Benefits:
 - matches the existing no-direct-input workflow
@@ -74,7 +74,7 @@ Benefits:
 - avoids forcing Ikeda to maintain a second experiment ledger
 - allows ChatGPT to continue updating Sheets from the conversational workflow
 
-### Mode B — Salon Growth OS canonical active experiment
+### Mode B — Ikeda Salon Learning OS canonical active experiment
 Allowed only if real use shows the app is clearly the natural place to update active experiments. If selected later:
 - architecture docs must be updated,
 - Sheets must stop being independently maintained for the same active fields,
@@ -103,7 +103,7 @@ Google Sheets `KPI日報` already records:
 - menu / notes
 - observation notes
 
-Salon Growth OS should not create another daily KPI form if a reliable Sheets adapter can supply these facts.
+Ikeda Salon Learning OS should not create another daily KPI form if a reliable Sheets adapter can supply these facts.
 
 ## Case source mapping
 
@@ -122,14 +122,14 @@ Google Sheets `施術ケース` already records the primary Case structure, incl
 - Knowledge candidate
 - publishing candidate
 
-Salon Growth OS must not copy full Case/customer records. Future Case-to-Learning integration should project only non-PII learning signals.
+Ikeda Salon Learning OS must not copy full Case/customer records. Future Case-to-Learning integration should project only non-PII learning signals.
 
 ## Prohibited patterns
 
-- Ikeda manually updating the same experiment in Sheets, Notion, and Salon Growth OS
+- Ikeda manually updating the same experiment in Sheets, Notion, and Ikeda Salon Learning OS
 - creating another KPI daily-input workflow when Sheets is already the primary log
-- copying customer names, phone numbers, email, photos or identifiable visit histories into Salon Growth OS
-- creating another Case database inside Salon Growth OS
+- copying customer names, phone numbers, email, photos or identifiable visit histories into Ikeda Salon Learning OS
+- creating another Case database inside Ikeda Salon Learning OS
 - automatic causal classification from one observation
 - treating missing data as zero or negative evidence
 - adding a new SaaS solely to bridge these systems
@@ -150,7 +150,7 @@ A future adapter is justified only if it:
 Review after real field use:
 
 - Did EXP-0001 naturally get updated through ChatGPT → Sheets?
-- Did the Salon Growth OS UI need write capability, or was display enough?
+- Did the Ikeda Salon Learning OS UI need write capability, or was display enough?
 - Which fields changed daily versus weekly?
 - Did the UI reduce thinking friction or merely duplicate Notion/Sheets?
 - Did any manual double maintenance occur?
