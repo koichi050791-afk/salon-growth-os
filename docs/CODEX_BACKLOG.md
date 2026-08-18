@@ -1,141 +1,137 @@
-# Codex implementation backlog — Ikeda Salon OS v0.1
+# Codex implementation backlog — Decision-first Ikeda Salon OS
 
 Status: 2026-08-18
 
-This backlog is subordinate to `IKEDA_OS_V0_1.md`, `IKEDA_OS_ROADMAP.md`, `TECHNICAL_BOUNDARIES_V0_1.md`, and active GitHub Issues. Build order follows field value, correctness, reversibility, and the no-duplicate-input rule.
+This backlog is subordinate to active GitHub Issues, `AGENTS.md`, and `docs/DECISION_OS_V0_1.md`.
+
+Build order follows field value, customer impact, reversibility, privacy, and the no-duplicate-input rule.
 
 ## P0 — CURRENT
 
-### 1. Issue #2 — Active experiment tracking surface
-Status: **ready for Codex implementation**.
+### 1. Issue #12 — Decision OS v0.1
+Status: **field validation first; inspect before coding**.
 
 Goal:
-Represent the learning chain:
+Validate that meaningful professional Decisions can be captured in <=3 minutes and later reused.
 
-hypothesis → observation → result → interpretation → unresolved question → next check.
+Minimum model:
+- consultation / concern
+- confirmed facts — Customer Truth
+- selected Decision
+- deliberately not selected option/action
+- Next Observation
 
-Confirmed decisions:
-- reuse `improvement_actions`
-- no new `experiments` table
-- add nullable `hypothesis`, `observation_metrics`, `interpretation`, `unresolved_question`
-- keep `HomeActionCard`
-- add `ActiveExperimentCard`
-- explicit empty/error states
-- no causal claim from one observation
-- no customer PII
-- do not depend on legacy `improvement-engine.ts`
+Rules:
+- Airtable remains canonical for customer Visit / Decision continuity
+- do not create a second Decision store
+- Customer Truth and Professional Hypothesis must remain separate
+- all-customer/all-visit deep documentation is explicitly out of scope
+- no customer PII in this repository
+- no legacy improvement-engine dependency
+- prefer the smallest reversible implementation, including no runtime persistence if field use does not justify it
 
-Implementation branch: `codex/experiment-tracking-v0.1`.
+Implementation branch: `codex/decision-os-v0.1`.
 
-### 2. Issue #8 — Asia/Tokyo business-date correctness
-Status: **correctness prerequisite for Home/Sheets work**.
+### 2. Real salon field validation
+Status: **required before expanding schema/UI**.
 
-Goal:
-Create one explicit Asia/Tokyo business-date utility boundary and remove ad hoc UTC/local date mixing from relevant Home calculations.
+Observe:
+- actual capture time
+- fields that feel unnecessary
+- missing fields that block future reuse
+- whether Next Observation is useful at the next visit
+- where duplicate work appears
+- whether a Decision is later reused
 
-Issue #2 may proceed independently if it does not add business-date logic. Issue #8 should be complete before Issue #3 and Issue #7 runtime implementation.
+Do not optimize Decision count.
 
-### 3. Issue #9 — quarantine legacy prescriptive improvement engine
-Status: **audit/quarantine before new recommendation or Home flows**.
+## P1 — CLOSE THE LEARNING LOOP
 
-Goal:
-Prevent old generic recommendations—discounts, blanket upsells, mandatory proposals, acquisition-first actions—from leaking into Ikeda OS.
-
-Issue #2 may proceed if isolated from this engine. Complete the audit before Issue #3 or any new automatic recommendation surface.
-
-## P1 — AFTER ISSUE #2 FIELD USE
-
-### 4. Issue #3 — Ikeda operating cockpit
-Status: **defined; do not implement before Issue #2 is used and reviewed**.
-
-Dependencies/guards:
-- Issue #8 business-date semantics resolved
-- Issue #9 legacy recommendation dependencies understood/quarantined
+### 3. Issue #13 — Decision Outcome + Next Observation lifecycle
+Status: **discovery after real Decision capture**.
 
 Goal:
-Reframe Home from generic store dashboard to personal management / learning cockpit.
+Find the minimum useful way to revisit a prior Decision and compare expected vs actual result.
 
-Primary mobile hierarchy:
-1. current state
-2. monthly ¥1.3M target progress
-3. current operating focus
-4. active experiment
-5. KPI pulse
-6. learning / unresolved question
-7. minimum shortcuts
+Potential later fields are not mandatory until validated:
+- outcome_observed
+- customer_response
+- home_result
+- validation_state/note
+- optional prediction
 
-Avoid broad rewrites. De-emphasize legacy multi-store/staff surfaces before deleting schema.
-
-### 5. Issue #4 — Weekly review assembly model
-Status: **defined**.
+### 4. Issue #14 — retrieve past Decisions at the moment of salon work
+Status: **manual/ChatGPT retrieval may be sufficient first**.
 
 Goal:
-Expose one server-side review payload for ChatGPT/review workflows without adding an LLM dependency inside the app.
+Surface the last relevant Decision, non-selected option, open Next Observation, and known Outcome/Validation in seconds.
 
-Must separate:
-- KPI facts
-- observations
-- interpretation
-- unresolved questions
-- missing-data flags
+Past information is context, not current Customer Truth. Re-confirm current preference/state.
 
-Reuse Issue #2 experiment data and KPI coverage semantics.
-
-## P2 — DISCOVERY
-
-### 6. Issue #5 — Non-PII Case → Learning bridge
+### 5. Issue #5 — Decision → Learning bridge
 Status: **discovery only**.
 
 Goal:
-Define the narrowest handoff from Drive/Sheets Case facts and Notion Knowledge into anonymized management learning signals.
+Move from repeated Decisions + Outcomes + counterexamples to conditional Knowledge Candidates without creating a second customer database.
 
-Do not implement storage/sync until canonical Case ID, allowed fields, update/version behavior, and read/write direction are validated.
+## P1 CORRECTNESS / SAFETY
 
-### 7. Issue #7 — Google Sheets read adapter
-Status: **discovery after Issue #2 field use**.
+### 6. Issue #8 — Asia/Tokyo business-date correctness
+Status: **required whenever runtime business-date work is touched**.
 
-Goal:
-Read canonical KPI and Experiment operating facts from Sheets without creating another manual ledger.
+Do not allow UTC/local drift in business day/week/month semantics.
 
-Requirements:
-- server-side/read-only first
-- bounded ranges
-- Asia/Tokyo normalization via Issue #8 utility
-- null/coverage/reconciliation semantics
-- no customer PII
-- explicit stale/error state
+### 7. Issue #9 — quarantine legacy prescriptive improvement engine
+Status: **required before any new recommendation surface**.
 
-## P3 — ONLY WHEN A REAL SOURCE/NEED EXISTS
+Do not let discount/blanket-upsell/acquisition-first or causal-prescriptive legacy logic leak into Decision OS.
 
-### 8. Daily brief assembly
-Do not make this a booking/calendar project by default. Build only after exact source data and user need are validated. Missing appointment data must remain explicit.
+## P2 — DEFERRED UNTIL FIELD VALUE IS PROVEN
 
-### 9. Calendar context
-Use Google Calendar only where actual calendar events materially improve the operating view. Never create a second booking ledger.
+### Issue #2 — Active Experiment Tracking
+Experiment remains a Learning Layer. Resume only if real Decision/weekly-review use proves persistent experiment visibility useful.
 
-## Deferred / out of scope
+### Issue #3 — Home / Decision Learning cockpit
+Do not redesign Home until real field use identifies the few elements that improve the next salon-work decision.
 
-- customer CRM inside this repository
-- customer names / phone / email / photos / detailed appointment histories
-- My Hair OS customer-facing implementation
-- full Airtable customer timeline UI
-- generic multi-store SaaS expansion
-- direct social publishing automation
-- automatic AI causal recommendations
-- product analytics without a concrete product question
-- new paid SaaS dependencies without explicit approval
+### Issue #4 — Weekly Decision learning review
+Resume when weekly synthesis repeatedly helps the next week or removes manual review burden.
+
+### Issue #7 — read adapters
+Build only when a concrete manual retrieval/duplication problem is demonstrated.
+
+## P3 — LATER
+
+- My Hair OS customer-facing UI
+- Prediction/Validation automation
+- advanced semantic retrieval
+- write integrations across tools
+- agents / advanced automation
+- content automation beyond explicit editorial transformation
+
+These are downstream of proven Decision reuse.
+
+## Source-of-truth summary
+
+- Airtable: customer / visit / Decision / Future Plan continuity
+- Drive / Sheets: KPI and primary/source facts where canonical
+- Notion: hypotheses, Knowledge Candidates, conditional Knowledge, strategic/product decisions
+- GitHub: implementation source of truth
+- Salon Growth OS: anonymized management/growth/learning projections only
 
 ## Build gate
 
-Before starting any new Codex issue, confirm:
+Before starting any new Codex work, confirm:
 
-1. Does it solve an observed operating problem?
-2. Does it reduce work or improve decision/learning quality?
-3. Is there a canonical source for the required data?
+1. Does it improve the next salon-work Decision or reduce real work?
+2. Is the need observed rather than imagined?
+3. Is there one clear Source of Truth?
 4. Does it avoid duplicate manual input?
 5. Is the smallest version reversible?
-6. Can it be implemented without customer PII?
-7. Are Asia/Tokyo business-date semantics explicit?
-8. Does it avoid depending on legacy prescriptive recommendation logic?
+6. Can it avoid customer PII in this repository?
+7. Are facts/hypotheses/outcomes kept distinct?
+8. Does it preserve missing/unknown states?
+9. Are Asia/Tokyo semantics explicit where needed?
+10. Does it avoid legacy prescriptive logic?
 
-If the answer is unclear, return to discovery instead of coding.
+If unclear, return to field validation/discovery instead of coding.
