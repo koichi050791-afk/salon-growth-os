@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import PersonalNavigation from '@/lib/components/PersonalNavigation'
-import { getServerProfile } from '@/lib/repositories/profiles'
+import { getServerUser } from '@/lib/auth/server-user'
 
 export const metadata: Metadata = {
   title: '130万円プロジェクト | 池田航一｜美容師OS',
@@ -22,8 +22,8 @@ const priorities = [
 ]
 
 export default async function ProjectPage() {
-  const profile = await getServerProfile()
-  if (!profile) redirect('/login')
+  const user = await getServerUser()
+  if (!user) redirect('/login')
 
   return (
     <AuthGuard>
