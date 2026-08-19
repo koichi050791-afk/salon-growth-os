@@ -9,7 +9,7 @@ import {
   createAirtableDecisionRecord,
   type AirtableDecisionCoreValues,
 } from '@/lib/repositories/airtable-decisions'
-import { safeDispatchDecisionCaptured } from '@/lib/services/work-graph'
+import { runDecisionIntelligencePipeline } from '@/lib/services/decision-intelligence-pipeline'
 import type { DecisionCoreFieldKey } from '@/lib/types/decision'
 
 export type DecisionInputActionState = {
@@ -87,7 +87,7 @@ export async function saveDecisionInput(
     return { status: 'error', message }
   }
 
-  await safeDispatchDecisionCaptured({
+  await runDecisionIntelligencePipeline({
     decisionRecordId: result.recordId,
     title: decisionTitle,
     values,
