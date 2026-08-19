@@ -1,35 +1,33 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { AuthProvider } from "@/lib/contexts/AuthContext";
+import type { Metadata } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
+import './globals.css'
+import { AuthProvider } from '@/lib/contexts/AuthContext'
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+})
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+})
 
 export const metadata: Metadata = {
-  title: "Salon Growth OS",
-  description: "美容室の生産性向上ツール",
-};
+  title: '池田航一｜美容師OS',
+  description: 'Decisionを中心にサロンワークから学習する池田航一個人のExperience Learning System',
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
-    <html lang="ja" className="bg-gray-950">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-950 text-white`}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+    <html lang="ja" className="bg-[#0B1220]">
+      <body className={`${geistSans.variable} ${geistMono.variable} bg-[#0B1220] text-white antialiased`}>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
-  );
+  )
 }
