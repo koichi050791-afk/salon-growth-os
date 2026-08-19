@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
-import { getServerProfile } from '@/lib/repositories/profiles'
+import { getServerUser } from '@/lib/auth/server-user'
 import DecisionInputClient from './DecisionInputClient'
 
 export const metadata: Metadata = {
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 }
 
 export default async function DecisionInputPage() {
-  const profile = await getServerProfile()
-  if (!profile) redirect('/login')
+  const user = await getServerUser()
+  if (!user) redirect('/login')
 
   return (
     <AuthGuard>
