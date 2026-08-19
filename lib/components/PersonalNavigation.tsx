@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { href: '/', icon: '⌂', label: 'ホーム' },
   { href: '/decision-input', icon: '＋', label: '記録' },
   { href: '/decisions', icon: '◎', label: 'Decision' },
-  { href: '/project', icon: '↗', label: '130万' },
+  { href: '/operations', icon: '◐', label: 'AI Team' },
 ]
 
 export default function PersonalNavigation() {
