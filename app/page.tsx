@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import PersonalNavigation from '@/lib/components/PersonalNavigation'
 import { listAirtableDecisionRecords } from '@/lib/repositories/airtable-decisions'
+import { getServerProfile } from '@/lib/repositories/profiles'
 
 function shortText(value: string | null, fallback: string) {
   if (!value) return fallback
@@ -9,6 +11,9 @@ function shortText(value: string | null, fallback: string) {
 }
 
 export default async function Home() {
+  const profile = await getServerProfile()
+  if (!profile) redirect('/login')
+
   const recent = await listAirtableDecisionRecords(3)
 
   return (
