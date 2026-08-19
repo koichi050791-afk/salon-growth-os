@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { fetchDashboardData, fetchLatestWeekStart } from './actions'
 import type { Store } from '@/lib/types/db'
 import type { DashboardData, HistoryWeek } from './actions'
+import { runAfterCurrentEffect } from '@/lib/utils/deferred-effect'
 import {
   calcStoreProdactivity,
   calcStaffProductivity,
@@ -137,7 +138,7 @@ export default function DashboardClient({
     setFetching(false)
   }, [])
 
-  useEffect(() => { loadData(storeId, weekStart) }, [storeId, weekStart, loadData])
+  useEffect(() => runAfterCurrentEffect(() => { void loadData(storeId, weekStart) }), [storeId, weekStart, loadData])
 
   async function handleStoreChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const val = e.target.value

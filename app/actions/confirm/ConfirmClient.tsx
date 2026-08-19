@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { fetchConfirmData, saveConfirmedAction } from './actions'
 import { issueLabel } from '@/lib/services/improvement-engine'
 import type { IssueType } from '@/lib/services/improvement-engine'
+import { runAfterCurrentEffect } from '@/lib/utils/deferred-effect'
 
 export default function ConfirmClient({ storeId }: { storeId: string }) {
   const router = useRouter()
@@ -20,7 +21,7 @@ export default function ConfirmClient({ storeId }: { storeId: string }) {
     setFetching(false)
   }, [storeId])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => runAfterCurrentEffect(() => { void load() }), [load])
 
   const diagnose = data?.diagnose ?? null
   const candidates = diagnose?.candidates ?? []

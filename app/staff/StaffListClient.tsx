@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { fetchStaffListData } from './actions'
 import type { Store } from '@/lib/types/db'
 import { calcStaffProductivity, formatProductivity } from '@/lib/calculations'
+import { runAfterCurrentEffect } from '@/lib/utils/deferred-effect'
 
 // ──────────────────────────────────────────────
 // ヘルパー
@@ -119,7 +120,7 @@ export default function StaffListClient({
     setFetching(false)
   }, [])
 
-  useEffect(() => { loadData(storeId, weekStart) }, [storeId, weekStart, loadData])
+  useEffect(() => runAfterCurrentEffect(() => { void loadData(storeId, weekStart) }), [storeId, weekStart, loadData])
 
   function handleStoreChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const val = e.target.value

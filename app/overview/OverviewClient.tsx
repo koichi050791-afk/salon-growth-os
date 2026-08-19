@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchOverviewData } from './actions'
 import type { OverviewData, StoreOverview } from './actions'
+import { runAfterCurrentEffect } from '@/lib/utils/deferred-effect'
 import {
   calcMonthlyProductivity,
   formatMonthlyProductivity,
@@ -205,7 +206,7 @@ export default function OverviewClient() {
     setFetching(false)
   }, [])
 
-  useEffect(() => { loadData(weekStart) }, [weekStart, loadData])
+  useEffect(() => runAfterCurrentEffect(() => { void loadData(weekStart) }), [weekStart, loadData])
 
   const allDerived = (data?.stores ?? []).map((s) => ({ s, d: derive(s, weekStart) }))
 

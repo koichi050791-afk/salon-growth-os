@@ -66,11 +66,6 @@ function toFloat(s: string): number | null {
   return isNaN(n) ? null : n
 }
 
-function fmtYen(val: number | null): string {
-  if (val === null) return '—'
-  return '¥' + val.toLocaleString('ja-JP')
-}
-
 function calcPct(numerator: number | null, denominator: number | null): string {
   if (!numerator || !denominator || denominator === 0) return '—'
   return (Math.round((numerator / denominator) * 1000) / 10).toFixed(1) + '%'
@@ -87,12 +82,6 @@ function calcUnitPrice(sales: string, count: string): string {
   const c = toInt(count)
   if (!s || !c || c === 0) return '—'
   return '¥' + Math.round(s / c).toLocaleString('ja-JP')
-}
-
-// 'YYYY-MM-DD' → 'YYYY年MM月'
-function fmtYearMonth(yearMonthDate: string): string {
-  const [y, m] = yearMonthDate.split('-')
-  return `${y}年${parseInt(m, 10)}月`
 }
 
 // ──────────────────────────────────────────────

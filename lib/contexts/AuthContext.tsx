@@ -1,8 +1,9 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
+import { runAfterCurrentEffect } from '@/lib/utils/deferred-effect'
 
 const supabase = createClient()
 
@@ -42,30 +43,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const authUserIdRef = useRef<string | null>(null)
+  const currentUserId = user?.id ?? null
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.user) {
-        setUser(null)
-        setLoading(false)
-      }
-      // 認証済みの場合は onAuthStateChange の SIGNED_IN で user/profile/loading をまとめて更新
-    })
+    let isMounted = true
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const currentUser = session?.user ?? null
+    const applyAuthUser = (currentUser: User | null) => {
+      const nextUserId = currentUser?.id ?? null
+      const previousUserId = authUserIdRef.current
+      authUserIdRef.current = nextUserId
+
       setUser(currentUser)
-      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && currentUser) {
-        const p = await fetchProfile(currentUser.id)
-        setProfile(p)
-      } else if (!currentUser) {
+
+      if (!currentUser) {
         setProfile(null)
+        setLoading(false)
+        return
       }
-      setLoading(false)
+
+      if (nextUserId !== previousUserId) {
+        setProfile(null)
+        setLoading(true)
+      }
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return
+      applyAuthUser(session?.user ?? null)
+    }).catch(() => {
+      if (!isMounted) return
+      applyAuthUser(null)
     })
 
-    return () => subscription.unsubscribe()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return
+      applyAuthUser(session?.user ?? null)
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [])
+
+  useEffect(() => {
+    if (!currentUserId) return
+
+    let isCurrent = true
+    const cancelProfileFetch = runAfterCurrentEffect(() => {
+      void fetchProfile(currentUserId)
+        .then((p) => {
+          if (isCurrent) setProfile(p)
+        })
+        .catch(() => {
+          if (isCurrent) setProfile(null)
+        })
+        .finally(() => {
+          if (isCurrent) setLoading(false)
+        })
+    })
+
+    return () => {
+      isCurrent = false
+      cancelProfileFetch()
+    }
+  }, [currentUserId])
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
