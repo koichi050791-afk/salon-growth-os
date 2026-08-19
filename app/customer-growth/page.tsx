@@ -54,16 +54,27 @@ function dayDiff(later: string, earlier: string): number {
   return Math.round((laterMs - earlierMs) / 86_400_000)
 }
 
-function watchCandidate(customer: CustomerGrowthRecord, today: string) {
+type ObservationCandidate = {
+  customer: CustomerGrowthRecord
+  expected: string | null
+  overdueDays: number | null
+  reason: 'WATCH' | 'EXPECTED_RETURN_OVERDUE'
+}
+
+function observationCandidate(customer: CustomerGrowthRecord, today: string): ObservationCandidate | null {
   const expected = dateOnly(customer.expectedReturnDate)
+  const overdueDays = expected ? Math.max(0, dayDiff(today, expected)) : null
+
+  if (customer.state === 'WATCH') {
+    return { customer, expected, overdueDays, reason: 'WATCH' }
+  }
+
   if (!expected) return null
   if (customer.state === 'DORMANT') return null
   if (customer.nextPlanStatus === 'BOOKED') return null
+  if (!overdueDays) return null
 
-  const overdueDays = dayDiff(today, expected)
-  if (overdueDays <= 0) return null
-
-  return { customer, expected, overdueDays }
+  return { customer, expected, overdueDays, reason: 'EXPECTED_RETURN_OVERDUE' }
 }
 
 export default async function CustomerGrowthPage() {
@@ -79,10 +90,13 @@ export default async function CustomerGrowthPage() {
   ) as Record<CustomerState, number>
 
   const unclassified = customers.filter((customer) => !customer.state).length
-  const watchCandidates = customers
-    .map((customer) => watchCandidate(customer, today))
-    .filter((candidate): candidate is NonNullable<ReturnType<typeof watchCandidate>> => candidate !== null)
-    .sort((a, b) => b.overdueDays - a.overdueDays)
+  const observationCandidates = customers
+    .map((customer) => observationCandidate(customer, today))
+    .filter((candidate): candidate is ObservationCandidate => candidate !== null)
+    .sort((a, b) => {
+      if (a.reason !== b.reason) return a.reason === 'WATCH' ? -1 : 1
+      return (b.overdueDays ?? -1) - (a.overdueDays ?? -1)
+    })
     .slice(0, 12)
 
   return (
@@ -145,17 +159,17 @@ export default async function CustomerGrowthPage() {
                   <p className="text-xs text-[#7F8AA0]">Today&apos;s Observation</p>
                   <h2 className="mt-1 text-lg font-bold">今、見る候補</h2>
                   <p className="mt-1 text-xs leading-relaxed text-[#8B94A7]">
-                    Expected Returnを超過し、次回予約がない顧客。自動連絡はしません。
+                    WATCH状態、またはExpected Returnを超過して次回予約がない顧客。自動連絡はしません。
                   </p>
                 </div>
 
-                {watchCandidates.length === 0 ? (
+                {observationCandidates.length === 0 ? (
                   <div className="mt-4 rounded-2xl border border-white/10 bg-[#0B1220] p-4 text-sm text-[#8B94A7]">
-                    現時点でWATCH候補はありません。
+                    現時点で確認候補はありません。
                   </div>
                 ) : (
                   <div className="mt-4 space-y-3">
-                    {watchCandidates.map(({ customer, expected, overdueDays }) => (
+                    {observationCandidates.map(({ customer, expected, overdueDays, reason }) => (
                       <article key={customer.id} className="rounded-2xl border border-white/10 bg-[#0B1220] p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -165,17 +179,19 @@ export default async function CustomerGrowthPage() {
                             )}
                           </div>
                           <span className="rounded-full bg-[#D4AF37]/10 px-2.5 py-1 text-[10px] font-semibold text-[#D4AF37]">
-                            {customer.state === 'WATCH' ? 'WATCH' : 'WATCH候補'}
+                            {reason === 'WATCH' ? 'WATCH' : 'WATCH候補'}
                           </span>
                         </div>
                         <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                           <div className="rounded-xl bg-[#111A2B] p-3">
                             <p className="text-[#7F8AA0]">Expected Return</p>
-                            <p className="mt-1 text-[#C9D1DE]">{expected}</p>
+                            <p className="mt-1 text-[#C9D1DE]">{expected ?? '未設定'}</p>
                           </div>
                           <div className="rounded-xl bg-[#111A2B] p-3">
                             <p className="text-[#7F8AA0]">超過</p>
-                            <p className="mt-1 font-semibold text-[#C9D1DE]">{overdueDays}日</p>
+                            <p className="mt-1 font-semibold text-[#C9D1DE]">
+                              {overdueDays && overdueDays > 0 ? `${overdueDays}日` : '—'}
+                            </p>
                           </div>
                         </div>
                         <p className="mt-3 text-xs text-[#8B94A7]">
