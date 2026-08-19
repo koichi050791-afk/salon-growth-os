@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import PersonalNavigation from '@/lib/components/PersonalNavigation'
 import { listAirtableDecisionRecords, type AirtableDecisionRecord } from '@/lib/repositories/airtable-decisions'
-import { getServerProfile } from '@/lib/repositories/profiles'
+import { getServerUser } from '@/lib/auth/server-user'
 
 const TEST_PREFIXES = ['【TEST】', '【VERCEL TEST】', '【PRODUCTION TEST】']
 
@@ -18,8 +18,8 @@ function shortText(value: string | null, fallback: string) {
 }
 
 export default async function Home() {
-  const profile = await getServerProfile()
-  if (!profile) redirect('/login')
+  const user = await getServerUser()
+  if (!user) redirect('/login')
 
   const recentResult = await listAirtableDecisionRecords(10)
   const recent = {
