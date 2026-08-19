@@ -3,8 +3,8 @@ import { AuthGuard } from '@/lib/components/AuthGuard'
 import DecisionInputClient from './DecisionInputClient'
 
 export const metadata: Metadata = {
-  title: '記録 | Salon Growth OS',
-  description: 'Decision input for salon work',
+  title: 'Decision記録 | 池田航一｜美容師OS',
+  description: '現場のDecisionを3分以内で残す',
 }
 
 export default function DecisionInputPage() {
