@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
-import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -17,27 +16,10 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
+
     try {
       await signIn(email, password)
-
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, store_id')
-          .eq('id', user.id)
-          .single()
-
-        if (profile?.role === 'manager' && profile.store_id) {
-          router.push(`/dashboard?storeId=${profile.store_id}`)
-        } else {
-          router.push('/')
-        }
-      } else {
-        router.push('/')
-      }
+      router.push('/')
     } catch (err) {
       setError('メールアドレスまたはパスワードが正しくありません')
       console.error('Login error:', err)
@@ -47,40 +29,43 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0B1220] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-[#111A2B] rounded-3xl p-8 border border-white/5 space-y-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-[#E6ECF5]">Salon Growth OS</h1>
-          <p className="text-[#8B94A7] mt-2 text-sm">美容室経営改善ツール</p>
+    <div className="flex min-h-dvh items-center justify-center bg-[#0B1220] px-4">
+      <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#111A2B] p-8">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.18em] text-[#D4AF37]">IKEDA PERSONAL OS</p>
+          <h1 className="mt-3 text-2xl font-bold text-[#E6ECF5]">池田航一｜美容師OS</h1>
+          <p className="mt-2 text-sm leading-relaxed text-[#8B94A7]">
+            Decisionを残し、次回来店・Knowledge・発信・経営へ学習をつなげる。
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <div>
-            <label className="block text-sm text-[#8B94A7] mb-2">メールアドレス</label>
+            <label className="mb-2 block text-sm text-[#8B94A7]">メールアドレス</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-4 text-base focus:outline-none focus:border-[#D4AF37]/50 placeholder:text-[#8B94A7]/50"
+              className="w-full rounded-xl border border-white/10 bg-[#0B1220] p-4 text-base text-white outline-none placeholder:text-[#8B94A7]/50 focus:border-[#D4AF37]/50"
               placeholder="example@email.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm text-[#8B94A7] mb-2">パスワード</label>
+            <label className="mb-2 block text-sm text-[#8B94A7]">パスワード</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[#0B1220] border border-white/10 text-white rounded-xl p-4 text-base focus:outline-none focus:border-[#D4AF37]/50 placeholder:text-[#8B94A7]/50"
+              className="w-full rounded-xl border border-white/10 bg-[#0B1220] p-4 text-base text-white outline-none placeholder:text-[#8B94A7]/50 focus:border-[#D4AF37]/50"
               placeholder="••••••••"
               required
             />
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-sm">
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
               {error}
             </div>
           )}
@@ -88,9 +73,9 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#D4AF37] text-black font-bold rounded-xl py-4 text-base disabled:opacity-50 hover:opacity-90 transition active:scale-[0.98] mt-2"
+            className="mt-2 w-full rounded-xl bg-[#D4AF37] py-4 text-base font-bold text-black transition active:scale-[0.98] disabled:opacity-50"
           >
-            {loading ? 'ログイン中...' : 'ログイン'}
+            {loading ? 'ログイン中...' : '美容師OSを開く'}
           </button>
         </form>
       </div>

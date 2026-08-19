@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useActionState, useEffect, useMemo, useState } from 'react'
 import {
   DECISION_CAPTURE_FIELDS,
@@ -69,9 +70,18 @@ export default function DecisionInputClient() {
         action={formAction}
         className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pt-5"
       >
-        <header className="pb-4">
-          <h1 className="text-2xl font-bold">記録</h1>
-          <p className="mt-1 text-sm text-[#8B94A7]">3分以内で残す</p>
+        <header className="flex items-start justify-between gap-4 pb-4">
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.16em] text-[#D4AF37]">DECISION CAPTURE</p>
+            <h1 className="mt-1 text-2xl font-bold">Decision記録</h1>
+            <p className="mt-1 text-sm text-[#8B94A7]">3分以内。事実と判断を分けて残す。</p>
+          </div>
+          <Link
+            href="/"
+            className="rounded-xl border border-white/10 bg-[#111A2B] px-3 py-2 text-xs text-[#AEB7C8]"
+          >
+            ホーム
+          </Link>
         </header>
 
         <div className="flex-1 space-y-3 pb-5">

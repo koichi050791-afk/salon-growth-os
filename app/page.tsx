@@ -1,262 +1,119 @@
 import Link from 'next/link'
-import { getActiveStores } from '@/lib/repositories/stores'
-import { getLatestMonthlyConfig } from '@/lib/repositories/monthly-configs'
-import { getWeeklyStoreInput, getStoreInputsByDateRange } from '@/lib/repositories/weekly-store-inputs'
-import { getServerProfile } from '@/lib/repositories/profiles'
-import { getLatestImprovementAction } from '@/lib/repositories/improvement-actions'
+import { redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
-import Navigation from '@/lib/components/Navigation'
-import HomeActionCard from './HomeActionCard'
-import type { WeeklyStoreInput, MonthlyConfig } from '@/lib/types/db'
-import {
-  calcMonthlyProductivity,
-  formatMonthlyProductivity,
-  getMonthlyProductivityStatus,
-  calcProratedMonthlySales,
-} from '@/lib/calculations'
+import PersonalNavigation from '@/lib/components/PersonalNavigation'
+import { listAirtableDecisionRecords } from '@/lib/repositories/airtable-decisions'
+import { getServerProfile } from '@/lib/repositories/profiles'
 
-const WEEKLY_WEEKS = 4.3
-
-function getSundayISO(): string {
-  const today = new Date()
-  const sunday = new Date(today)
-  sunday.setDate(today.getDate() - today.getDay())
-  return sunday.toISOString().slice(0, 10)
-}
-
-function prevWeekISO(iso: string): string {
-  const d = new Date(iso)
-  d.setDate(d.getDate() - 7)
-  return d.toISOString().slice(0, 10)
-}
-
-function fmtYen(val: number | null): string {
-  if (val === null) return '—'
-  return '¥' + val.toLocaleString('ja-JP')
-}
-
-function diffPct(
-  current: number | null,
-  prev: number | null,
-): { text: string; up: boolean } | null {
-  if (current === null || prev === null || prev === 0) return null
-  const p = ((current - prev) / prev) * 100
-  return { text: `${p >= 0 ? '+' : ''}${p.toFixed(1)}%`, up: p >= 0 }
-}
-
-function targetPct(
-  current: number | null,
-  target: number | null,
-): { text: string; up: boolean } | null {
-  if (current === null || target === null || target === 0) return null
-  const p = (current / target) * 100
-  return { text: `目標比 ${p.toFixed(0)}%`, up: p >= 90 }
+function shortText(value: string | null, fallback: string) {
+  if (!value) return fallback
+  return value.length > 72 ? `${value.slice(0, 72)}…` : value
 }
 
 export default async function Home() {
   const profile = await getServerProfile()
-  const { data: stores } = await getActiveStores()
+  if (!profile) redirect('/login')
 
-  const isManager = profile?.role === 'manager'
-  const mainStore = isManager && profile?.store_id
-    ? (stores.find((s) => s.id === profile.store_id) ?? stores[0])
-    : stores[0]
-
-  const today = new Date()
-  const thisWeekStart = getSundayISO()
-  const lastWeekStart = prevWeekISO(thisWeekStart)
-  const currentMonth = today.toISOString().slice(0, 7) // YYYY-MM形式
-
-  // 月初の7日前（前月末にまたがる週を取得するため）
-  const monthFetchStart = new Date(today.getFullYear(), today.getMonth(), 1)
-  monthFetchStart.setDate(monthFetchStart.getDate() - 7)
-  const monthFetchStartISO = monthFetchStart.toISOString().slice(0, 10)
-
-  const [thisWeek, lastWeek, configResult, latestAction, monthlyInputsResult] = mainStore
-    ? await Promise.all([
-        getWeeklyStoreInput(mainStore.id, thisWeekStart),
-        getWeeklyStoreInput(mainStore.id, lastWeekStart),
-        getLatestMonthlyConfig(mainStore.id),
-        getLatestImprovementAction(mainStore.id),
-        getStoreInputsByDateRange(mainStore.id, monthFetchStartISO, thisWeekStart),
-      ])
-    : [null, null, { data: null }, null, { data: [], error: null }]
-
-  const config = (configResult as { data: MonthlyConfig | null }).data ?? null
-  const weeklyTargetSales = config?.target_sales != null ? Math.round(config.target_sales / WEEKLY_WEEKS) : null
-
-  const sales = thisWeek?.sales ?? null
-  const visits = thisWeek?.visits ?? null
-  const unitPrice = sales !== null && visits !== null && visits > 0 ? Math.round(sales / visits) : null
-  const prevSales = lastWeek?.sales ?? null
-  const prevVisits = lastWeek?.visits ?? null
-  const prevUnitPrice = prevSales !== null && (lastWeek?.visits ?? 0) > 0
-    ? Math.round(prevSales / lastWeek!.visits!) : null
-
-  const nextVisitCount = thisWeek?.next_visit_count ?? null
-  const prevNextVisitCount = lastWeek?.next_visit_count ?? null
-  const repeatRate = nextVisitCount !== null && visits !== null && visits > 0
-    ? Math.round((nextVisitCount / visits) * 100) : null
-  const prevRepeatRate = prevNextVisitCount !== null && prevVisits !== null && prevVisits > 0
-    ? Math.round((prevNextVisitCount / prevVisits) * 100) : null
-
-  const monthlyInputs = (monthlyInputsResult as { data: WeeklyStoreInput[] }).data ?? []
-
-  // 按分方式で月累計売上を計算
-  const monthlySalesVal = calcProratedMonthlySales(monthlyInputs, currentMonth)
-  const completedWeeks = monthlyInputs.filter((w) => {
-    if (w.sales === null) return false
-    const weekStartDate = new Date(w.week_start)
-    const weekEndDate = new Date(weekStartDate)
-    weekEndDate.setDate(weekEndDate.getDate() + 6)
-    const [year, m] = currentMonth.split('-').map(Number)
-    const monthStart = new Date(year, m - 1, 1)
-    const monthEnd = new Date(year, m, 0)
-    return weekEndDate >= monthStart && weekStartDate <= monthEnd
-  }).length
-
-  const totalWeeks = config?.total_weeks ?? null
-  const activeStaffCount = config?.active_staff_count ?? null
-  const monthlyProd = monthlySalesVal !== null
-    ? calcMonthlyProductivity(monthlySalesVal, completedWeeks, totalWeeks, activeStaffCount)
-    : null
-  const monthlyProdStatus = getMonthlyProductivityStatus(monthlyProd)
-  const monthlyConfigMissing = totalWeeks === null || activeStaffCount === null
-
-  const dateLabel = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
-  const hasData = thisWeek !== null
+  const recent = await listAirtableDecisionRecords(3)
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#0B1220] pb-20">
-        <Navigation />
-        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-          {/* ヘッダー */}
-          <div>
-            <h1 className="text-lg font-semibold text-[#E6ECF5]">Salon Growth OS</h1>
-            <p className="text-[#8B94A7] text-xs mt-0.5">{dateLabel}</p>
-          </div>
+      <main className="min-h-dvh bg-[#0B1220] text-[#E6ECF5] pb-24">
+        <div className="mx-auto w-full max-w-lg px-4 py-6 space-y-5">
+          <header>
+            <p className="text-xs font-semibold tracking-[0.18em] text-[#D4AF37]">IKEDA PERSONAL OS</p>
+            <h1 className="mt-2 text-2xl font-bold">池田航一｜美容師OS</h1>
+            <p className="mt-2 text-sm leading-relaxed text-[#8B94A7]">
+              サロンワークから判断を残し、次回来店・Knowledge・発信・経営へ学習をつなげる。
+            </p>
+          </header>
 
-          {!mainStore ? (
-            <div className="bg-[#111A2B] rounded-2xl p-6 border border-white/5 text-center">
-              <p className="text-[#8B94A7] text-sm mb-4">店舗データがありません</p>
-              <Link href="/settings" className="text-sm px-5 py-3 bg-[#D4AF37] text-black font-bold rounded-xl hover:opacity-90 transition">
-                設定から店舗を追加する
-              </Link>
+          <section className="rounded-3xl border border-[#D4AF37]/25 bg-[#111A2B] p-5">
+            <p className="text-xs font-bold text-[#D4AF37]">今いちばん大事なこと</p>
+            <h2 className="mt-2 text-xl font-bold">Decisionを3分以内で残す</h2>
+            <p className="mt-2 text-sm leading-relaxed text-[#9AA4B7]">
+              機能を増やすより、現場で判断を残すほど本当に学習が深くなるかを検証する。
+            </p>
+            <Link
+              href="/decision-input"
+              className="mt-5 flex min-h-[58px] w-full items-center justify-center rounded-2xl bg-[#D4AF37] px-5 text-base font-bold text-black active:scale-[0.99]"
+            >
+              Decisionを記録する
+            </Link>
+          </section>
+
+          <section className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-white/10 bg-[#111A2B] p-4">
+              <p className="text-xs text-[#7F8AA0]">現在フェーズ</p>
+              <p className="mt-2 font-bold">ホップ</p>
+              <p className="mt-1 text-xs leading-relaxed text-[#9AA4B7]">観察・記録・小さな実験・勝ち筋の発見</p>
             </div>
-          ) : (
-            <>
-              {/* 今週のアクション（インタラクティブカード） */}
-              <HomeActionCard action={latestAction} storeId={mainStore.id} />
+            <Link href="/project" className="rounded-2xl border border-white/10 bg-[#111A2B] p-4 active:scale-[0.99]">
+              <p className="text-xs text-[#7F8AA0]">最上位目標</p>
+              <p className="mt-2 font-bold">月間技術売上130万円</p>
+              <p className="mt-1 text-xs leading-relaxed text-[#9AA4B7]">9:00〜18:00と家族時間を守って安定達成</p>
+            </Link>
+          </section>
 
-              {/* 今週速報カード */}
-              <div className="bg-[#111A2B] rounded-2xl p-4 border border-white/5">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-[#E6ECF5] text-base font-semibold">{mainStore.store_name}</p>
-                  <span className="bg-[#D4AF37]/10 text-[#D4AF37] rounded-full px-3 py-1 text-xs font-bold">
-                    今週速報
-                  </span>
-                </div>
-
-                {!hasData ? (
-                  <div className="text-center py-4">
-                    <p className="text-[#8B94A7] text-sm mb-4">今週のデータが未入力です</p>
-                    <Link
-                      href={`/weekly-input?storeId=${mainStore.id}`}
-                      className="inline-block text-sm px-5 py-3 bg-[#D4AF37] text-black font-bold rounded-xl hover:opacity-90 transition"
-                    >
-                      週次入力へ →
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    <MetricCard label="週売上" value={fmtYen(sales)}
-                      diff={targetPct(sales, weeklyTargetSales) ?? diffPct(sales, prevSales)} />
-                    <MetricCard label="客数" value={visits !== null ? `${visits}人` : '—'}
-                      diff={diffPct(visits, prevVisits)} />
-                    <MetricCard label="客単価" value={fmtYen(unitPrice)}
-                      diff={diffPct(unitPrice, prevUnitPrice)} />
-                    <MetricCard label="次回予約率" value={repeatRate !== null ? `${repeatRate}%` : '—'}
-                      diff={diffPct(repeatRate, prevRepeatRate)} />
-                    <MonthlyProdCard
-                      value={formatMonthlyProductivity(monthlyProd)}
-                      status={monthlyProdStatus}
-                      missing={monthlyConfigMissing}
-                    />
-                  </div>
-                )}
+          <section className="rounded-3xl border border-white/10 bg-[#111A2B] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs text-[#7F8AA0]">Learning Stream</p>
+                <h2 className="mt-1 text-lg font-bold">直近のDecision</h2>
               </div>
+              <Link href="/decisions" className="text-sm font-semibold text-[#D4AF37]">すべて見る →</Link>
+            </div>
 
-              {/* ショートカット */}
-              <div className="grid grid-cols-2 gap-3">
-                <Link href={`/weekly-input?storeId=${mainStore.id}`}
-                  className="text-center text-sm py-4 bg-[#D4AF37] rounded-xl text-black font-bold hover:opacity-90 transition">
-                  ➕ 週次入力
-                </Link>
-                <Link href={`/dashboard?storeId=${mainStore.id}`}
-                  className="text-center text-sm py-4 bg-[#111A2B] border border-[#D4AF37]/30 rounded-xl text-[#D4AF37] hover:opacity-90 transition">
-                  📊 ダッシュボード
-                </Link>
-                <Link href="/monthly-config"
-                  className="text-center text-sm py-3 px-4 bg-[#111A2B] border border-white/10 rounded-xl text-[#E6ECF5] hover:opacity-90 transition">
-                  ⚙️ 月次設定
-                </Link>
+            {recent.error ? (
+              <div className="mt-4 rounded-2xl border border-white/10 bg-[#0B1220] p-4 text-sm text-[#8B94A7]">
+                Decisionを読み込めませんでした。記録機能には影響ありません。
               </div>
-            </>
-          )}
+            ) : recent.data.length === 0 ? (
+              <div className="mt-4 rounded-2xl border border-white/10 bg-[#0B1220] p-4 text-sm text-[#8B94A7]">
+                まだDecisionがありません。最初の1件を残してください。
+              </div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {recent.data.map((decision) => (
+                  <article key={decision.id} className="rounded-2xl border border-white/10 bg-[#0B1220] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-xs text-[#7F8AA0]">{decision.title || 'Decision記録'}</p>
+                      {decision.status && (
+                        <span className="shrink-0 rounded-full bg-white/5 px-2 py-1 text-[10px] text-[#AEB7C8]">
+                          {decision.status}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-3 text-sm font-semibold leading-relaxed">
+                      {shortText(decision.values.consultationConcern, '相談未入力')}
+                    </p>
+                    <div className="mt-3 border-l-2 border-[#D4AF37]/50 pl-3">
+                      <p className="text-[11px] text-[#7F8AA0]">今回の判断</p>
+                      <p className="mt-1 text-sm leading-relaxed text-[#C9D1DE]">
+                        {shortText(decision.values.chosenDecision, '未入力')}
+                      </p>
+                    </div>
+                    <div className="mt-3 border-l-2 border-emerald-400/40 pl-3">
+                      <p className="text-[11px] text-[#7F8AA0]">次回確認</p>
+                      <p className="mt-1 text-sm leading-relaxed text-[#C9D1DE]">
+                        {shortText(decision.values.nextObservation, '未入力')}
+                      </p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-3xl border border-white/10 bg-[#111A2B] p-4">
+            <p className="text-xs text-[#7F8AA0]">OSの判断基準</p>
+            <p className="mt-2 text-sm leading-relaxed text-[#C9D1DE]">
+              何をするかより先に、何が必要かを判断する。事実と仮説を分け、選んだことだけでなく、しなかったことと次回観察を残す。
+            </p>
+          </section>
         </div>
-      </div>
+        <PersonalNavigation />
+      </main>
     </AuthGuard>
-  )
-}
-
-function MetricCard({
-  label, value, diff,
-}: {
-  label: string; value: string; diff: { text: string; up: boolean } | null
-}) {
-  return (
-    <div className="bg-[#0B1220] rounded-xl p-3 border border-white/5">
-      <p className="text-[#8B94A7] text-xs mb-1">{label}</p>
-      <p className="text-[#E6ECF5] text-2xl font-bold">{value}</p>
-      {diff ? (
-        <p className={`text-xs mt-1 ${diff.up ? 'text-emerald-400' : 'text-red-400'}`}>
-          {diff.up ? '↑' : '↓'} {diff.text}
-        </p>
-      ) : (
-        <p className="text-[#8B94A7] text-xs mt-1">-</p>
-      )}
-    </div>
-  )
-}
-
-const MONTHLY_PROD_BADGE_CLASS: Record<'success' | 'warning' | 'danger' | 'none', string> = {
-  success: 'bg-emerald-900/30 text-emerald-400',
-  warning: 'bg-amber-900/30 text-amber-400',
-  danger:  'bg-red-900/30 text-red-400',
-  none:    'bg-[#1E293B] text-[#8B94A7]',
-}
-const MONTHLY_PROD_BADGE_LABEL: Record<'success' | 'warning' | 'danger' | 'none', string> = {
-  success: '優良', warning: '標準', danger: '危険', none: '未設定',
-}
-
-function MonthlyProdCard({
-  value, status, missing,
-}: {
-  value: string
-  status: 'success' | 'warning' | 'danger' | 'none'
-  missing: boolean
-}) {
-  return (
-    <div className="col-span-2 bg-[#0B1220] rounded-xl p-3 border border-white/5">
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-[#8B94A7] text-xs">月次生産性（暫定）</p>
-        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${MONTHLY_PROD_BADGE_CLASS[status]}`}>
-          {MONTHLY_PROD_BADGE_LABEL[status]}
-        </span>
-      </div>
-      <p className="text-[#E6ECF5] text-2xl font-bold">{value}</p>
-      {missing && <p className="text-[#8B94A7] text-xs mt-1">月次設定から週数を入力してください</p>}
-    </div>
   )
 }
