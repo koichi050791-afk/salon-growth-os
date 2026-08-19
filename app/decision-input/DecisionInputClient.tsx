@@ -64,34 +64,37 @@ export default function DecisionInputClient() {
   }
 
   return (
-    <main className="min-h-dvh bg-[#0B1220] text-[#E6ECF5]">
+    <main className="min-h-dvh bg-[var(--paper)] text-[var(--ink)]">
       <form
         key={formKey}
         action={formAction}
-        className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pt-5"
+        className="mx-auto flex min-h-dvh w-full max-w-[560px] flex-col px-5 pt-5"
       >
-        <header className="flex items-start justify-between gap-4 pb-4">
+        <header className="flex items-start justify-between gap-4 border-b border-[var(--line)] pb-5">
           <div>
-            <p className="text-[11px] font-semibold tracking-[0.16em] text-[#D4AF37]">DECISION CAPTURE</p>
-            <h1 className="mt-1 text-2xl font-bold">Decision記録</h1>
-            <p className="mt-1 text-sm text-[#8B94A7]">3分以内。事実と判断を分けて残す。</p>
+            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--muted)]">
+              Decision Capture
+            </p>
+            <h1 className="mt-2 text-[32px] font-medium leading-tight">記録</h1>
+            <p className="mt-2 text-sm text-[var(--muted)]">3分以内で残す</p>
           </div>
           <Link
             href="/"
-            className="rounded-xl border border-white/10 bg-[#111A2B] px-3 py-2 text-xs text-[#AEB7C8]"
+            className="min-h-[44px] shrink-0 border border-[var(--line)] bg-[var(--paper-soft)] px-3 py-3 text-xs text-[var(--muted)]"
           >
             ホーム
           </Link>
         </header>
 
-        <div className="flex-1 space-y-3 pb-5">
-          {fields.map((field) => (
+        <div className="flex-1 pb-5">
+          {fields.map((field, index) => (
             <label
               key={field.key}
-              className="block rounded-2xl border border-white/10 bg-[#111A2B] p-3"
+              className="block border-b border-[var(--line)] py-5"
             >
-              <span className="block pb-2 text-[15px] font-bold">
-                {fieldLabels[field.key]}
+              <span className="mb-2 flex items-center gap-3">
+                <span className="text-[11px] text-[var(--muted)]">{String(index + 1).padStart(2, '0')}</span>
+                <span className="text-base font-medium">{fieldLabels[field.key]}</span>
               </span>
               <textarea
                 name={field.key}
@@ -100,20 +103,20 @@ export default function DecisionInputClient() {
                 onInput={(event) => resizeTextarea(event.currentTarget)}
                 placeholder={fieldPlaceholders[field.key]}
                 rows={2}
-                className="block min-h-[72px] w-full resize-none overflow-hidden rounded-xl border border-white/10 bg-[#0B1220] px-3 py-3 text-base leading-relaxed text-[#E6ECF5] outline-none placeholder:text-[#536078] focus:border-[#D4AF37]/60"
+                className="block min-h-[86px] w-full resize-none overflow-hidden border border-[var(--line)] bg-[var(--paper-soft)] px-3 py-3 text-base leading-7 text-[var(--ink)] outline-none placeholder:text-[color:rgba(119,115,107,0.62)] focus:border-[var(--gold)] focus:bg-white"
               />
             </label>
           ))}
         </div>
 
-        <div className="sticky bottom-0 -mx-4 border-t border-white/10 bg-[#0B1220]/95 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-3 backdrop-blur">
+        <div className="sticky bottom-0 -mx-5 border-t border-[var(--line)] bg-[var(--paper)]/95 px-5 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-3 backdrop-blur">
           {state.message && (
             <p
               aria-live="polite"
-              className={`mb-3 rounded-xl border px-3 py-2 text-sm ${
+              className={`mb-3 border px-3 py-2 text-sm ${
                 state.status === 'success'
-                  ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
-                  : 'border-red-500/20 bg-red-500/10 text-red-300'
+                  ? 'border-[var(--green)]/25 bg-[var(--green)]/10 text-[var(--green)]'
+                  : 'border-[var(--danger)]/25 bg-[var(--danger)]/10 text-[var(--danger)]'
               }`}
             >
               {state.message}
@@ -122,9 +125,9 @@ export default function DecisionInputClient() {
           <button
             type="submit"
             disabled={pending}
-            className="min-h-[56px] w-full rounded-2xl bg-[#D4AF37] px-5 py-4 text-lg font-bold text-black transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            className="min-h-[58px] w-full bg-[var(--charcoal)] px-5 py-4 text-lg font-medium text-[var(--paper-soft)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {pending ? '保存中...' : '保存'}
+            {pending ? '保存中…' : '保存'}
           </button>
         </div>
       </form>
