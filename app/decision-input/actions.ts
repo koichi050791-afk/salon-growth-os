@@ -9,6 +9,7 @@ import {
   createAirtableDecisionRecord,
   type AirtableDecisionCoreValues,
 } from '@/lib/repositories/airtable-decisions'
+import { safeDispatchDecisionCaptured } from '@/lib/services/work-graph'
 import type { DecisionCoreFieldKey } from '@/lib/types/decision'
 
 export type DecisionInputActionState = {
@@ -71,10 +72,12 @@ export async function saveDecisionInput(
     return { status: 'error', message: 'ログインが必要です' }
   }
 
+  const decisionTitle = buildTokyoDecisionTitle(new Date())
+  const values = buildCoreValues(formData)
   const result = await createAirtableDecisionRecord({
-    title: buildTokyoDecisionTitle(new Date()),
+    title: decisionTitle,
     status: process.env.AIRTABLE_DECISION_STATUS_VALUE?.trim() || INITIAL_STATUS,
-    values: buildCoreValues(formData),
+    values,
   })
 
   if (!result.ok) {
@@ -83,6 +86,12 @@ export async function saveDecisionInput(
       : '保存できませんでした'
     return { status: 'error', message }
   }
+
+  await safeDispatchDecisionCaptured({
+    decisionRecordId: result.recordId,
+    title: decisionTitle,
+    values,
+  })
 
   return { status: 'success', message: '保存しました' }
 }

@@ -4,10 +4,10 @@ import {
   SHARED_CAPABILITIES,
   buildWorkGraphRoutingPreview,
 } from '@/lib/services/agent-registry'
+import { getVisibleApprovalQueueItems } from '@/lib/services/approval-queue'
 import type {
   AiOperationDefinition,
   AiOperationsControlCenter,
-  ApprovalQueueItem,
 } from '@/lib/types/ai-operations'
 
 const OPERATIONS: readonly AiOperationDefinition[] = [
@@ -57,8 +57,6 @@ const OPERATIONS: readonly AiOperationDefinition[] = [
   },
 ]
 
-const APPROVAL_QUEUE: readonly ApprovalQueueItem[] = []
-
 function formatTokyoToday(date: Date): string {
   return new Intl.DateTimeFormat('ja-JP', {
     timeZone: 'Asia/Tokyo',
@@ -76,10 +74,12 @@ export function getAiOperationsControlCenter(date = new Date()): AiOperationsCon
     coreAgents: CORE_AGENTS,
     sharedCapabilities: SHARED_CAPABILITIES,
     operations: OPERATIONS,
-    approvalQueue: APPROVAL_QUEUE,
+    approvalQueue: getVisibleApprovalQueueItems(),
     routingPreviews: [
       buildWorkGraphRoutingPreview('DecisionCaptured'),
       buildWorkGraphRoutingPreview('DailyReportCaptured'),
+      buildWorkGraphRoutingPreview('KnowledgeCandidateDetected'),
+      buildWorkGraphRoutingPreview('ContentCandidateDetected'),
       buildWorkGraphRoutingPreview('EngineeringCandidateDetected'),
     ],
     boundaryNotes: [

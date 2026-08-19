@@ -135,7 +135,7 @@ export default async function OperationsPage() {
           </div>
           {approvalCount === 0 ? (
             <div className="mt-4 border border-[var(--line)] bg-[var(--paper-soft)] p-4 text-sm leading-7 text-[var(--muted)]">
-              現時点で承認待ちはありません。Approval Policy接続後、REVIEW / APPROVALだけをここに出します。
+              現時点で承認待ちはありません。AUTO作業は表示せず、池田の判断で次の行動が変わるものだけをここに出します。
             </div>
           ) : (
             <div>
@@ -146,7 +146,30 @@ export default async function OperationsPage() {
                     <ApprovalPill level={item.approvalLevel} />
                   </div>
                   <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{item.summary}</p>
-                  <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{item.requiredAction}</p>
+                  <dl className="mt-4 space-y-3 text-sm leading-7">
+                    <div>
+                      <dt className="text-[11px] text-[var(--muted)]">なぜ見るか</dt>
+                      <dd className="text-[var(--ink-soft)]">{item.reasonForHuman}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[11px] text-[var(--muted)]">承認すると</dt>
+                      <dd className="text-[var(--ink-soft)]">{item.proposedAction}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[11px] text-[var(--muted)]">Evidence</dt>
+                      <dd className="text-[var(--ink-soft)]">
+                        {item.evidenceRefs.length > 0
+                          ? item.evidenceRefs.map((ref) => ref.label).join(' / ')
+                          : 'sourceRef未接続'}
+                      </dd>
+                    </div>
+                  </dl>
+                  <div className="mt-4 flex flex-wrap gap-2 text-[10px] text-[var(--muted)]">
+                    <span className="border border-[var(--line)] px-2 py-1">{item.type}</span>
+                    <span className="border border-[var(--line)] px-2 py-1">{item.risk}</span>
+                    <span className="border border-[var(--line)] px-2 py-1">{item.reversibility}</span>
+                    <span className="border border-[var(--line)] px-2 py-1">{item.status}</span>
+                  </div>
                 </article>
               ))}
             </div>

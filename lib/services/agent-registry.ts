@@ -174,8 +174,8 @@ export const SHARED_CAPABILITIES: readonly SharedCapabilityDefinition[] = [
 const EVENT_APPROVAL_LEVELS: Record<WorkEventType, ApprovalLevel> = {
   DecisionCaptured: 'AUTO',
   DailyReportCaptured: 'AUTO',
-  KnowledgeCandidateDetected: 'APPROVAL',
-  ContentCandidateDetected: 'APPROVAL',
+  KnowledgeCandidateDetected: 'REVIEW',
+  ContentCandidateDetected: 'REVIEW',
   EngineeringCandidateDetected: 'REVIEW',
 }
 

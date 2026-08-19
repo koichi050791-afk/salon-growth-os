@@ -11,6 +11,7 @@ export type CreateAirtableDecisionInput = {
 export type CreateAirtableDecisionResult = {
   ok: boolean
   error: 'missing_config' | 'request_failed' | null
+  recordId: string | null
 }
 
 export type AirtableDecisionRecord = {
@@ -134,7 +135,7 @@ export async function createAirtableDecisionRecord(
 ): Promise<CreateAirtableDecisionResult> {
   const config = readAirtableConfig()
   if (!config) {
-    return { ok: false, error: 'missing_config' }
+    return { ok: false, error: 'missing_config', recordId: null }
   }
 
   try {
@@ -152,17 +153,24 @@ export async function createAirtableDecisionRecord(
     })
 
     if (!response.ok) {
-      return { ok: false, error: 'request_failed' }
+      return { ok: false, error: 'request_failed', recordId: null }
     }
 
-    const body = await response.json().catch(() => null) as { records?: unknown[] } | null
+    const body = await response.json().catch(() => null) as {
+      records?: Array<{ id?: unknown }>
+    } | null
     if (!body?.records || body.records.length !== 1) {
-      return { ok: false, error: 'request_failed' }
+      return { ok: false, error: 'request_failed', recordId: null }
     }
 
-    return { ok: true, error: null }
+    const recordId = body.records[0]?.id
+    if (typeof recordId !== 'string') {
+      return { ok: false, error: 'request_failed', recordId: null }
+    }
+
+    return { ok: true, error: null, recordId }
   } catch {
-    return { ok: false, error: 'request_failed' }
+    return { ok: false, error: 'request_failed', recordId: null }
   }
 }
 
