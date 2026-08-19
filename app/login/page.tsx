@@ -29,43 +29,43 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#0B1220] px-4">
-      <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#111A2B] p-8">
+    <div className="flex min-h-dvh items-center justify-center bg-[var(--paper)] px-5 py-8 text-[var(--ink)]">
+      <div className="w-full max-w-sm border-y border-[var(--line)] bg-[var(--paper-soft)] px-1 py-8">
         <div>
-          <p className="text-xs font-semibold tracking-[0.18em] text-[#D4AF37]">IKEDA PERSONAL OS</p>
-          <h1 className="mt-3 text-2xl font-bold text-[#E6ECF5]">池田航一｜美容師OS</h1>
-          <p className="mt-2 text-sm leading-relaxed text-[#8B94A7]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--muted)]">Ikeda Personal OS</p>
+          <h1 className="mt-3 text-[32px] font-medium leading-tight">池田航一｜美容師OS</h1>
+          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
             Decisionを残し、次回来店・Knowledge・発信・経営へ学習をつなげる。
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <div>
-            <label className="mb-2 block text-sm text-[#8B94A7]">メールアドレス</label>
+            <label className="mb-2 block text-sm text-[var(--muted)]">メールアドレス</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#0B1220] p-4 text-base text-white outline-none placeholder:text-[#8B94A7]/50 focus:border-[#D4AF37]/50"
+              className="min-h-[52px] w-full border border-[var(--line)] bg-white/70 p-4 text-base text-[var(--ink)] outline-none placeholder:text-[color:rgba(119,115,107,0.58)] focus:border-[var(--gold)]"
               placeholder="example@email.com"
               required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-[#8B94A7]">パスワード</label>
+            <label className="mb-2 block text-sm text-[var(--muted)]">パスワード</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#0B1220] p-4 text-base text-white outline-none placeholder:text-[#8B94A7]/50 focus:border-[#D4AF37]/50"
-              placeholder="••••••••"
+              className="min-h-[52px] w-full border border-[var(--line)] bg-white/70 p-4 text-base text-[var(--ink)] outline-none placeholder:text-[color:rgba(119,115,107,0.58)] focus:border-[var(--gold)]"
+              placeholder="password"
               required
             />
           </div>
 
           {error && (
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            <div className="border border-[var(--danger)]/25 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
               {error}
             </div>
           )}
@@ -73,9 +73,9 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 w-full rounded-xl bg-[#D4AF37] py-4 text-base font-bold text-black transition active:scale-[0.98] disabled:opacity-50"
+            className="mt-2 min-h-[56px] w-full bg-[var(--charcoal)] px-5 py-4 text-base font-medium text-[var(--paper-soft)] transition active:scale-[0.98] disabled:opacity-50"
           >
-            {loading ? 'ログイン中...' : '美容師OSを開く'}
+            {loading ? 'ログイン中…' : '美容師OSを開く'}
           </button>
         </form>
       </div>

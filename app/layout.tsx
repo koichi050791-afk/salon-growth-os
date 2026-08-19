@@ -24,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ja" className="bg-[#0B1220]">
-      <body className={`${geistSans.variable} ${geistMono.variable} bg-[#0B1220] text-white antialiased`}>
+    <html lang="ja" className="bg-[var(--paper)]">
+      <body className={`${geistSans.variable} ${geistMono.variable} bg-[var(--paper)] text-[var(--ink)] antialiased`}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

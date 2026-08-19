@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
-import PersonalNavigation from '@/lib/components/PersonalNavigation'
+import { EditorialPage, QuietPanel, SectionLabel } from '@/lib/components/EditorialPage'
 import { getServerUser } from '@/lib/auth/server-user'
 import {
   CUSTOMER_STATES,
@@ -101,119 +101,116 @@ export default async function CustomerGrowthPage() {
 
   return (
     <AuthGuard>
-      <main className="min-h-dvh bg-[#0B1220] pb-24 text-[#E6ECF5]">
-        <div className="mx-auto w-full max-w-lg space-y-5 px-4 py-6">
-          <header>
-            <p className="text-xs font-semibold tracking-[0.18em] text-[#D4AF37]">CUSTOMER GROWTH</p>
-            <h1 className="mt-2 text-2xl font-bold">Customer Growth Layer</h1>
-            <p className="mt-2 text-sm leading-relaxed text-[#8B94A7]">
-              今月の売上ではなく、来月以降も売上を生む顧客基盤が強くなっているかを観測する。
-            </p>
-          </header>
+      <EditorialPage containerClassName="space-y-8">
+        <header className="border-b border-[var(--line)] pb-5">
+          <SectionLabel>Customer Growth</SectionLabel>
+          <h1 className="mt-2 text-[34px] font-medium leading-tight">Customer Growth Layer</h1>
+          <p className="mt-3 max-w-[36rem] text-sm leading-7 text-[var(--muted)]">
+            今月の売上ではなく、来月以降も売上を生む顧客基盤が強くなっているかを観測する。
+          </p>
+        </header>
 
-          <section className="rounded-3xl border border-[#D4AF37]/25 bg-[#111A2B] p-5">
-            <p className="text-xs font-bold text-[#D4AF37]">v0.2の原則</p>
-            <p className="mt-2 text-sm leading-relaxed text-[#C9D1DE]">
-              Customer Stateは顧客ランクではありません。WATCHも営業LINE送信リストではなく、予定した時間軸からズレ始めた時に「何が起きているかを見る」ための状態です。
+        <QuietPanel>
+          <SectionLabel>Principle</SectionLabel>
+          <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+            Customer Stateは顧客ランクではありません。WATCHも営業LINE送信リストではなく、予定した時間軸からズレ始めた時に「何が起きているかを見る」ための状態です。
+          </p>
+        </QuietPanel>
+
+        {result.error ? (
+          <section className="border border-[var(--danger)]/25 bg-[var(--danger)]/10 p-5 text-sm leading-7 text-[var(--danger)]">
+            AirtableからCustomer情報を読み込めませんでした。Decision記録には影響ありません。
+          </section>
+        ) : customers.length === 0 ? (
+          <section className="border-y border-[var(--line)] bg-[var(--paper-soft)] px-4 py-7">
+            <SectionLabel>Phase 0</SectionLabel>
+            <h2 className="mt-3 text-xl font-medium">実顧客の時間軸を接続する段階</h2>
+            <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+              現在はSampleデータを集計から除外しています。実顧客のCustomer → Visit → Decision接続が始まると、ここに状態と確認候補が表示されます。
             </p>
           </section>
-
-          {result.error ? (
-            <section className="rounded-3xl border border-red-500/20 bg-red-500/10 p-5 text-sm text-red-200">
-              AirtableからCustomer情報を読み込めませんでした。Decision記録には影響ありません。
-            </section>
-          ) : customers.length === 0 ? (
-            <section className="rounded-3xl border border-white/10 bg-[#111A2B] p-5">
-              <p className="text-xs text-[#7F8AA0]">Phase 0</p>
-              <h2 className="mt-2 text-lg font-bold">実顧客の時間軸を接続する段階</h2>
-              <p className="mt-2 text-sm leading-relaxed text-[#9AA4B7]">
-                現在はSampleデータを集計から除外しています。実顧客のCustomer → Visit → Decision接続が始まると、ここに状態と確認候補が表示されます。
-              </p>
-            </section>
-          ) : (
-            <>
-              <section className="rounded-3xl border border-white/10 bg-[#111A2B] p-4">
-                <div className="flex items-end justify-between gap-3">
-                  <div>
-                    <p className="text-xs text-[#7F8AA0]">Customer Base</p>
-                    <h2 className="mt-1 text-lg font-bold">現在の状態</h2>
-                  </div>
-                  <p className="text-xs text-[#7F8AA0]">実顧客 {customers.length}人</p>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  {CUSTOMER_STATES.map((state) => (
-                    <div key={state} className="rounded-2xl border border-white/10 bg-[#0B1220] p-3">
-                      <p className="text-[11px] text-[#7F8AA0]">{stateLabel[state]}</p>
-                      <p className="mt-1 text-xl font-bold">{counts[state]}</p>
-                    </div>
-                  ))}
-                  <div className="rounded-2xl border border-white/10 bg-[#0B1220] p-3">
-                    <p className="text-[11px] text-[#7F8AA0]">未分類</p>
-                    <p className="mt-1 text-xl font-bold">{unclassified}</p>
-                  </div>
-                </div>
-              </section>
-
-              <section className="rounded-3xl border border-white/10 bg-[#111A2B] p-4">
+        ) : (
+          <>
+            <section>
+              <div className="flex items-end justify-between gap-3 border-b border-[var(--line)] pb-4">
                 <div>
-                  <p className="text-xs text-[#7F8AA0]">Today&apos;s Observation</p>
-                  <h2 className="mt-1 text-lg font-bold">今、見る候補</h2>
-                  <p className="mt-1 text-xs leading-relaxed text-[#8B94A7]">
-                    WATCH状態、またはExpected Returnを超過して次回予約がない顧客。自動連絡はしません。
-                  </p>
+                  <SectionLabel>Customer Base</SectionLabel>
+                  <h2 className="mt-2 text-2xl font-medium">現在の状態</h2>
                 </div>
-
-                {observationCandidates.length === 0 ? (
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-[#0B1220] p-4 text-sm text-[#8B94A7]">
-                    現時点で確認候補はありません。
+                <p className="text-xs text-[var(--muted)]">実顧客 {customers.length}人</p>
+              </div>
+              <div className="grid grid-cols-2 border-b border-[var(--line)] sm:grid-cols-3">
+                {CUSTOMER_STATES.map((state) => (
+                  <div key={state} className="border-t border-[var(--line)] py-4 pr-3">
+                    <p className="text-[11px] text-[var(--muted)]">{stateLabel[state]}</p>
+                    <p className="mt-1 text-2xl font-medium">{counts[state]}</p>
                   </div>
-                ) : (
-                  <div className="mt-4 space-y-3">
-                    {observationCandidates.map(({ customer, expected, overdueDays, reason }) => (
-                      <article key={customer.id} className="rounded-2xl border border-white/10 bg-[#0B1220] p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-semibold">{customer.name}</p>
-                            {customer.customerId && (
-                              <p className="mt-1 text-[11px] text-[#667085]">{customer.customerId}</p>
-                            )}
-                          </div>
-                          <span className="rounded-full bg-[#D4AF37]/10 px-2.5 py-1 text-[10px] font-semibold text-[#D4AF37]">
-                            {reason === 'WATCH' ? 'WATCH' : 'WATCH候補'}
-                          </span>
-                        </div>
-                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                          <div className="rounded-xl bg-[#111A2B] p-3">
-                            <p className="text-[#7F8AA0]">Expected Return</p>
-                            <p className="mt-1 text-[#C9D1DE]">{expected ?? '未設定'}</p>
-                          </div>
-                          <div className="rounded-xl bg-[#111A2B] p-3">
-                            <p className="text-[#7F8AA0]">超過</p>
-                            <p className="mt-1 font-semibold text-[#C9D1DE]">
-                              {overdueDays && overdueDays > 0 ? `${overdueDays}日` : '—'}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="mt-3 text-xs text-[#8B94A7]">
-                          Next Plan：{customer.nextPlanStatus ? planLabel[customer.nextPlanStatus] : '未確認'}
-                        </p>
-                      </article>
-                    ))}
-                  </div>
-                )}
-              </section>
-            </>
-          )}
+                ))}
+                <div className="border-t border-[var(--line)] py-4 pr-3">
+                  <p className="text-[11px] text-[var(--muted)]">未分類</p>
+                  <p className="mt-1 text-2xl font-medium">{unclassified}</p>
+                </div>
+              </div>
+            </section>
 
-          <section className="rounded-3xl border border-white/10 bg-[#111A2B] p-4">
-            <p className="text-xs text-[#7F8AA0]">まだ自動化しないこと</p>
-            <p className="mt-2 text-sm leading-relaxed text-[#C9D1DE]">
-              State変更、失客確定、連絡判断、施術提案は自動化しません。30〜60日の実データを見て、池田の場合に成立する条件を先に発見します。
-            </p>
-          </section>
-        </div>
-        <PersonalNavigation />
-      </main>
+            <section>
+              <div className="border-b border-[var(--line)] pb-4">
+                <SectionLabel>Today&apos;s Observation</SectionLabel>
+                <h2 className="mt-2 text-2xl font-medium">今、見る候補</h2>
+                <p className="mt-2 text-xs leading-6 text-[var(--muted)]">
+                  WATCH状態、またはExpected Returnを超過して次回予約がない顧客。自動連絡はしません。
+                </p>
+              </div>
+
+              {observationCandidates.length === 0 ? (
+                <div className="mt-4 border border-[var(--line)] bg-[var(--paper-soft)] p-4 text-sm text-[var(--muted)]">
+                  現時点で確認候補はありません。
+                </div>
+              ) : (
+                <div>
+                  {observationCandidates.map(({ customer, expected, overdueDays, reason }) => (
+                    <article key={customer.id} className="border-b border-[var(--line)] py-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium">{customer.name}</p>
+                          {customer.customerId && (
+                            <p className="mt-1 text-[11px] text-[var(--muted)]">{customer.customerId}</p>
+                          )}
+                        </div>
+                        <span className="border border-[var(--gold)]/30 bg-[var(--gold-soft)] px-2.5 py-1 text-[10px] font-medium text-[var(--gold)]">
+                          {reason === 'WATCH' ? 'WATCH' : 'WATCH候補'}
+                        </span>
+                      </div>
+                      <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <dt className="text-[var(--muted)]">Expected Return</dt>
+                          <dd className="mt-1 text-[var(--ink-soft)]">{expected ?? '未設定'}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-[var(--muted)]">超過</dt>
+                          <dd className="mt-1 font-medium text-[var(--ink-soft)]">
+                            {overdueDays && overdueDays > 0 ? `${overdueDays}日` : '—'}
+                          </dd>
+                        </div>
+                      </dl>
+                      <p className="mt-4 text-xs text-[var(--muted)]">
+                        Next Plan：{customer.nextPlanStatus ? planLabel[customer.nextPlanStatus] : '未確認'}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
+
+        <QuietPanel>
+          <SectionLabel>Not Automated</SectionLabel>
+          <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+            State変更、失客確定、連絡判断、施術提案は自動化しません。30〜60日の実データを見て、池田の場合に成立する条件を先に発見します。
+          </p>
+        </QuietPanel>
+      </EditorialPage>
     </AuthGuard>
   )
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
-import PersonalNavigation from '@/lib/components/PersonalNavigation'
+import { EditorialPage, QuietPanel, SectionLabel } from '@/lib/components/EditorialPage'
 import { listAirtableDecisionRecords, type AirtableDecisionRecord } from '@/lib/repositories/airtable-decisions'
 import { getServerUser } from '@/lib/auth/server-user'
 
@@ -29,116 +29,133 @@ export default async function Home() {
 
   return (
     <AuthGuard>
-      <main className="min-h-dvh bg-[#0B1220] text-[#E6ECF5] pb-24">
-        <div className="mx-auto w-full max-w-lg px-4 py-6 space-y-5">
-          <header>
-            <p className="text-xs font-semibold tracking-[0.18em] text-[#D4AF37]">IKEDA PERSONAL OS</p>
-            <h1 className="mt-2 text-2xl font-bold">池田航一｜美容師OS</h1>
-            <p className="mt-2 text-sm leading-relaxed text-[#8B94A7]">
-              サロンワークから判断を残し、次回来店・Knowledge・発信・経営へ学習をつなげる。
+      <EditorialPage containerClassName="space-y-9">
+        <header className="space-y-5 pt-1">
+          <div className="flex items-center justify-between gap-4">
+            <SectionLabel>Ikeda Personal OS</SectionLabel>
+            <span className="border border-[var(--line)] px-3 py-1.5 text-[11px] text-[var(--muted)]">
+              ホップ
+            </span>
+          </div>
+          <div>
+            <h1 className="text-[34px] font-medium leading-[1.24] sm:text-5xl">
+              池田航一｜美容師OS
+            </h1>
+            <p className="mt-4 max-w-[32rem] text-[15px] leading-8 text-[var(--muted)]">
+              サロンワークの判断を短く残し、次に見ることへつなげる。
             </p>
-          </header>
+          </div>
+        </header>
 
-          <section className="rounded-3xl border border-[#D4AF37]/25 bg-[#111A2B] p-5">
-            <p className="text-xs font-bold text-[#D4AF37]">今いちばん大事なこと</p>
-            <h2 className="mt-2 text-xl font-bold">Decisionを3分以内で残す</h2>
-            <p className="mt-2 text-sm leading-relaxed text-[#9AA4B7]">
-              機能を増やすより、現場で判断を残すほど本当に学習が深くなるかを検証する。
-            </p>
-            <Link
-              href="/decision-input"
-              className="mt-5 flex min-h-[58px] w-full items-center justify-center rounded-2xl bg-[#D4AF37] px-5 text-base font-bold text-black active:scale-[0.99]"
-            >
-              Decisionを記録する
-            </Link>
-          </section>
-
-          <section className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-white/10 bg-[#111A2B] p-4">
-              <p className="text-xs text-[#7F8AA0]">現在フェーズ</p>
-              <p className="mt-2 font-bold">ホップ</p>
-              <p className="mt-1 text-xs leading-relaxed text-[#9AA4B7]">観察・記録・小さな実験・勝ち筋の発見</p>
-            </div>
-            <Link href="/project" className="rounded-2xl border border-white/10 bg-[#111A2B] p-4 active:scale-[0.99]">
-              <p className="text-xs text-[#7F8AA0]">最上位目標</p>
-              <p className="mt-2 font-bold">月間技術売上130万円</p>
-              <p className="mt-1 text-xs leading-relaxed text-[#9AA4B7]">9:00〜18:00と家族時間を守って安定達成</p>
-            </Link>
-          </section>
-
+        <QuietPanel className="py-6">
+          <SectionLabel>Primary Action</SectionLabel>
+          <h2 className="mt-3 text-[26px] font-medium leading-snug">Decisionを3分以内で残す</h2>
+          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+            相談、事実、判断、しなかったこと、次回確認だけを残す。
+          </p>
           <Link
-            href="/customer-growth"
-            className="flex items-center justify-between gap-4 rounded-3xl border border-white/10 bg-[#111A2B] p-4 active:scale-[0.99]"
+            href="/decision-input"
+            className="mt-6 flex min-h-[58px] w-full items-center justify-between bg-[var(--charcoal)] px-5 text-base font-medium text-[var(--paper-soft)] transition active:scale-[0.99]"
           >
-            <div>
-              <p className="text-xs text-[#7F8AA0]">Customer Growth</p>
-              <h2 className="mt-1 text-lg font-bold">顧客基盤の状態を見る</h2>
-              <p className="mt-1 text-xs leading-relaxed text-[#9AA4B7]">
-                NEW・DEVELOP・CORE・WATCHを時間軸で観測する。
-              </p>
-            </div>
-            <span className="shrink-0 text-xl text-[#D4AF37]">→</span>
+            <span>記録を開く</span>
+            <span aria-hidden="true">→</span>
           </Link>
+        </QuietPanel>
 
-          <section className="rounded-3xl border border-white/10 bg-[#111A2B] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs text-[#7F8AA0]">Learning Stream</p>
-                <h2 className="mt-1 text-lg font-bold">直近のDecision</h2>
-              </div>
-              <Link href="/decisions" className="text-sm font-semibold text-[#D4AF37]">すべて見る →</Link>
+        <section className="grid gap-5 sm:grid-cols-2">
+          <div className="border-t border-[var(--line)] pt-4">
+            <SectionLabel>Current Phase</SectionLabel>
+            <p className="mt-3 text-xl font-medium">ホップ</p>
+            <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+              観察・記録・小さな実験・勝ち筋の発見
+            </p>
+          </div>
+          <Link href="/project" className="border-t border-[var(--line)] pt-4 transition active:scale-[0.99]">
+            <SectionLabel>Goal</SectionLabel>
+            <p className="mt-3 text-xl font-medium">月間技術売上130万円</p>
+            <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+              9:00〜18:00と家族時間を守って安定達成
+            </p>
+          </Link>
+        </section>
+
+        <Link
+          href="/customer-growth"
+          className="group flex items-center justify-between gap-5 border-y border-[var(--line)] py-5 transition active:scale-[0.99]"
+        >
+          <div>
+            <SectionLabel>Customer Growth</SectionLabel>
+            <h2 className="mt-3 text-xl font-medium">顧客基盤の状態を見る</h2>
+            <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+              NEW・DEVELOP・CORE・WATCHを時間軸で観測する。
+            </p>
+          </div>
+          <span className="shrink-0 text-xl text-[var(--gold)] transition group-active:translate-x-1" aria-hidden="true">
+            →
+          </span>
+        </Link>
+
+        <section>
+          <div className="flex items-end justify-between gap-3 border-b border-[var(--line)] pb-4">
+            <div>
+              <SectionLabel>Learning Stream</SectionLabel>
+              <h2 className="mt-2 text-2xl font-medium">直近のDecision</h2>
             </div>
+            <Link href="/decisions" className="min-h-[44px] px-1 py-3 text-sm text-[var(--gold)]">
+              すべて見る →
+            </Link>
+          </div>
 
-            {recent.error ? (
-              <div className="mt-4 rounded-2xl border border-white/10 bg-[#0B1220] p-4 text-sm text-[#8B94A7]">
-                Decisionを読み込めませんでした。記録機能には影響ありません。
-              </div>
-            ) : recent.data.length === 0 ? (
-              <div className="mt-4 rounded-2xl border border-white/10 bg-[#0B1220] p-4 text-sm text-[#8B94A7]">
-                まだDecisionがありません。最初の1件を残してください。
-              </div>
-            ) : (
-              <div className="mt-4 space-y-3">
-                {recent.data.map((decision) => (
-                  <article key={decision.id} className="rounded-2xl border border-white/10 bg-[#0B1220] p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="text-xs text-[#7F8AA0]">{decision.title || 'Decision記録'}</p>
-                      {decision.status && (
-                        <span className="shrink-0 rounded-full bg-white/5 px-2 py-1 text-[10px] text-[#AEB7C8]">
-                          {decision.status}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-3 text-sm font-semibold leading-relaxed">
-                      {shortText(decision.values.consultationConcern, '相談未入力')}
-                    </p>
-                    <div className="mt-3 border-l-2 border-[#D4AF37]/50 pl-3">
-                      <p className="text-[11px] text-[#7F8AA0]">今回の判断</p>
-                      <p className="mt-1 text-sm leading-relaxed text-[#C9D1DE]">
+          {recent.error ? (
+            <div className="mt-5 border border-[var(--line)] bg-[var(--paper-soft)] p-4 text-sm leading-7 text-[var(--muted)]">
+              Decisionを読み込めませんでした。記録機能には影響ありません。
+            </div>
+          ) : recent.data.length === 0 ? (
+            <div className="mt-5 border border-[var(--line)] bg-[var(--paper-soft)] p-4 text-sm leading-7 text-[var(--muted)]">
+              まだDecisionがありません。最初の1件を残してください。
+            </div>
+          ) : (
+            <div>
+              {recent.data.map((decision) => (
+                <article key={decision.id} className="border-b border-[var(--line)] py-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-xs text-[var(--muted)]">{decision.title || 'Decision記録'}</p>
+                    {decision.status && (
+                      <span className="shrink-0 border border-[var(--line)] px-2 py-1 text-[10px] text-[var(--muted)]">
+                        {decision.status}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-3 text-base font-medium leading-7">
+                    {shortText(decision.values.consultationConcern, '相談未入力')}
+                  </p>
+                  <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <p className="text-[11px] text-[var(--muted)]">今回の判断</p>
+                      <p className="mt-1 leading-7 text-[var(--ink-soft)]">
                         {shortText(decision.values.chosenDecision, '未入力')}
                       </p>
                     </div>
-                    <div className="mt-3 border-l-2 border-emerald-400/40 pl-3">
-                      <p className="text-[11px] text-[#7F8AA0]">次回確認</p>
-                      <p className="mt-1 text-sm leading-relaxed text-[#C9D1DE]">
+                    <div>
+                      <p className="text-[11px] text-[var(--muted)]">次回確認</p>
+                      <p className="mt-1 leading-7 text-[var(--ink-soft)]">
                         {shortText(decision.values.nextObservation, '未入力')}
                       </p>
                     </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
-          <section className="rounded-3xl border border-white/10 bg-[#111A2B] p-4">
-            <p className="text-xs text-[#7F8AA0]">OSの判断基準</p>
-            <p className="mt-2 text-sm leading-relaxed text-[#C9D1DE]">
-              何をするかより先に、何が必要かを判断する。事実と仮説を分け、選んだことだけでなく、しなかったことと次回観察を残す。
-            </p>
-          </section>
-        </div>
-        <PersonalNavigation />
-      </main>
+        <QuietPanel>
+          <SectionLabel>Principle</SectionLabel>
+          <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+            何をするかより先に、何が必要かを判断する。事実と仮説を分け、選んだことだけでなく、しなかったことと次回観察を残す。
+          </p>
+        </QuietPanel>
+      </EditorialPage>
     </AuthGuard>
   )
 }
