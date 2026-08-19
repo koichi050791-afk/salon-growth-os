@@ -87,6 +87,8 @@ export async function saveDecisionInput(
     return { status: 'error', message }
   }
 
+  // Intelligence is intentionally non-transactional. A successful Airtable save
+  // remains successful even when downstream Work Graph / Knowledge analysis fails.
   await runDecisionIntelligencePipeline({
     decisionRecordId: result.recordId,
     title: decisionTitle,
