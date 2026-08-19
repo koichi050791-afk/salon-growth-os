@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 池田航一｜美容師OS
 
-## Getting Started
+池田航一個人のサロンワークを、Decision（判断）中心で学習へ変えるための Experience Learning System。
 
-First, run the development server:
+## 最上位目標
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+9:00〜18:00の勤務と家族との時間を守りながら、月間技術売上130万円を持続的・安定的に達成し、その理由を説明・再現できる状態を作る。
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 現在フェーズ
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+ホップ｜現場検証
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+観察 → 仮説 → 小さく試す → 結果を見る → 修正する。
 
-## Learn More
+完成した経営システムを先に作るのではなく、池田航一の場合に何が無理なく成果へつながるかを現場から発見する。
 
-To learn more about Next.js, take a look at the following resources:
+## 現在の主要画面
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/` — 池田個人OS HOME
+- `/decision-input` — 5項目・3分以内のDecision記録
+- `/decisions` — AirtableをSource of TruthとするDecision時間軸
+- `/project` — 130万円安定達成プロジェクト
+- `/login` — 個人OS認証
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Decisionの最小入力
 
-## Deploy on Vercel
+1. 相談
+2. 確認した事実
+3. 今回の判断
+4. あえてしなかったこと
+5. 次回確認
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+事実と仮説は混同しない。単一CaseからKnowledgeを確定しない。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## データの役割
+
+- Airtable — Decisionの正本
+- Supabase — 現在は認証のみ
+- Vercel — Webアプリの実行環境
+- GitHub — コードと変更履歴
+
+旧Salon Growth OSの店舗管理・全店管理・週次KPI・スタッフ管理・月報機能は現行プロダクトから廃止する。旧DBデータの物理削除は、必要性とバックアップを確認した別工程で扱う。
