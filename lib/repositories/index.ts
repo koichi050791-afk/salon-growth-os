@@ -1,5 +1,0 @@
-export * from './stores'
-export * from './monthly-configs'
-export * from './staff'
-export * from './daily-records'
-export * from './diagnosis-results'
