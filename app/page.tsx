@@ -66,6 +66,20 @@ export default async function Home() {
             </Link>
           </section>
 
+          <Link
+            href="/customer-growth"
+            className="flex items-center justify-between gap-4 rounded-3xl border border-white/10 bg-[#111A2B] p-4 active:scale-[0.99]"
+          >
+            <div>
+              <p className="text-xs text-[#7F8AA0]">Customer Growth</p>
+              <h2 className="mt-1 text-lg font-bold">顧客基盤の状態を見る</h2>
+              <p className="mt-1 text-xs leading-relaxed text-[#9AA4B7]">
+                NEW・DEVELOP・CORE・WATCHを時間軸で観測する。
+              </p>
+            </div>
+            <span className="shrink-0 text-xl text-[#D4AF37]">→</span>
+          </Link>
+
           <section className="rounded-3xl border border-white/10 bg-[#111A2B] p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
