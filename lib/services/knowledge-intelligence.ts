@@ -74,7 +74,6 @@ function buildProposal(
   input: DetectKnowledgeProposalsInput,
   proposal: Omit<KnowledgeProposal, 'id' | 'evidenceRefs'> & { evidenceRefs?: readonly EvidenceRef[] },
 ): KnowledgeProposal {
-  const occurredAt = (input.occurredAt ?? new Date()).toISOString()
   return {
     ...proposal,
     id: `knowledge_proposal_${stableHash(`${input.decisionRecordId ?? input.decisionTitle}:${proposal.title}`)}`,
@@ -109,7 +108,14 @@ export function detectKnowledgeProposals(
       approvalLevel: 'REVIEW',
       risk: 'LOW',
       reversibility: 'REVERSIBLE',
-      evidenceRefs: [input.sourceRef],
+      evidenceRefs: [
+        input.sourceRef,
+        proposalEvidenceRef(
+          'knowledge_pattern_change_amount_candidate',
+          'Knowledge candidate pattern: 変化量設計（未確立）',
+          occurredAt,
+        ),
+      ],
     }))
   }
 
