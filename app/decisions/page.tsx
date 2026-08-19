@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import PersonalNavigation from '@/lib/components/PersonalNavigation'
 import { listAirtableDecisionRecords, type AirtableDecisionRecord } from '@/lib/repositories/airtable-decisions'
-import { getServerProfile } from '@/lib/repositories/profiles'
+import { getServerUser } from '@/lib/auth/server-user'
 
 export const metadata: Metadata = {
   title: 'Decision | 池田航一｜美容師OS',
@@ -30,8 +30,8 @@ function ValueBlock({ label, value, accent = false }: { label: string; value: st
 }
 
 export default async function DecisionsPage() {
-  const profile = await getServerProfile()
-  if (!profile) redirect('/login')
+  const user = await getServerUser()
+  if (!user) redirect('/login')
 
   const result = await listAirtableDecisionRecords(30)
   const decisions = result.data.filter((decision) => !isTestDecision(decision))
