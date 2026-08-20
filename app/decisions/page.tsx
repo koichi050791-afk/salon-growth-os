@@ -29,6 +29,13 @@ function ValueBlock({ label, value, accent = false }: { label: string; value: st
   )
 }
 
+function loopStatus(decision: AirtableDecisionRecord): string {
+  if (decision.validation) return 'Validated'
+  if (decision.outcome) return 'Outcome Captured'
+  if (decision.values.nextObservation) return 'Awaiting Observation'
+  return 'No Next Observation'
+}
+
 export default async function DecisionsPage() {
   const user = await getServerUser()
   if (!user) redirect('/login')
@@ -74,12 +81,22 @@ export default async function DecisionsPage() {
             {decisions.map((decision) => (
               <article key={decision.id} className="border-b border-[var(--line)] py-6">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-xs text-[var(--muted)]">{decision.title || 'Decision記録'}</p>
-                  {decision.status && (
+                  <div>
+                    <p className="text-xs text-[var(--muted)]">{decision.title || 'Decision記録'}</p>
+                    <p className="mt-1 text-[11px] text-[var(--muted)]">
+                      Customer {decision.customerId ? '接続済み' : '未接続'} / Visit {decision.visitId ? '接続済み' : '未接続'}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
                     <span className="shrink-0 border border-[var(--line)] px-2.5 py-1 text-[10px] text-[var(--muted)]">
-                      {decision.status}
+                      {loopStatus(decision)}
                     </span>
-                  )}
+                    {decision.status && (
+                      <span className="shrink-0 border border-[var(--line)] px-2.5 py-1 text-[10px] text-[var(--muted)]">
+                        {decision.status}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-4 space-y-5">
@@ -90,6 +107,20 @@ export default async function DecisionsPage() {
                     <ValueBlock label="確認した事実" value={decision.values.customerTruth} />
                     <ValueBlock label="あえてしなかったこと" value={decision.values.notChosen} />
                   </div>
+                  {decision.outcome && (
+                    <div className="border-t border-[var(--line)] pt-4">
+                      <ValueBlock label="Outcome" value={decision.outcome.observation} />
+                      <ValueBlock label="Validation" value={decision.validation?.result ?? null} accent />
+                    </div>
+                  )}
+                  {decision.values.nextObservation && !decision.validation && (
+                    <Link
+                      href={`/decisions/${decision.id}/outcome`}
+                      className="inline-flex min-h-[44px] items-center border border-[var(--line)] bg-[var(--paper-soft)] px-4 py-3 text-sm font-medium text-[var(--ink-soft)]"
+                    >
+                      Outcomeを記録
+                    </Link>
+                  )}
                 </div>
               </article>
             ))}

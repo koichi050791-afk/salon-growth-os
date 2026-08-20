@@ -9,7 +9,10 @@ import {
   createAirtableDecisionRecord,
   type AirtableDecisionCoreValues,
 } from '@/lib/repositories/airtable-decisions'
-import { runDecisionIntelligencePipeline } from '@/lib/services/decision-intelligence-pipeline'
+import {
+  safeDispatchDecisionCaptured,
+  safeDispatchNextObservationCreated,
+} from '@/lib/services/work-graph'
 import type { DecisionCoreFieldKey } from '@/lib/types/decision'
 
 export type DecisionInputActionState = {
@@ -87,13 +90,16 @@ export async function saveDecisionInput(
     return { status: 'error', message }
   }
 
-  // Intelligence is intentionally non-transactional. A successful Airtable save
-  // remains successful even when downstream Work Graph / Knowledge analysis fails.
-  await runDecisionIntelligencePipeline({
+  await safeDispatchDecisionCaptured({
     decisionRecordId: result.recordId,
     title: decisionTitle,
     values,
   })
+  if (result.recordId && values.nextObservation) {
+    await safeDispatchNextObservationCreated({
+      decisionId: result.recordId,
+    })
+  }
 
   return { status: 'success', message: '保存しました' }
 }

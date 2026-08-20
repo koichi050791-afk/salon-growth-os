@@ -7,7 +7,7 @@ import {
   type ApprovalQueueCandidate,
 } from '@/lib/services/approval-queue'
 import type { AirtableDecisionCoreValues } from '@/lib/repositories/airtable-decisions'
-import type { DecisionCoreFieldKey } from '@/lib/types/decision'
+import type { DecisionCoreFieldKey, DecisionValidationResult } from '@/lib/types/decision'
 import type {
   ApprovalLevel,
   CandidateWorkGraphEvent,
@@ -30,11 +30,34 @@ type DispatchDecisionCapturedInput = {
   occurredAt?: Date
 }
 
+type DispatchOutcomeValidationInput = {
+  decisionId: string
+  outcomeId: string
+  validationId: string
+  validationResult: DecisionValidationResult
+  observedAt: string
+  visitId: string | null
+}
+
+type DispatchNextObservationInput = {
+  decisionId: string
+  observedAt?: Date
+}
+
 type WorkGraphHandlerResult = Omit<WorkGraphAgentRunResult, 'producedQueueItemIds'> & {
   candidates: readonly ApprovalQueueCandidate[]
 }
 
-type QueueCandidateEventType = Exclude<WorkEventType, 'DecisionCaptured' | 'DailyReportCaptured'>
+type AutoDecisionLoopEventType =
+  | 'NextObservationCreated'
+  | 'OutcomeCaptured'
+  | 'ValidationRequested'
+  | 'ValidationCompleted'
+
+type QueueCandidateEventType = Exclude<
+  WorkEventType,
+  'DecisionCaptured' | 'DailyReportCaptured' | AutoDecisionLoopEventType
+>
 
 type QueueCandidateEvent = CandidateWorkGraphEvent & {
   type: QueueCandidateEventType
@@ -52,6 +75,7 @@ const CANDIDATE_QUEUE_TYPE_BY_EVENT: Record<
   QueueCandidateEventType,
   ApprovalQueueCandidate['type']
 > = {
+  KnowledgeEvaluationCandidate: 'knowledge_candidate',
   KnowledgeCandidateDetected: 'knowledge_candidate',
   ContentCandidateDetected: 'content_draft_candidate',
   EngineeringCandidateDetected: 'engineering_candidate',
@@ -129,13 +153,15 @@ function buildSkippedRun(agent: CoreAgentDefinition, event: WorkGraphEvent, note
 
 function isQueueCandidateEvent(event: WorkGraphEvent): event is QueueCandidateEvent {
   return (
-    event.type === 'KnowledgeCandidateDetected'
+    event.type === 'KnowledgeEvaluationCandidate'
+    || event.type === 'KnowledgeCandidateDetected'
     || event.type === 'ContentCandidateDetected'
     || event.type === 'EngineeringCandidateDetected'
   )
 }
 
 function getCandidateApprovalLevel(event: CandidateWorkGraphEvent): Extract<ApprovalLevel, 'REVIEW' | 'APPROVAL'> {
+  if (event.type === 'KnowledgeEvaluationCandidate') return 'REVIEW'
   if (event.type === 'KnowledgeCandidateDetected') return 'REVIEW'
   if (event.type === 'ContentCandidateDetected') return 'REVIEW'
   return 'REVIEW'
@@ -153,11 +179,14 @@ function buildCandidateRun(agent: CoreAgentDefinition, event: QueueCandidateEven
   const evidenceRefs = event.payload.evidenceRefs?.length ? event.payload.evidenceRefs : event.sourceRefs
   const sourceRef = getEventSourceRef(event)
 
-  if (event.type === 'KnowledgeCandidateDetected' && evidenceRefs.length < 2) {
+  if (
+    (event.type === 'KnowledgeEvaluationCandidate' || event.type === 'KnowledgeCandidateDetected')
+    && evidenceRefs.length < 2
+  ) {
     return buildSkippedRun(
       agent,
       event,
-      'Knowledge candidate requires multiple supporting or contrasting source references.',
+      'Knowledge evaluation requires multiple supporting or contrasting source references.',
     )
   }
 
@@ -211,7 +240,23 @@ function runCoreAgentForEvent(agent: CoreAgentDefinition, event: WorkGraphEvent)
     return buildAutoRun(agent, event, 'Daily report aggregation is AUTO and bypasses Approval Queue.')
   }
 
-  if (event.type === 'KnowledgeCandidateDetected' && agent.id !== 'decision-learning-intelligence') {
+  if (
+    event.type === 'NextObservationCreated'
+    || event.type === 'OutcomeCaptured'
+    || event.type === 'ValidationRequested'
+    || event.type === 'ValidationCompleted'
+  ) {
+    return buildAutoRun(
+      agent,
+      event,
+      'Decision loop lifecycle event is recorded as AUTO; Knowledge promotion is not automatic.',
+    )
+  }
+
+  if (
+    (event.type === 'KnowledgeEvaluationCandidate' || event.type === 'KnowledgeCandidateDetected')
+    && agent.id !== 'decision-learning-intelligence'
+  ) {
     return buildSkippedRun(agent, event, 'Knowledge candidates are handled by Decision & Learning Intelligence.')
   }
 
@@ -273,6 +318,56 @@ export function buildDecisionCapturedEvent(input: DispatchDecisionCapturedInput)
   }
 }
 
+function buildDecisionLoopEvent(
+  type: AutoDecisionLoopEventType,
+  input: DispatchOutcomeValidationInput,
+): CandidateWorkGraphEvent {
+  const sourceRef: EvidenceRef = {
+    id: `airtable_decision_${stableHash(input.decisionId)}`,
+    source: 'airtable',
+    label: 'Airtable Decision',
+    recordId: input.decisionId,
+    observedAt: input.observedAt,
+  }
+
+  return {
+    id: buildEventId(type, `${input.decisionId}:${input.outcomeId}:${input.validationId}`),
+    type,
+    occurredAt: input.observedAt,
+    source: 'airtable',
+    sourceRefs: [sourceRef],
+    payload: {
+      decisionId: input.decisionId,
+      outcomeId: input.outcomeId,
+      validationId: input.validationId,
+      visitId: input.visitId,
+      validationResult: input.validationResult,
+    },
+  }
+}
+
+function buildNextObservationCreatedEvent(input: DispatchNextObservationInput): CandidateWorkGraphEvent {
+  const observedAt = input.observedAt ?? new Date()
+  const sourceRef: EvidenceRef = {
+    id: `airtable_decision_${stableHash(input.decisionId)}`,
+    source: 'airtable',
+    label: 'Airtable Decision',
+    recordId: input.decisionId,
+    observedAt: observedAt.toISOString(),
+  }
+
+  return {
+    id: buildEventId('NextObservationCreated', input.decisionId),
+    type: 'NextObservationCreated',
+    occurredAt: observedAt.toISOString(),
+    source: 'airtable',
+    sourceRefs: [sourceRef],
+    payload: {
+      decisionId: input.decisionId,
+    },
+  }
+}
+
 export async function dispatchWorkGraphEvent(event: WorkGraphEvent): Promise<WorkGraphDispatchResult> {
   try {
     const targetAgents = getCoreAgentsForEvent(event.type)
@@ -306,4 +401,40 @@ export async function safeDispatchDecisionCaptured(
   } catch {
     return buildFailedDispatchResult(event)
   }
+}
+
+export async function safeDispatchNextObservationCreated(
+  input: DispatchNextObservationInput,
+  dispatch = dispatchWorkGraphEvent,
+): Promise<WorkGraphDispatchResult> {
+  const event = buildNextObservationCreatedEvent(input)
+
+  try {
+    return await dispatch(event)
+  } catch {
+    return buildFailedDispatchResult(event)
+  }
+}
+
+export async function safeDispatchOutcomeValidationCaptured(
+  input: DispatchOutcomeValidationInput,
+  dispatch = dispatchWorkGraphEvent,
+): Promise<readonly WorkGraphDispatchResult[]> {
+  const events = [
+    buildDecisionLoopEvent('OutcomeCaptured', input),
+    buildDecisionLoopEvent('ValidationRequested', input),
+    buildDecisionLoopEvent('ValidationCompleted', input),
+  ]
+
+  const results: WorkGraphDispatchResult[] = []
+
+  for (const event of events) {
+    try {
+      results.push(await dispatch(event))
+    } catch {
+      results.push(buildFailedDispatchResult(event))
+    }
+  }
+
+  return results
 }

@@ -77,7 +77,11 @@ export function getAiOperationsControlCenter(date = new Date()): AiOperationsCon
     approvalQueue: getVisibleApprovalQueueItems(),
     routingPreviews: [
       buildWorkGraphRoutingPreview('DecisionCaptured'),
+      buildWorkGraphRoutingPreview('NextObservationCreated'),
+      buildWorkGraphRoutingPreview('OutcomeCaptured'),
+      buildWorkGraphRoutingPreview('ValidationCompleted'),
       buildWorkGraphRoutingPreview('DailyReportCaptured'),
+      buildWorkGraphRoutingPreview('KnowledgeEvaluationCandidate'),
       buildWorkGraphRoutingPreview('KnowledgeCandidateDetected'),
       buildWorkGraphRoutingPreview('ContentCandidateDetected'),
       buildWorkGraphRoutingPreview('EngineeringCandidateDetected'),

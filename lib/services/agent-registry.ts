@@ -40,7 +40,7 @@ export const CORE_AGENTS: readonly CoreAgentDefinition[] = [
       'Next Observation',
       'customer-state candidates',
     ],
-    acceptedEvents: ['DecisionCaptured'],
+    acceptedEvents: ['DecisionCaptured', 'NextObservationCreated', 'OutcomeCaptured'],
     inputs: [
       'Airtable Customer / Visit / Decision / Future Plan projection',
       'salon input routed from ChatGPT',
@@ -70,7 +70,14 @@ export const CORE_AGENTS: readonly CoreAgentDefinition[] = [
       'Knowledge Candidate',
       'contrary-evidence handling',
     ],
-    acceptedEvents: ['DecisionCaptured', 'KnowledgeCandidateDetected'],
+    acceptedEvents: [
+      'DecisionCaptured',
+      'OutcomeCaptured',
+      'ValidationRequested',
+      'ValidationCompleted',
+      'KnowledgeEvaluationCandidate',
+      'KnowledgeCandidateDetected',
+    ],
     inputs: ['Airtable Decision projection', 'Outcome / validation events', 'source-linked observations'],
     outputs: ['learning candidate', 'validation question', 'contrary-evidence note'],
     defaultApprovalLevel: 'REVIEW',
@@ -173,6 +180,11 @@ export const SHARED_CAPABILITIES: readonly SharedCapabilityDefinition[] = [
 
 const EVENT_APPROVAL_LEVELS: Record<WorkEventType, ApprovalLevel> = {
   DecisionCaptured: 'AUTO',
+  NextObservationCreated: 'AUTO',
+  OutcomeCaptured: 'AUTO',
+  ValidationRequested: 'AUTO',
+  ValidationCompleted: 'AUTO',
+  KnowledgeEvaluationCandidate: 'REVIEW',
   DailyReportCaptured: 'AUTO',
   KnowledgeCandidateDetected: 'REVIEW',
   ContentCandidateDetected: 'REVIEW',

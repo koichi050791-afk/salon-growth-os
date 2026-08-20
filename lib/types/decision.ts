@@ -23,6 +23,18 @@ export type DecisionFieldState = 'known' | 'unknown'
 
 export type DecisionCanonicalSource = 'airtable'
 
+export type DecisionValidationResult =
+  | 'supported'
+  | 'partially_supported'
+  | 'contradicted'
+  | 'insufficient_evidence'
+
+export type KnowledgeEvaluationRelation =
+  | 'reinforce'
+  | 'contradict'
+  | 'extend'
+  | 'insufficient_evidence'
+
 export type DecisionCaptureDraft = Record<DecisionCaptureKey, string | null>
 
 export type DecisionFieldDefinition = {
@@ -58,4 +70,28 @@ export type DecisionCaptureCompleteness = {
   knownCoreCount: number
   totalCoreCount: number
   unknownCoreKeys: DecisionCoreFieldKey[]
+}
+
+export type DecisionLoopDecision = {
+  decisionId: string
+  customerId: string | null
+  visitId: string | null
+  nextObservation: string | null
+  createdAt: string | null
+}
+
+export type DecisionLoopOutcome = {
+  outcomeId: string
+  decisionId: string
+  visitId: string | null
+  observedAt: string
+  observation: string
+  customerReaction: string | null
+}
+
+export type DecisionLoopValidation = {
+  validationId: string
+  decisionId: string
+  outcomeId: string
+  result: DecisionValidationResult
 }

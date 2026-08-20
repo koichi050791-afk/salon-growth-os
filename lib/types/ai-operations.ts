@@ -1,4 +1,8 @@
-import type { DecisionCoreFieldKey, DecisionFieldState } from '@/lib/types/decision'
+import type {
+  DecisionCoreFieldKey,
+  DecisionFieldState,
+  DecisionValidationResult,
+} from '@/lib/types/decision'
 
 export type ApprovalLevel = 'AUTO' | 'REVIEW' | 'APPROVAL'
 
@@ -6,6 +10,11 @@ export type AiOperationStatus = 'RUNNING' | 'WATCHING' | 'REVIEW' | 'APPROVAL'
 
 export type WorkEventType =
   | 'DecisionCaptured'
+  | 'NextObservationCreated'
+  | 'OutcomeCaptured'
+  | 'ValidationRequested'
+  | 'ValidationCompleted'
+  | 'KnowledgeEvaluationCandidate'
   | 'DailyReportCaptured'
   | 'KnowledgeCandidateDetected'
   | 'ContentCandidateDetected'
@@ -155,6 +164,11 @@ export type WorkGraphCandidatePayload = {
   evidenceRefs?: readonly EvidenceRef[]
   risk?: ApprovalRisk
   reversibility?: ApprovalReversibility
+  decisionId?: string
+  outcomeId?: string
+  validationId?: string
+  visitId?: string | null
+  validationResult?: DecisionValidationResult
   expiresAt?: string | null
 }
 
