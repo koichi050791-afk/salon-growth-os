@@ -62,15 +62,20 @@ function parseList(value: string | null): readonly string[] {
 
 function parseContentAccount(value: string | null): ContentAccount {
   const normalized = value?.trim().toLowerCase()
-  if (normalized === 'professional' || normalized === 'industry' || normalized?.includes('業界')) {
+  if (normalized === '顧客向け' || normalized === 'customer') return 'customer'
+  if (normalized === '業界向け' || normalized === 'professional' || normalized === 'industry') {
     return 'professional'
   }
 
-  return 'customer'
+  return 'unknown'
 }
 
 function parseMonetization(value: string | null): ContentMonetization {
-  const normalized = value?.trim().toUpperCase()
+  const trimmed = value?.trim()
+  if (trimmed === '無料') return 'FREE'
+  if (trimmed === '有料') return 'PAID'
+
+  const normalized = trimmed?.toUpperCase()
   if (normalized === 'FREE' || normalized === 'PAID') return normalized
   return 'UNKNOWN'
 }
@@ -82,14 +87,15 @@ function parseEvidenceState(value: string | null): EvidenceState | null {
     : null
 }
 
-function parseGoogleDocumentId(value: string | null): string | null {
+function readGoogleDocumentUrl(value: string | null): string | null {
   if (!value) return null
-  const match = value.match(/\/document\/d\/([^/]+)/)
-  return match?.[1] ?? value
+  return /^https:\/\/docs\.google\.com\/document\/d\/[^/?#]+/.test(value.trim())
+    ? value.trim()
+    : null
 }
 
 function buildEvidenceRefs(row: ContentRegistryRow): readonly EvidenceRef[] {
-  return parseList(readCell(row, ['Evidence Refs', 'EvidenceRefs', 'Evidence', '根拠', 'Evidence Provenance']))
+  return parseList(readCell(row, ['正本・根拠', 'Evidence Refs', 'EvidenceRefs', 'Evidence', '根拠', 'Evidence Provenance']))
     .map((label) => ({
       id: `content_evidence_${stableHash(label)}`,
       source: 'drive',
@@ -102,43 +108,43 @@ export function normalizeContentRegistryRow(
   index: number,
 ): ContentRegistryItem {
   const title = readCell(row, ['Title', '記事タイトル', 'タイトル']) ?? `Untitled content ${index + 1}`
-  const publicUrl = readCell(row, ['Public URL', 'PublicUrl', '公開URL', 'note URL'])
+  const publicUrl = readCell(row, ['URL', 'Public URL', 'PublicUrl', '公開URL', 'note URL'])
   const account = parseContentAccount(readCell(row, ['Account', 'アカウント']))
   const route = getContentBodyRoute(account)
   const canonicalBodyValue = readCell(row, ['Canonical Body Source', 'CanonicalBodySource', '本文正本'])
-  const documentUrl = canonicalBodyValue?.startsWith('http') ? canonicalBodyValue : readCell(row, ['Document URL', 'Google Doc URL'])
+  const documentUrl = readGoogleDocumentUrl(canonicalBodyValue)
+    ?? readGoogleDocumentUrl(readCell(row, ['Document URL', 'Google Doc URL']))
   const documentId = readCell(row, ['Document ID', 'Google Doc ID'])
-    ?? parseGoogleDocumentId(documentUrl)
-    ?? (canonicalBodyValue && !canonicalBodyValue.startsWith('http') ? canonicalBodyValue : null)
   const canonicalBodySource = buildCanonicalGoogleDocSource({
     documentId,
     documentUrl,
-    folderId: readCell(row, ['Folder ID', 'Google Drive Folder ID']) ?? route.folderId,
+    folderId: readCell(row, ['Folder ID', 'Google Drive Folder ID']) ?? route?.folderId,
     lastVerifiedAt: readCell(row, ['Last Verified At', 'lastVerifiedAt', '最終確認']),
   })
   const rawStatus = readCell(row, ['Body Sync Status', 'BodySyncStatus', '同期状態'])
   const currentStatus = isBodySyncStatus(rawStatus) ? rawStatus : null
-  const bodySyncStatus = detectBodySyncStatus({
+  const bodySyncResult = detectBodySyncStatus({
     publicUrl,
     canonicalBodySource,
     currentStatus,
     publicFingerprint: readCell(row, ['Public Fingerprint', '公開Fingerprint']),
     canonicalFingerprint: readCell(row, ['Canonical Fingerprint', '正本Fingerprint']),
-  }).status
+  })
   const evidenceRefs = buildEvidenceRefs(row)
   const evidenceState = parseEvidenceState(readCell(row, ['Evidence State', 'EvidenceState', '根拠状態']))
 
   return {
-    id: readCell(row, ['ID', 'Content ID', 'ContentRegistry ID'])
+    id: readCell(row, ['Link ID', 'ID', 'Content ID', 'ContentRegistry ID'])
       ?? `content_${stableHash(`${title}:${publicUrl ?? index}`)}`,
     title,
     publicUrl,
     account,
-    role: readCell(row, ['Role', '役割']),
+    role: readCell(row, ['公開上の役割', 'Role', '役割']),
     relatedCaseIds: parseList(readCell(row, ['Related Case IDs', 'Related Cases', '関連Case'])),
     relatedKnowledgeIds: parseList(readCell(row, ['Related Knowledge IDs', 'Related Knowledge', '関連Knowledge'])),
     canonicalBodySource,
-    bodySyncStatus,
+    bodySyncStatus: bodySyncResult.status,
+    bodySyncReasons: bodySyncResult.reasons,
     monetization: parseMonetization(readCell(row, ['Monetization', '収益化'])),
     evidenceState,
     evidenceRefs,
@@ -146,7 +152,7 @@ export function normalizeContentRegistryRow(
       evidenceState,
       evidenceRefsCount: evidenceRefs.length,
     }),
-    updatedAt: readCell(row, ['Updated At', 'updatedAt', '更新日']),
+    updatedAt: readCell(row, ['最終更新', 'Updated At', 'updatedAt', '更新日']),
   }
 }
 

@@ -10,6 +10,7 @@ import type {
   ContentSourceStatusFilter,
   ContentSourceStatusModel,
   EvidenceState,
+  RoutableContentAccount,
   SourceAcquisitionRequest,
   SourceAcquisitionResult,
 } from '@/lib/types/content-source'
@@ -36,11 +37,30 @@ const FILTER_STATUS_VALUES: readonly BodySyncStatus[] = [
   'SYNC_DRIFT',
 ]
 
+const SOURCE_PRESENT_STATUSES: readonly BodySyncStatus[] = [
+  'SOURCE_CAPTURED',
+  'MATCHED',
+  'DRAFT_UPDATED',
+  'APPROVED',
+  'APPLIED',
+  'SYNC_DRIFT',
+]
+
+const INVALID_CANONICAL_SOURCE_MARKERS = [
+  'unknown',
+  '未接続',
+  '不明',
+  'template',
+  'テンプレート',
+]
+
 type SourceAcquisitionAdapter = (
   request: SourceAcquisitionRequest,
 ) => Promise<SourceAcquisitionResult>
 
-export function getContentBodyRoute(account: ContentAccount): ContentBodyRoute {
+export function getContentBodyRoute(account: RoutableContentAccount): ContentBodyRoute
+export function getContentBodyRoute(account: ContentAccount): ContentBodyRoute | null
+export function getContentBodyRoute(account: ContentAccount): ContentBodyRoute | null {
   if (account === 'customer') {
     return {
       account,
@@ -50,6 +70,8 @@ export function getContentBodyRoute(account: ContentAccount): ContentBodyRoute {
       assetFolderId: NOTE_ASSET_FOLDER_ID,
     }
   }
+
+  if (account !== 'professional') return null
 
   return {
     account,
@@ -75,22 +97,36 @@ export function normalizeContentSourceStatusFilter(
   return 'all'
 }
 
+function hasVerifiedCanonicalBodySource(source: CanonicalBodySource | null): boolean {
+  return Boolean(source?.sourceType === 'GOOGLE_DOC' && (source.documentId || source.documentUrl))
+}
+
 export function detectBodySyncStatus(input: BodySyncStatusInput): BodySyncStatusResult {
   const reasons: string[] = []
   const hasPublicUrl = Boolean(input.publicUrl)
-  const hasCanonicalSource = Boolean(input.canonicalBodySource?.documentId || input.canonicalBodySource?.documentUrl)
+  const hasCanonicalSource = hasVerifiedCanonicalBodySource(input.canonicalBodySource)
 
   if (hasPublicUrl && !hasCanonicalSource) {
+    if (input.currentStatus && SOURCE_PRESENT_STATUSES.includes(input.currentStatus)) {
+      reasons.push('status_claims_source_but_canonical_source_missing')
+    }
+    reasons.push('public_url_exists_without_canonical_body_source')
+
     return {
       status: 'BODY_SOURCE_MISSING',
-      reasons: ['public_url_exists_without_canonical_body_source'],
+      reasons,
     }
   }
 
   if (!hasCanonicalSource) {
+    if (input.currentStatus && SOURCE_PRESENT_STATUSES.includes(input.currentStatus)) {
+      reasons.push('status_claims_source_but_canonical_source_missing')
+    }
+    reasons.push('canonical_body_source_missing')
+
     return {
       status: 'BODY_SOURCE_MISSING',
-      reasons: ['canonical_body_source_missing'],
+      reasons,
     }
   }
 
@@ -108,15 +144,38 @@ export function detectBodySyncStatus(input: BodySyncStatusInput): BodySyncStatus
     }
   }
 
-  if (input.currentStatus && input.currentStatus !== 'BODY_SOURCE_MISSING') {
-    return {
-      status: input.currentStatus,
-      reasons: ['existing_status_preserved_without_comparable_fingerprints'],
-    }
-  }
-
   reasons.push('canonical_body_source_captured_without_public_comparison')
   return { status: 'SOURCE_CAPTURED', reasons }
+}
+
+function extractGoogleDocumentIdFromUrl(value: string | null): string | null {
+  if (!value) return null
+
+  const trimmed = value.trim()
+  const match = trimmed.match(/^https:\/\/docs\.google\.com\/document\/d\/([^/?#]+)/)
+  return match?.[1] ?? null
+}
+
+function isInvalidCanonicalSourceValue(value: string): boolean {
+  const normalized = value.trim().toLowerCase()
+  return INVALID_CANONICAL_SOURCE_MARKERS.some((marker) => normalized.includes(marker))
+}
+
+function normalizeExplicitGoogleDocumentId(value: string | null | undefined): string | null {
+  const trimmed = value?.trim()
+  if (!trimmed) return null
+  if (extractGoogleDocumentIdFromUrl(trimmed)) return extractGoogleDocumentIdFromUrl(trimmed)
+  if (trimmed.includes('/') || trimmed.includes('|') || /\s/.test(trimmed)) return null
+  if (isInvalidCanonicalSourceValue(trimmed)) return null
+  if (!/^[A-Za-z0-9_-]{8,}$/.test(trimmed)) return null
+  return trimmed
+}
+
+function normalizeGoogleDocumentUrl(value: string | null | undefined): string | null {
+  const trimmed = value?.trim()
+  if (!trimmed) return null
+  if (!extractGoogleDocumentIdFromUrl(trimmed)) return null
+  return trimmed
 }
 
 export function buildCanonicalGoogleDocSource(input: {
@@ -125,8 +184,9 @@ export function buildCanonicalGoogleDocSource(input: {
   folderId?: string | null
   lastVerifiedAt?: string | null
 }): CanonicalBodySource | null {
-  const documentId = input.documentId?.trim() || null
-  const documentUrl = input.documentUrl?.trim() || null
+  const documentUrl = normalizeGoogleDocumentUrl(input.documentUrl)
+  const documentId = extractGoogleDocumentIdFromUrl(documentUrl)
+    ?? normalizeExplicitGoogleDocumentId(input.documentId)
   const folderId = input.folderId?.trim() || null
 
   if (!documentId && !documentUrl) return null
@@ -176,6 +236,13 @@ export async function acquireCanonicalBodySource(
     }
   }
 
+  if (!request.route) {
+    return {
+      status: 'HUMAN_REQUIRED',
+      reason: 'content_account_unroutable',
+    }
+  }
+
   if (!adapter) {
     return {
       status: 'HUMAN_REQUIRED',
@@ -218,11 +285,11 @@ export function buildContentSourceStatusModel(input: {
     items: filteredItems,
     customerItems: filteredItems.filter((item) => item.account === 'customer'),
     professionalItems: filteredItems.filter((item) => item.account === 'professional'),
+    unknownItems: filteredItems.filter((item) => item.account === 'unknown'),
     counts,
-    humanRequiredCount: input.items.filter((item) =>
+    sourceAttentionCount: input.items.filter((item) =>
       item.bodySyncStatus === 'BODY_SOURCE_MISSING'
-      || item.bodySyncStatus === 'SYNC_DRIFT'
-      || item.productizationGate.state === 'HOLD',
+      || item.bodySyncStatus === 'SYNC_DRIFT',
     ).length,
     filter: input.filter,
     error: input.error,

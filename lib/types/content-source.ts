@@ -1,6 +1,8 @@
 import type { EvidenceRef } from '@/lib/types/ai-operations'
 
-export type ContentAccount = 'customer' | 'professional'
+export type ContentAccount = 'customer' | 'professional' | 'unknown'
+
+export type RoutableContentAccount = Exclude<ContentAccount, 'unknown'>
 
 export type BodySyncStatus =
   | 'BODY_SOURCE_MISSING'
@@ -48,6 +50,7 @@ export type ContentRegistryItem = {
   relatedKnowledgeIds: readonly string[]
   canonicalBodySource: CanonicalBodySource | null
   bodySyncStatus: BodySyncStatus
+  bodySyncReasons: readonly string[]
   monetization: ContentMonetization
   evidenceState: EvidenceState | null
   evidenceRefs: readonly EvidenceRef[]
@@ -56,7 +59,7 @@ export type ContentRegistryItem = {
 }
 
 export type ContentBodyRoute = {
-  account: ContentAccount
+  account: RoutableContentAccount
   folderId: string
   folderName: string
   templateDocumentId: string
@@ -79,7 +82,7 @@ export type ContentRegistryRow = Record<string, string | null | undefined>
 
 export type SourceAcquisitionRequest = {
   item: ContentRegistryItem
-  route: ContentBodyRoute
+  route: ContentBodyRoute | null
   proposedTitle?: string | null
 }
 
@@ -121,8 +124,9 @@ export type ContentSourceStatusModel = {
   items: readonly ContentRegistryItem[]
   customerItems: readonly ContentRegistryItem[]
   professionalItems: readonly ContentRegistryItem[]
+  unknownItems: readonly ContentRegistryItem[]
   counts: Record<BodySyncStatus, number>
-  humanRequiredCount: number
+  sourceAttentionCount: number
   filter: ContentSourceStatusFilter
   error: ContentRegistryReadResult['error']
 }

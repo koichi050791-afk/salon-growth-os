@@ -35,6 +35,7 @@ const statusLabel: Record<BodySyncStatus, string> = {
 const accountLabel: Record<ContentAccount, string> = {
   customer: '顧客向け',
   professional: '業界向け',
+  unknown: '未分類',
 }
 
 const filters: Array<{ value: ContentSourceStatusFilter; label: string }> = [
@@ -146,11 +147,6 @@ function ContentItemRow({ item }: { item: ContentRegistryItem }) {
         </div>
       </dl>
 
-      {item.productizationGate.state === 'HOLD' ? (
-        <p className="mt-4 border border-[var(--line)] bg-[var(--paper-soft)] px-3 py-2 text-xs leading-6 text-[var(--muted)]">
-          HOLD: {item.productizationGate.reason}
-        </p>
-      ) : null}
     </article>
   )
 }
@@ -224,8 +220,8 @@ export default async function ContentIntelligencePage({
             <p className="mt-2 font-medium">{model.counts.BODY_SOURCE_MISSING}件</p>
           </div>
           <div className="border-l border-[var(--line)] py-4 pl-3">
-            <p className="text-[11px] text-[var(--muted)]">Human</p>
-            <p className="mt-2 font-medium">{model.humanRequiredCount}件</p>
+            <p className="text-[11px] text-[var(--muted)]">Source Attention</p>
+            <p className="mt-2 font-medium">{model.sourceAttentionCount}件</p>
           </div>
         </section>
 
@@ -275,10 +271,11 @@ export default async function ContentIntelligencePage({
 
         <ContentSection title="Customer" items={model.customerItems} />
         <ContentSection title="Professional" items={model.professionalItems} />
+        <ContentSection title="Unroutable" items={model.unknownItems} />
 
         <section className="space-y-2 text-xs leading-6 text-[var(--muted)]">
           <p>note公開・有料切替・本文編集・商品化判定はこの画面では実行しません。</p>
-          <p>BODY_SOURCE_MISSING / SYNC_DRIFT はHOLDとして扱います。</p>
+          <p>BODY_SOURCE_MISSING / SYNC_DRIFT だけをSource attentionとして扱います。</p>
         </section>
       </EditorialPage>
     </AuthGuard>
