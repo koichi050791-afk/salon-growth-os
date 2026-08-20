@@ -113,8 +113,10 @@ function CoverageRow({ coverage }: { coverage: RevenueSourceCoverage }) {
           <dd className="mt-1 text-[var(--ink-soft)]">{coverage.evidenceClass}</dd>
         </div>
         <div>
-          <dt className="text-[var(--muted)]">SAMPLE / TEST Excluded</dt>
-          <dd className="mt-1 text-[var(--ink-soft)]">{coverage.sampleTestExcludedCount}</dd>
+          <dt className="text-[var(--muted)]">Excluded</dt>
+          <dd className="mt-1 text-[var(--ink-soft)]">
+            {coverage.sampleTestExcludedCount + coverage.unknownExcludedCount}
+          </dd>
         </div>
       </dl>
     </article>

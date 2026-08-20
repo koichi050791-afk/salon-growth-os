@@ -23,6 +23,11 @@ type BuildRevenueProjectionInput = {
 }
 
 const TEST_DECISION_PREFIXES = ['【TEST】', '【VERCEL TEST】', '【PRODUCTION TEST】']
+const SAMPLE_DECISION_PREFIXES = ['【SAMPLE】']
+const REAL_DATA_KIND_VALUES = ['real', 'production', 'operational', '実データ', '本番']
+const SAMPLE_DATA_KIND_VALUES = ['sample', 'サンプル']
+const TEST_DATA_KIND_VALUES = ['test', 'テスト']
+const UNKNOWN_DATA_KIND_VALUES = ['unknown', '不明', '未確認']
 
 function stableHash(value: string): string {
   let hash = 5381
@@ -34,13 +39,41 @@ function stableHash(value: string): string {
   return (hash >>> 0).toString(36)
 }
 
-function isTestDecision(decision: AirtableDecisionRecord): boolean {
-  const consultation = decision.values.consultationConcern ?? ''
-  return TEST_DECISION_PREFIXES.some((prefix) => consultation.startsWith(prefix))
+function startsWithAny(value: string, prefixes: readonly string[]): boolean {
+  return prefixes.some((prefix) => value.startsWith(prefix))
 }
 
-function isOperationalCustomer(customer: CustomerGrowthRecord): boolean {
-  return customer.dataKind?.toLowerCase() !== 'sample'
+function classifyDecisionEvidence(decision: AirtableDecisionRecord): RevenueEvidenceClass {
+  const consultation = decision.values.consultationConcern ?? ''
+  if (startsWithAny(consultation, TEST_DECISION_PREFIXES)) return 'TEST'
+  if (startsWithAny(consultation, SAMPLE_DECISION_PREFIXES)) return 'SAMPLE'
+
+  return 'UNKNOWN'
+}
+
+function normalizeDataKind(value: string | null): string | null {
+  const normalized = value?.trim().toLowerCase()
+  return normalized || null
+}
+
+function classifyCustomerEvidence(customer: CustomerGrowthRecord): RevenueEvidenceClass {
+  const dataKind = normalizeDataKind(customer.dataKind)
+  if (!dataKind) return 'UNKNOWN'
+  if (REAL_DATA_KIND_VALUES.includes(dataKind)) return 'REAL'
+  if (SAMPLE_DATA_KIND_VALUES.includes(dataKind)) return 'SAMPLE'
+  if (TEST_DATA_KIND_VALUES.includes(dataKind)) return 'TEST'
+  if (UNKNOWN_DATA_KIND_VALUES.includes(dataKind)) return 'UNKNOWN'
+
+  return 'UNKNOWN'
+}
+
+function countEvidenceClasses(items: readonly RevenueEvidenceClass[]): Record<RevenueEvidenceClass, number> {
+  return {
+    REAL: items.filter((item) => item === 'REAL').length,
+    SAMPLE: items.filter((item) => item === 'SAMPLE').length,
+    TEST: items.filter((item) => item === 'TEST').length,
+    UNKNOWN: items.filter((item) => item === 'UNKNOWN').length,
+  }
 }
 
 function buildEvidenceRef(input: {
@@ -56,31 +89,6 @@ function buildEvidenceRef(input: {
     label: input.label,
     recordId: input.recordId,
     observedAt: input.observedAt,
-  }
-}
-
-function buildDecisionConsultationSignal(decision: AirtableDecisionRecord): RevenueSignal | null {
-  if (!decision.values.consultationConcern) return null
-
-  const evidenceRef = buildEvidenceRef({
-    id: `airtable_decision_${stableHash(decision.id)}`,
-    source: 'airtable',
-    label: 'Airtable Decision',
-    recordId: decision.id,
-    observedAt: decision.createdAt,
-  })
-
-  return {
-    id: `revenue_signal_${stableHash(`DECISION:${decision.id}:CONSULTATION`)}`,
-    sourceType: 'DECISION',
-    sourceId: decision.id,
-    signalType: 'CONSULTATION',
-    value: true,
-    confidence: 'LOW',
-    evidenceClass: 'REAL',
-    evidenceRefs: [evidenceRef],
-    observedAt: decision.createdAt,
-    status: 'NEEDS_VALIDATION',
   }
 }
 
@@ -118,6 +126,7 @@ function coverage(input: {
   totalCount: number | null
   realCount: number | null
   sampleTestExcludedCount?: number
+  unknownExcludedCount?: number
   notes?: readonly string[]
 }): RevenueSourceCoverage {
   return {
@@ -128,6 +137,7 @@ function coverage(input: {
     totalCount: input.totalCount,
     realCount: input.realCount,
     sampleTestExcludedCount: input.sampleTestExcludedCount ?? 0,
+    unknownExcludedCount: input.unknownExcludedCount ?? 0,
     notes: input.notes ?? [],
   }
 }
@@ -146,18 +156,17 @@ function contentDataQualityNotes(contentRegistry: ContentRegistryReadResult): re
 export function buildRevenueIntelligenceProjection(
   input: BuildRevenueProjectionInput,
 ): RevenueIntelligenceProjection {
-  const operationalDecisions = input.decisions.data.filter((decision) => !isTestDecision(decision))
-  const testDecisions = input.decisions.data.length - operationalDecisions.length
-  const operationalCustomers = input.customerGrowth.data.filter(isOperationalCustomer)
-  const sampleCustomers = input.customerGrowth.data.length - operationalCustomers.length
+  const decisionEvidenceCounts = countEvidenceClasses(input.decisions.data.map(classifyDecisionEvidence))
+  const customerEvidenceCounts = countEvidenceClasses(input.customerGrowth.data.map(classifyCustomerEvidence))
+  const realCustomers = input.customerGrowth.data.filter((customer) => classifyCustomerEvidence(customer) === 'REAL')
+  const sampleExcludedCount = decisionEvidenceCounts.SAMPLE + customerEvidenceCounts.SAMPLE
+  const testExcludedCount = decisionEvidenceCounts.TEST + customerEvidenceCounts.TEST
+  const unknownExcludedCount = decisionEvidenceCounts.UNKNOWN + customerEvidenceCounts.UNKNOWN
 
-  const decisionSignals = operationalDecisions
-    .map(buildDecisionConsultationSignal)
-    .filter((signal): signal is RevenueSignal => signal !== null)
-  const customerSignals = operationalCustomers
+  const customerSignals = realCustomers
     .map(buildCustomerBookingSignal)
     .filter((signal): signal is RevenueSignal => signal !== null)
-  const signals = [...decisionSignals, ...customerSignals]
+  const signals = [...customerSignals]
   const dataQualityNotes = contentDataQualityNotes(input.contentRegistry)
   const errors = [
     input.contentRegistry.error ? `Content Registry: ${input.contentRegistry.error}` : null,
@@ -168,7 +177,10 @@ export function buildRevenueIntelligenceProjection(
   return {
     signals,
     realSignalCount: signals.filter((signal) => signal.evidenceClass === 'REAL').length,
-    sampleTestExcludedCount: testDecisions + sampleCustomers,
+    sampleExcludedCount,
+    testExcludedCount,
+    unknownExcludedCount,
+    sampleTestExcludedCount: sampleExcludedCount + testExcludedCount,
     needsValidationCount: signals.filter((signal) => signal.status === 'NEEDS_VALIDATION').length,
     productizationSignalCount: signals.filter((signal) => signal.signalType === 'PRODUCTIZATION_SIGNAL').length,
     sourceCoverage: [
@@ -190,22 +202,27 @@ export function buildRevenueIntelligenceProjection(
         label: 'Airtable Decision',
         connected: input.decisions.error === null,
         error: input.decisions.error === 'request_failed',
-        evidenceClass: 'REAL',
+        evidenceClass: decisionEvidenceCounts.REAL > 0 ? 'REAL' : 'UNKNOWN',
         totalCount: input.decisions.error === null ? input.decisions.data.length : null,
-        realCount: input.decisions.error === null ? operationalDecisions.length : null,
-        sampleTestExcludedCount: testDecisions,
-        notes: ['Consultation signals remain NEEDS_VALIDATION and do not imply revenue causality.'],
+        realCount: input.decisions.error === null ? decisionEvidenceCounts.REAL : null,
+        sampleTestExcludedCount: decisionEvidenceCounts.SAMPLE + decisionEvidenceCounts.TEST,
+        unknownExcludedCount: decisionEvidenceCounts.UNKNOWN,
+        notes: [
+          'Decision consultation text is Decision Evidence, not a Revenue Signal by itself.',
+          'No existing Decision field explicitly classifies REAL revenue evidence in this branch.',
+        ],
       }),
       coverage({
         sourceType: 'CUSTOMER',
         label: 'Airtable Customer Growth',
         connected: input.customerGrowth.error === null,
         error: input.customerGrowth.error === 'request_failed',
-        evidenceClass: 'REAL',
+        evidenceClass: customerEvidenceCounts.REAL > 0 ? 'REAL' : 'UNKNOWN',
         totalCount: input.customerGrowth.error === null ? input.customerGrowth.data.length : null,
-        realCount: input.customerGrowth.error === null ? operationalCustomers.length : null,
-        sampleTestExcludedCount: sampleCustomers,
-        notes: ['Customer names are not projected into Revenue Intelligence.'],
+        realCount: input.customerGrowth.error === null ? customerEvidenceCounts.REAL : null,
+        sampleTestExcludedCount: customerEvidenceCounts.SAMPLE + customerEvidenceCounts.TEST,
+        unknownExcludedCount: customerEvidenceCounts.UNKNOWN,
+        notes: ['Only explicit REAL dataKind records can produce Booking signals.'],
       }),
       coverage({
         sourceType: 'VISIT',

@@ -54,12 +54,16 @@ export type RevenueSourceCoverage = {
   totalCount: number | null
   realCount: number | null
   sampleTestExcludedCount: number
+  unknownExcludedCount: number
   notes: readonly string[]
 }
 
 export type RevenueIntelligenceProjection = {
   signals: readonly RevenueSignal[]
   realSignalCount: number
+  sampleExcludedCount: number
+  testExcludedCount: number
+  unknownExcludedCount: number
   sampleTestExcludedCount: number
   needsValidationCount: number
   productizationSignalCount: number
