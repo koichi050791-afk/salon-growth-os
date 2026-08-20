@@ -6,6 +6,10 @@ import { EditorialPage, QuietPanel, SectionLabel } from '@/lib/components/Editor
 import { getServerUser } from '@/lib/auth/server-user'
 import { listContentRegistryItems } from '@/lib/repositories/content-registry'
 import {
+  googleSheetsContentRegistryReader,
+  isGoogleSheetsContentRegistryReaderConfigured,
+} from '@/lib/repositories/google-sheets-content-registry'
+import {
   buildContentSourceStatusModel,
   getContentBodyRoute,
   normalizeContentSourceStatusFilter,
@@ -21,6 +25,8 @@ export const metadata: Metadata = {
   title: 'Content Intelligence | 池田航一｜美容師OS',
   description: '公開コンテンツの本文正本と同期状態を確認する',
 }
+
+export const runtime = 'nodejs'
 
 const statusLabel: Record<BodySyncStatus, string> = {
   BODY_SOURCE_MISSING: 'BODY SOURCE MISSING',
@@ -44,6 +50,11 @@ const filters: Array<{ value: ContentSourceStatusFilter; label: string }> = [
   { value: 'SOURCE_CAPTURED', label: 'Captured' },
   { value: 'SYNC_DRIFT', label: 'Drift' },
 ]
+
+const sourceErrorLabel: Record<'adapter_not_configured' | 'read_failed', string> = {
+  adapter_not_configured: 'Google Sheets credential未設定。正本台帳は変更していません。',
+  read_failed: 'Content Registryを読み込めません。正本台帳は変更していません。',
+}
 
 function StatusPill({ status }: { status: BodySyncStatus }) {
   const tone = status === 'BODY_SOURCE_MISSING' || status === 'SYNC_DRIFT'
@@ -189,7 +200,10 @@ export default async function ContentIntelligencePage({
 
   const params = await searchParams
   const filter = normalizeContentSourceStatusFilter(params.status)
-  const result = await listContentRegistryItems()
+  const reader = isGoogleSheetsContentRegistryReaderConfigured()
+    ? googleSheetsContentRegistryReader
+    : undefined
+  const result = await listContentRegistryItems(reader)
   const model = buildContentSourceStatusModel({
     items: result.data,
     source: result.source,
@@ -210,14 +224,26 @@ export default async function ContentIntelligencePage({
           </p>
         </header>
 
-        <section className="grid grid-cols-3 border-y border-[var(--line)] text-sm">
+        <section className="grid grid-cols-2 border-y border-[var(--line)] text-sm sm:grid-cols-6">
           <div className="py-4 pr-3">
             <p className="text-[11px] text-[var(--muted)]">Registry</p>
-            <p className="mt-2 font-medium">{model.items.length}件</p>
+            <p className="mt-2 font-medium">{model.totalCount}件</p>
           </div>
           <div className="border-l border-[var(--line)] px-3 py-4">
             <p className="text-[11px] text-[var(--muted)]">Missing</p>
             <p className="mt-2 font-medium">{model.counts.BODY_SOURCE_MISSING}件</p>
+          </div>
+          <div className="border-l border-[var(--line)] px-3 py-4">
+            <p className="text-[11px] text-[var(--muted)]">Captured</p>
+            <p className="mt-2 font-medium">{model.counts.SOURCE_CAPTURED}件</p>
+          </div>
+          <div className="border-l border-[var(--line)] px-3 py-4">
+            <p className="text-[11px] text-[var(--muted)]">Matched</p>
+            <p className="mt-2 font-medium">{model.counts.MATCHED}件</p>
+          </div>
+          <div className="border-l border-[var(--line)] px-3 py-4">
+            <p className="text-[11px] text-[var(--muted)]">Drift</p>
+            <p className="mt-2 font-medium">{model.counts.SYNC_DRIFT}件</p>
           </div>
           <div className="border-l border-[var(--line)] py-4 pl-3">
             <p className="text-[11px] text-[var(--muted)]">Source Attention</p>
@@ -240,7 +266,7 @@ export default async function ContentIntelligencePage({
           <QuietPanel>
             <SectionLabel>Source</SectionLabel>
             <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-              Google Sheets adapter未接続。正本台帳は変更していません。
+              {sourceErrorLabel[model.error]}
             </p>
             <dl className="mt-4 space-y-2 text-xs leading-6 text-[var(--muted)]">
               <div>
