@@ -126,6 +126,7 @@ export type ContentSourceStatusModel = {
   professionalItems: readonly ContentRegistryItem[]
   unknownItems: readonly ContentRegistryItem[]
   counts: Record<BodySyncStatus, number>
+  totalCount: number
   sourceAttentionCount: number
   filter: ContentSourceStatusFilter
   error: ContentRegistryReadResult['error']

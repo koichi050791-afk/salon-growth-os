@@ -227,7 +227,7 @@ export default async function ContentIntelligencePage({
         <section className="grid grid-cols-2 border-y border-[var(--line)] text-sm sm:grid-cols-6">
           <div className="py-4 pr-3">
             <p className="text-[11px] text-[var(--muted)]">Registry</p>
-            <p className="mt-2 font-medium">{model.items.length}件</p>
+            <p className="mt-2 font-medium">{model.totalCount}件</p>
           </div>
           <div className="border-l border-[var(--line)] px-3 py-4">
             <p className="text-[11px] text-[var(--muted)]">Missing</p>

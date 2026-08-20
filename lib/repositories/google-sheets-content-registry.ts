@@ -9,12 +9,15 @@ import type { ContentRegistryRow } from '@/lib/types/content-source'
 
 export const GOOGLE_SHEETS_CONTENT_REGISTRY_RANGE = `'${CONTENT_REGISTRY_SOURCE.sheetName}'!A1:P300`
 export const GOOGLE_SHEETS_READONLY_SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly'
+export const GOOGLE_SHEETS_FETCH_TIMEOUT_MS = 9_000
 
 type SheetValue = string | number | boolean | null | undefined
 
 type SheetsValuesResponse = {
   values?: SheetValue[][]
 }
+
+type SheetsFetch = typeof fetch
 
 function readServerEnv(name: string): string | null {
   const value = process.env[name]?.trim()
@@ -85,8 +88,11 @@ async function getSheetsAccessToken(): Promise<string> {
   return token
 }
 
-export const googleSheetsContentRegistryReader: ContentRegistryReader = async () => {
-  const token = await getSheetsAccessToken()
+export async function readContentRegistryRowsFromSheetsApi(input: {
+  accessToken: string
+  fetcher?: SheetsFetch
+  signal?: AbortSignal
+}): Promise<readonly ContentRegistryRow[]> {
   const endpoint = new URL(
     `https://sheets.googleapis.com/v4/spreadsheets/${CONTENT_REGISTRY_SOURCE.spreadsheetId}/values/${
       encodeURIComponent(GOOGLE_SHEETS_CONTENT_REGISTRY_RANGE)
@@ -94,11 +100,12 @@ export const googleSheetsContentRegistryReader: ContentRegistryReader = async ()
   )
   endpoint.searchParams.set('majorDimension', 'ROWS')
 
-  const response = await fetch(endpoint, {
+  const response = await (input.fetcher ?? fetch)(endpoint, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${input.accessToken}`,
     },
     cache: 'no-store',
+    signal: input.signal ?? AbortSignal.timeout(GOOGLE_SHEETS_FETCH_TIMEOUT_MS),
   })
 
   if (!response.ok) {
@@ -107,4 +114,9 @@ export const googleSheetsContentRegistryReader: ContentRegistryReader = async ()
 
   const payload = await response.json() as SheetsValuesResponse
   return contentRegistryRowsFromSheetValues(payload.values ?? [])
+}
+
+export const googleSheetsContentRegistryReader: ContentRegistryReader = async () => {
+  const token = await getSheetsAccessToken()
+  return readContentRegistryRowsFromSheetsApi({ accessToken: token })
 }

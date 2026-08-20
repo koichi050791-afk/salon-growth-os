@@ -287,6 +287,7 @@ export function buildContentSourceStatusModel(input: {
     professionalItems: filteredItems.filter((item) => item.account === 'professional'),
     unknownItems: filteredItems.filter((item) => item.account === 'unknown'),
     counts,
+    totalCount: input.items.length,
     sourceAttentionCount: input.items.filter((item) =>
       item.bodySyncStatus === 'BODY_SOURCE_MISSING'
       || item.bodySyncStatus === 'SYNC_DRIFT',
