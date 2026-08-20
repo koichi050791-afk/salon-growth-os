@@ -43,7 +43,7 @@ function startsWithAny(value: string, prefixes: readonly string[]): boolean {
   return prefixes.some((prefix) => value.startsWith(prefix))
 }
 
-function classifyDecisionEvidence(decision: AirtableDecisionRecord): RevenueEvidenceClass {
+export function classifyDecisionEvidence(decision: AirtableDecisionRecord): RevenueEvidenceClass {
   const consultation = decision.values.consultationConcern ?? ''
   if (startsWithAny(consultation, TEST_DECISION_PREFIXES)) return 'TEST'
   if (startsWithAny(consultation, SAMPLE_DECISION_PREFIXES)) return 'SAMPLE'
@@ -56,7 +56,7 @@ function normalizeDataKind(value: string | null): string | null {
   return normalized || null
 }
 
-function classifyCustomerEvidence(customer: CustomerGrowthRecord): RevenueEvidenceClass {
+export function classifyCustomerEvidence(customer: CustomerGrowthRecord): RevenueEvidenceClass {
   const dataKind = normalizeDataKind(customer.dataKind)
   if (!dataKind) return 'UNKNOWN'
   if (REAL_DATA_KIND_VALUES.includes(dataKind)) return 'REAL'

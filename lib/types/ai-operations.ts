@@ -8,6 +8,62 @@ export type ApprovalLevel = 'AUTO' | 'REVIEW' | 'APPROVAL'
 
 export type AiOperationStatus = 'RUNNING' | 'WATCHING' | 'REVIEW' | 'APPROVAL'
 
+export type AutonomousOperationStatus =
+  | 'PASS'
+  | 'FAIL'
+  | 'UNKNOWN'
+  | 'NOT_CHECKED'
+  | 'UNAVAILABLE'
+  | 'NO_ACTION'
+
+export type AutonomousEvidenceClass = 'REAL' | 'SAMPLE' | 'TEST' | 'UNKNOWN'
+
+export type AutonomousOperationType =
+  | 'OS_HEALTH_CHECK'
+  | 'ENGINEERING_TRIAGE'
+  | 'DATA_QUALITY_AUDIT'
+  | 'DEPARTMENT_PATROL'
+  | 'WEEKLY_OPERATIONS_REVIEW'
+
+export type DepartmentPatrolDomain =
+  | 'CUSTOMER'
+  | 'KNOWLEDGE'
+  | 'CONTENT'
+  | 'GROWTH_REVENUE'
+  | 'ENGINEERING_OPERATIONS'
+
+export type DepartmentPatrolOutcome =
+  | 'NO_ACTION'
+  | 'AUTO_RESULT'
+  | 'REVIEW_CANDIDATE'
+  | 'APPROVAL_REQUIRED'
+
+export type AutonomousActionKind =
+  | 'read'
+  | 'inspect'
+  | 'classify'
+  | 'calculate'
+  | 'detect'
+  | 'summarize'
+  | 'generate_candidate'
+  | 'safe_deterministic_check'
+  | 'propose_code_fix'
+  | 'propose_pr'
+  | 'content_candidate'
+  | 'knowledge_candidate'
+  | 'experiment_candidate'
+  | 'non_destructive_remediation'
+  | 'merge_main'
+  | 'production_deploy'
+  | 'public_publish'
+  | 'customer_message'
+  | 'delete_source_data'
+  | 'destructive_schema_change'
+  | 'promote_canonical_knowledge'
+  | 'change_business_strategy'
+
+export type AutonomousOperationSeverity = 'INFO' | 'LOW' | 'MEDIUM' | 'HIGH'
+
 export type WorkEventType =
   | 'DecisionCaptured'
   | 'NextObservationCreated'
@@ -72,6 +128,86 @@ export type EvidenceRef = {
   field?: string | null
   observedAt?: string | null
   url?: string | null
+}
+
+export type AutonomousObservedFact = {
+  id: string
+  label: string
+  value: string
+  status: AutonomousOperationStatus
+  evidenceClass?: AutonomousEvidenceClass
+  sourceRefs: readonly EvidenceRef[]
+}
+
+export type AutonomousOperationFinding = {
+  id: string
+  operationType: AutonomousOperationType
+  title: string
+  summary: string
+  status: AutonomousOperationStatus
+  severity: AutonomousOperationSeverity
+  evidenceClass: AutonomousEvidenceClass
+  sourceRefs: readonly EvidenceRef[]
+  reasonForHuman: string | null
+  proposedAction: string | null
+  patrolOutcome: DepartmentPatrolOutcome
+}
+
+export type AutonomyPolicyDecision = {
+  actionKind: AutonomousActionKind
+  executionLevel: ApprovalLevel
+  canAutoExecute: boolean
+  createsReviewCandidate: boolean
+  requiresApprovalQueueItem: boolean
+  reason: string
+}
+
+export type AutonomousOperationRun = {
+  operationId: string
+  operationType: AutonomousOperationType
+  startedAt: string
+  completedAt: string
+  status: AutonomousOperationStatus
+  executionLevel: ApprovalLevel
+  sourceRefs: readonly EvidenceRef[]
+  observedFacts: readonly AutonomousObservedFact[]
+  findings: readonly AutonomousOperationFinding[]
+  proposedActions: readonly AutonomyPolicyDecision[]
+  error: string | null
+  unavailableReason: string | null
+}
+
+export type DepartmentPatrolResult = {
+  domain: DepartmentPatrolDomain
+  displayName: string
+  status: AutonomousOperationStatus
+  outcome: DepartmentPatrolOutcome
+  sourceAgent: CoreAgentId
+  summary: string
+  observedFacts: readonly AutonomousObservedFact[]
+  findings: readonly AutonomousOperationFinding[]
+  proposedAction: AutonomyPolicyDecision | null
+}
+
+export type WeeklyOperationsReview = {
+  status: AutonomousOperationStatus
+  observedFacts: readonly AutonomousObservedFact[]
+  healthIssueCount: number
+  dataQualityFindingCount: number
+  automaticObservationCount: number
+  reviewCandidateCount: number
+  approvalRequiredCount: number
+  unresolvedOrStaleCount: number
+  noActionCount: number
+  unknownCoverageCount: number
+  sourceCoverageSummary: readonly AutonomousObservedFact[]
+}
+
+export type AutonomousSchedulerBoundary = {
+  callable: true
+  schedulerConfigured: false
+  externalTriggerOnly: true
+  note: string
 }
 
 export type ChatGptOrchestratorDefinition = {
@@ -221,6 +357,16 @@ export type AiOperationsControlCenter = {
   coreAgents: readonly CoreAgentDefinition[]
   sharedCapabilities: readonly SharedCapabilityDefinition[]
   operations: readonly AiOperationDefinition[]
+  autonomousOperations: {
+    health: AutonomousOperationRun
+    engineeringTriage: AutonomousOperationRun
+    dataQuality: AutonomousOperationRun
+    departmentPatrol: AutonomousOperationRun
+    weeklyOperationsReview: AutonomousOperationRun
+    patrolResults: readonly DepartmentPatrolResult[]
+    weeklyReview: WeeklyOperationsReview
+    schedulerBoundary: AutonomousSchedulerBoundary
+  }
   approvalQueue: readonly ApprovalQueueItem[]
   routingPreviews: readonly WorkGraphRoutingPreview[]
   boundaryNotes: readonly string[]
