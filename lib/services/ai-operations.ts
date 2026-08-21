@@ -5,6 +5,15 @@ import {
   buildWorkGraphRoutingPreview,
 } from '@/lib/services/agent-registry'
 import { getVisibleApprovalQueueItems } from '@/lib/services/approval-queue'
+import { listAirtableDecisionRecords } from '@/lib/repositories/airtable-decisions'
+import { listCustomerGrowthRecords } from '@/lib/repositories/airtable-customer-growth'
+import { listContentRegistryItems } from '@/lib/repositories/content-registry'
+import {
+  googleSheetsContentRegistryReader,
+  isGoogleSheetsContentRegistryReaderConfigured,
+} from '@/lib/repositories/google-sheets-content-registry'
+import { buildAutonomousOperationsProjection } from '@/lib/services/autonomous-operations'
+import { buildRevenueIntelligenceProjection } from '@/lib/services/revenue-intelligence'
 import type {
   AiOperationDefinition,
   AiOperationsControlCenter,
@@ -67,13 +76,45 @@ function formatTokyoToday(date: Date): string {
   }).format(date)
 }
 
-export function getAiOperationsControlCenter(date = new Date()): AiOperationsControlCenter {
+export function getAiOperationsNavigationSummary(): {
+  operationCount: number
+  approvalQueueCount: number
+} {
+  return {
+    operationCount: OPERATIONS.length,
+    approvalQueueCount: getVisibleApprovalQueueItems().length,
+  }
+}
+
+export async function getAiOperationsControlCenter(date = new Date()): Promise<AiOperationsControlCenter> {
+  const contentReader = isGoogleSheetsContentRegistryReaderConfigured()
+    ? googleSheetsContentRegistryReader
+    : undefined
+  const [contentRegistry, decisions, customerGrowth] = await Promise.all([
+    listContentRegistryItems(contentReader),
+    listAirtableDecisionRecords(50),
+    listCustomerGrowthRecords(500),
+  ])
+  const revenue = buildRevenueIntelligenceProjection({
+    contentRegistry,
+    decisions,
+    customerGrowth,
+  })
+  const autonomousOperations = buildAutonomousOperationsProjection({
+    contentRegistry,
+    decisions,
+    customerGrowth,
+    revenue,
+    now: date,
+  })
+
   return {
     todayLabel: formatTokyoToday(date),
     orchestrator: CHATGPT_ORCHESTRATOR,
     coreAgents: CORE_AGENTS,
     sharedCapabilities: SHARED_CAPABILITIES,
     operations: OPERATIONS,
+    autonomousOperations,
     approvalQueue: getVisibleApprovalQueueItems(),
     routingPreviews: [
       buildWorkGraphRoutingPreview('DecisionCaptured'),

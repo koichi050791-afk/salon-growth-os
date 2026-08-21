@@ -4,7 +4,7 @@ import { AuthGuard } from '@/lib/components/AuthGuard'
 import { EditorialPage, QuietPanel, SectionLabel } from '@/lib/components/EditorialPage'
 import { listAirtableDecisionRecords, type AirtableDecisionRecord } from '@/lib/repositories/airtable-decisions'
 import { getServerUser } from '@/lib/auth/server-user'
-import { getAiOperationsControlCenter } from '@/lib/services/ai-operations'
+import { getAiOperationsNavigationSummary } from '@/lib/services/ai-operations'
 
 const TEST_PREFIXES = ['【TEST】', '【VERCEL TEST】', '【PRODUCTION TEST】']
 
@@ -27,7 +27,7 @@ export default async function Home() {
     ...recentResult,
     data: recentResult.data.filter((decision) => !isTestDecision(decision)).slice(0, 3),
   }
-  const operations = getAiOperationsControlCenter()
+  const operations = getAiOperationsNavigationSummary()
 
   return (
     <AuthGuard>
@@ -105,7 +105,7 @@ export default async function Home() {
             <SectionLabel>AI Operations</SectionLabel>
             <h2 className="mt-3 text-xl font-medium">AI Teamの動きを見る</h2>
             <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-              {operations.operations.length}つの運用と承認待ち{operations.approvalQueue.length}件を確認する。
+              {operations.operationCount}つの運用と承認待ち{operations.approvalQueueCount}件を確認する。
             </p>
           </div>
           <span className="shrink-0 text-xl text-[var(--gold)] transition group-active:translate-x-1" aria-hidden="true">
