@@ -233,6 +233,25 @@ function EmptyState({ children }: { children: string }) {
   )
 }
 
+function SystemHealthFacts({
+  title,
+  facts,
+}: {
+  title: string
+  facts: readonly AutonomousObservedFact[]
+}) {
+  return (
+    <div>
+      <p className="border-b border-[var(--line)] py-3 text-[11px] font-medium text-[var(--muted)]">
+        {title}
+      </p>
+      {facts.map((fact) => (
+        <FactRow key={fact.id} fact={fact} />
+      ))}
+    </div>
+  )
+}
+
 export default async function OperationsPage() {
   const user = await getServerUser()
   if (!user) redirect('/login')
@@ -247,6 +266,12 @@ export default async function OperationsPage() {
   )
   const patrolApprovalRequired = autonomous.patrolResults.filter((result) =>
     result.outcome === 'APPROVAL_REQUIRED',
+  )
+  const criticalHealthFacts = autonomous.health.observedFacts.filter((fact) =>
+    fact.id === 'airtable_decision_adapter',
+  )
+  const coverageFacts = autonomous.health.observedFacts.filter((fact) =>
+    fact.id !== 'airtable_decision_adapter',
   )
   const reviewCount = reviewQueueItems.length + patrolReviewCandidates.length
   const approvalCount = approvalQueueItems.length + patrolApprovalRequired.length
@@ -277,9 +302,8 @@ export default async function OperationsPage() {
             <h2 className="mt-2 text-2xl font-medium">確認状態</h2>
           </div>
           <div>
-            {autonomous.health.observedFacts.map((fact) => (
-              <FactRow key={fact.id} fact={fact} />
-            ))}
+            <SystemHealthFacts title="Critical path" facts={criticalHealthFacts} />
+            <SystemHealthFacts title="Coverage" facts={coverageFacts} />
           </div>
         </section>
 

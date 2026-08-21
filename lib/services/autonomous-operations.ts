@@ -235,7 +235,7 @@ function buildSourceReadFact(input: {
     label: input.label,
     value,
     status,
-    evidenceClass: status === 'PASS' ? 'REAL' : 'UNKNOWN',
+    evidenceClass: status === 'UNAVAILABLE' ? 'UNKNOWN' : undefined,
     sourceRefs: [input.sourceRef],
   })
 }
@@ -304,7 +304,9 @@ function buildSystemHealthOperation(
     }),
   ]
 
-  const findings = observedFacts
+  const criticalFactIds = new Set(['airtable_decision_adapter'])
+  const criticalFacts = observedFacts.filter((fact) => criticalFactIds.has(fact.id))
+  const findings = criticalFacts
     .filter((fact) => fact.status !== 'PASS')
     .map((fact) => buildFinding({
       id: fact.id,
@@ -312,7 +314,7 @@ function buildSystemHealthOperation(
       title: fact.label,
       summary: fact.value,
       status: fact.status,
-      severity: fact.status === 'UNAVAILABLE' ? 'MEDIUM' : 'INFO',
+      severity: 'HIGH',
       sourceRefs: fact.sourceRefs,
       patrolOutcome: 'NO_ACTION',
     }))
@@ -322,7 +324,7 @@ function buildSystemHealthOperation(
     operationType: 'OS_HEALTH_CHECK',
     startedAt,
     completedAt,
-    status: aggregateStatus(observedFacts.map((fact) => fact.status), 'UNKNOWN'),
+    status: aggregateStatus(criticalFacts.map((fact) => fact.status), 'UNKNOWN'),
     sourceRefs: [
       SOURCE_REFS.repository,
       SOURCE_REFS.airtableDecision,
@@ -332,8 +334,8 @@ function buildSystemHealthOperation(
     ],
     observedFacts,
     findings,
-    unavailableReason: findings.some((finding) => finding.status === 'UNAVAILABLE')
-      ? 'Some sources or durable stores are not connected in this slice.'
+    unavailableReason: findings.length > 0
+      ? 'A critical source for the current Decision loop could not be read.'
       : null,
   })
 }
@@ -445,7 +447,7 @@ function buildDecisionClassificationFacts(
       id: 'decision_evidence_real',
       label: 'Decision REAL evidence',
       value: counts.REAL,
-      status: counts.REAL > 0 ? 'PASS' : 'UNKNOWN',
+      status: 'PASS',
       evidenceClass: 'REAL',
       sourceRefs: [SOURCE_REFS.airtableDecision],
     }),
@@ -461,7 +463,7 @@ function buildDecisionClassificationFacts(
       id: 'decision_evidence_unknown',
       label: 'Decision UNKNOWN evidence',
       value: counts.UNKNOWN,
-      status: counts.UNKNOWN > 0 ? 'UNKNOWN' : 'PASS',
+      status: 'PASS',
       evidenceClass: 'UNKNOWN',
       sourceRefs: [SOURCE_REFS.airtableDecision],
     }),
@@ -480,7 +482,7 @@ function buildCustomerClassificationFacts(
       id: 'customer_growth_real',
       label: 'Customer Growth REAL evidence',
       value: counts.REAL,
-      status: counts.REAL > 0 ? 'PASS' : 'UNKNOWN',
+      status: 'PASS',
       evidenceClass: 'REAL',
       sourceRefs: [SOURCE_REFS.airtableCustomerGrowth],
     }),
@@ -496,7 +498,7 @@ function buildCustomerClassificationFacts(
       id: 'customer_growth_unknown',
       label: 'Customer Growth UNKNOWN evidence',
       value: counts.UNKNOWN,
-      status: counts.UNKNOWN > 0 ? 'UNKNOWN' : 'PASS',
+      status: 'PASS',
       evidenceClass: 'UNKNOWN',
       sourceRefs: [SOURCE_REFS.airtableCustomerGrowth],
     }),
@@ -531,8 +533,8 @@ function buildDataQualityOperation(
       totalCount: input.contentRegistry.error === null ? input.contentRegistry.data.length : null,
       sourceRef: SOURCE_REFS.contentRegistry,
     }),
-    ...buildDecisionClassificationFacts(input.decisions.data),
-    ...buildCustomerClassificationFacts(input.customerGrowth.data),
+    ...(input.decisions.error === null ? buildDecisionClassificationFacts(input.decisions.data) : []),
+    ...(input.customerGrowth.error === null ? buildCustomerClassificationFacts(input.customerGrowth.data) : []),
   ]
 
   if (input.decisions.error) {
@@ -624,13 +626,11 @@ function buildDataQualityOperation(
       id: `next_observation_without_validation_${openNextObservationCount}`,
       operationType: 'DATA_QUALITY_AUDIT',
       title: 'Next Observation exists without Validation',
-      summary: `${openNextObservationCount} Decision loop items still need later validation. This is a loop finding, not treatment failure.`,
+      summary: `${openNextObservationCount} Decision loop items have a later observation target. No review is needed until the confirmation condition is observable.`,
       status: 'UNKNOWN',
       evidenceClass: 'UNKNOWN',
       sourceRefs: [SOURCE_REFS.airtableDecision],
-      reasonForHuman: 'Ikeda may choose when to validate the open observation.',
-      proposedAction: 'Review only when the next salon context makes the validation actionable.',
-      patrolOutcome: 'REVIEW_CANDIDATE',
+      patrolOutcome: 'NO_ACTION',
     }))
   }
 
@@ -646,9 +646,7 @@ function buildDataQualityOperation(
       status: 'FAIL',
       severity: 'MEDIUM',
       sourceRefs: [SOURCE_REFS.contentRegistry],
-      reasonForHuman: 'Source repair may change what gets reviewed or published later.',
-      proposedAction: 'Review body-source connection candidates before any publishing or productization action.',
-      patrolOutcome: 'REVIEW_CANDIDATE',
+      patrolOutcome: 'NO_ACTION',
     }))
   }
 
@@ -664,9 +662,7 @@ function buildDataQualityOperation(
       status: 'FAIL',
       severity: 'MEDIUM',
       sourceRefs: [SOURCE_REFS.contentRegistry],
-      reasonForHuman: 'Drift can change the next content action.',
-      proposedAction: 'Review drift before generating any content candidate.',
-      patrolOutcome: 'REVIEW_CANDIDATE',
+      patrolOutcome: 'NO_ACTION',
     }))
   }
 
@@ -740,6 +736,7 @@ function buildPatrolResult(input: {
   const reviewFindings = input.findings.filter((finding) => finding.patrolOutcome === 'REVIEW_CANDIDATE')
   const approvalFindings = input.findings.filter((finding) => finding.patrolOutcome === 'APPROVAL_REQUIRED')
   const unavailableFindings = input.findings.filter((finding) => finding.status === 'UNAVAILABLE')
+  const firstFinding = input.findings[0]
   const status = aggregateStatus([
     ...input.observedFacts.map((fact) => fact.status),
     ...input.findings.map((finding) => finding.status),
@@ -774,6 +771,7 @@ function buildPatrolResult(input: {
     summary: reviewFindings[0]?.summary
       ?? approvalFindings[0]?.summary
       ?? unavailableFindings[0]?.summary
+      ?? firstFinding?.summary
       ?? input.fallbackSummary,
     observedFacts: input.observedFacts,
     findings: input.findings,
@@ -815,7 +813,7 @@ function buildDepartmentPatrol(
       id: 'revenue_unknown_excluded',
       label: 'Revenue UNKNOWN excluded',
       value: input.revenue.unknownExcludedCount,
-      status: input.revenue.unknownExcludedCount > 0 ? 'UNKNOWN' : 'PASS',
+      status: 'PASS',
       evidenceClass: 'UNKNOWN',
       sourceRefs: [SOURCE_REFS.workGraph],
     }),
