@@ -5,8 +5,8 @@ import { getServerUser } from '@/lib/auth/server-user'
 import DecisionInputClient from './DecisionInputClient'
 
 export const metadata: Metadata = {
-  title: 'Decision記録 | 池田航一｜美容師OS',
-  description: '現場のDecisionを3分以内で残す',
+  title: 'Decision予備入力 | 池田航一｜美容師OS',
+  description: '専用GPTを使えない場合の手動入力',
 }
 
 export default async function DecisionInputPage() {
