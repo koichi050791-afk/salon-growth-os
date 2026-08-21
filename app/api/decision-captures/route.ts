@@ -61,8 +61,18 @@ type ApiPayload = {
 type ApiValidationResult =
   | { ok: true; payload: ApiPayload }
   | { ok: false; status: number; code: string }
+type AuthDiagnostics = {
+  authorizationHeaderPresent: boolean
+  bearerTokenPresent: boolean
+  expectedTokenConfigured: boolean
+  actualTokenLength: number | null
+  expectedTokenLength: number | null
+  tokenLengthMatches: boolean
+  authResult: 'PASS' | 'FAIL'
+}
 type HandleDecisionCapturePostDependencies = {
   saveDecisionCapture?: typeof saveDecisionCaptureService
+  logAuthDiagnostics?: (diagnostics: AuthDiagnostics) => void
 }
 
 function jsonResponse(body: Record<string, unknown>, status: number): Response {
@@ -96,12 +106,45 @@ function compareTokens(actual: string, expected: string): boolean {
   return matched && actualBuffer.length === expectedBuffer.length
 }
 
-function isAuthorized(request: Request): boolean {
+function buildAuthDiagnostics(request: Request): AuthDiagnostics {
   const expected = process.env.DECISION_CAPTURE_API_TOKEN?.trim()
+  const authorizationHeaderPresent = request.headers.has('authorization')
   const actual = readBearerToken(request)
-  if (!expected || !actual) return false
+  const expectedTokenConfigured = Boolean(expected)
+  const actualTokenLength = actual?.length ?? null
+  const expectedTokenLength = expected?.length ?? null
+  const tokenLengthMatches = (
+    actualTokenLength !== null
+    && expectedTokenLength !== null
+    && actualTokenLength === expectedTokenLength
+  )
+  const authResult = expected && actual && compareTokens(actual, expected) ? 'PASS' : 'FAIL'
 
-  return compareTokens(actual, expected)
+  return {
+    authorizationHeaderPresent,
+    bearerTokenPresent: Boolean(actual),
+    expectedTokenConfigured,
+    actualTokenLength,
+    expectedTokenLength,
+    tokenLengthMatches,
+    authResult,
+  }
+}
+
+function shouldLogPreviewAuthDiagnostics(): boolean {
+  return process.env.VERCEL_ENV === 'preview'
+}
+
+function logPreviewAuthDiagnostics(
+  diagnostics: AuthDiagnostics,
+  logger: (diagnostics: AuthDiagnostics) => void,
+) {
+  if (!shouldLogPreviewAuthDiagnostics()) return
+  logger(diagnostics)
+}
+
+function isAuthorized(diagnostics: AuthDiagnostics): boolean {
+  return diagnostics.authResult === 'PASS'
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -260,7 +303,15 @@ export async function handleDecisionCapturePost(
   request: Request,
   dependencies: HandleDecisionCapturePostDependencies = {},
 ): Promise<Response> {
-  if (!isAuthorized(request)) {
+  const authDiagnostics = buildAuthDiagnostics(request)
+  logPreviewAuthDiagnostics(
+    authDiagnostics,
+    dependencies.logAuthDiagnostics ?? ((diagnostics) => {
+      console.info('decision_capture_auth_diagnostics', diagnostics)
+    }),
+  )
+
+  if (!isAuthorized(authDiagnostics)) {
     return unauthorized()
   }
 
