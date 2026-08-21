@@ -6,7 +6,6 @@ import { useAuth } from '@/lib/contexts/AuthContext'
 
 const NAV_ITEMS = [
   { href: '/', icon: '⌂', label: 'ホーム' },
-  { href: '/decision-input', icon: '＋', label: '記録' },
   { href: '/decisions', icon: '◎', label: 'Decision' },
   { href: '/project', icon: '↗', label: '130万' },
 ]
