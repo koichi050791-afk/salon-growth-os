@@ -1,6 +1,7 @@
 import type {
   DecisionCaptureSource,
   DecisionCoreFieldKey,
+  DecisionDataKind,
   DecisionFieldState,
 } from '@/lib/types/decision'
 
@@ -67,6 +68,7 @@ export type DecisionCapturedEvent = {
     fieldState: Record<DecisionCoreFieldKey, DecisionFieldState>
     containsProfessionalHypothesis: false
     captureSource?: DecisionCaptureSource
+    dataKind: DecisionDataKind
   }
 }
 

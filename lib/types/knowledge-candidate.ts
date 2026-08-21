@@ -1,6 +1,5 @@
 import type { DecisionCoreFieldKey } from '@/lib/types/decision'
-
-export type KnowledgeEvidenceClass = 'REAL' | 'SAMPLE' | 'TEST' | 'UNKNOWN'
+import type { DataKind } from '@/lib/types/data-kind'
 
 export type KnowledgeCandidateValidationStatus =
   | 'UNVALIDATED'
@@ -30,7 +29,7 @@ export type KnowledgeDecisionCase = {
   decisionId: string
   title?: string | null
   values: KnowledgeDecisionCaseValues
-  evidenceClass: KnowledgeEvidenceClass
+  dataKind: DataKind
   sourceKind?: KnowledgeCaseSourceKind
   outcome?: string | null
   validation?: KnowledgeCaseValidationState | null

@@ -1,5 +1,7 @@
 import type { AirtableDecisionRecord } from '@/lib/repositories/airtable-decisions'
 import type { DecisionCoreFieldKey } from '@/lib/types/decision'
+import { parseDataKind } from '@/lib/types/data-kind'
+import type { DataKind } from '@/lib/types/data-kind'
 import type {
   KnowledgeCandidate,
   KnowledgeCandidateConfidence,
@@ -7,11 +9,10 @@ import type {
   KnowledgeCandidateValidationStatus,
   KnowledgeCaseSourceKind,
   KnowledgeDecisionCase,
-  KnowledgeEvidenceClass,
 } from '@/lib/types/knowledge-candidate'
 
 type EvidenceClassificationInput = {
-  explicitEvidenceClass?: KnowledgeEvidenceClass | string | null
+  dataKind?: DataKind | string | null
   title?: string | null
   values?: Partial<Record<DecisionCoreFieldKey, string | null>> | null
   sourceKind?: KnowledgeCaseSourceKind | string | null
@@ -33,8 +34,8 @@ type ScoredCase = {
 const DEFAULT_MIN_SUPPORTING_COUNT = 2
 const DEFAULT_SIMILARITY_THRESHOLD = 0.34
 const TEST_PREFIXES = ['【TEST】', '【VERCEL TEST】', '【PRODUCTION TEST】']
-const TEST_WORDS = ['fixture', 'demo', 'synthetic']
-const SAMPLE_WORDS = ['sample']
+const TEST_WORDS = ['test', 'テスト', '動作確認']
+const SAMPLE_WORDS = ['sample', 'サンプル', 'demo', 'デモ', 'example', 'fixture', 'synthetic']
 const TOKEN_MIN_LENGTH = 2
 const TEXT_FIELDS: readonly DecisionCoreFieldKey[] = [
   'consultationConcern',
@@ -52,21 +53,6 @@ function stableHash(value: string): string {
   }
 
   return (hash >>> 0).toString(36)
-}
-
-function normalizeEvidenceClass(value: KnowledgeEvidenceClass | string | null | undefined): KnowledgeEvidenceClass | null {
-  if (typeof value !== 'string') return null
-  const normalized = value.trim().toUpperCase()
-  if (
-    normalized === 'REAL'
-    || normalized === 'SAMPLE'
-    || normalized === 'TEST'
-    || normalized === 'UNKNOWN'
-  ) {
-    return normalized
-  }
-
-  return null
 }
 
 function joinedDecisionText(input: EvidenceClassificationInput): string {
@@ -95,7 +81,7 @@ function hasSampleMarker(text: string): boolean {
 
 export function classifyKnowledgeDecisionEvidence(
   input: EvidenceClassificationInput,
-): KnowledgeEvidenceClass {
+): DataKind {
   const sourceKind = typeof input.sourceKind === 'string'
     ? input.sourceKind.trim().toLowerCase()
     : ''
@@ -109,7 +95,7 @@ export function classifyKnowledgeDecisionEvidence(
     return 'SAMPLE'
   }
 
-  const explicit = normalizeEvidenceClass(input.explicitEvidenceClass)
+  const explicit = parseDataKind(input.dataKind)
   if (explicit) {
     return explicit
   }
@@ -120,7 +106,8 @@ export function classifyKnowledgeDecisionEvidence(
 export function projectAirtableDecisionToKnowledgeCase(
   record: AirtableDecisionRecord,
 ): KnowledgeDecisionCase {
-  const evidenceClass = classifyKnowledgeDecisionEvidence({
+  const dataKind = classifyKnowledgeDecisionEvidence({
+    dataKind: record.dataKind,
     title: record.title,
     values: record.values,
     sourceKind: 'airtable',
@@ -130,7 +117,7 @@ export function projectAirtableDecisionToKnowledgeCase(
     decisionId: record.id,
     title: record.title,
     values: record.values,
-    evidenceClass,
+    dataKind,
     sourceKind: 'airtable',
     outcome: null,
     validation: 'UNOBSERVED',
@@ -243,7 +230,7 @@ function buildScoredCases(
 ): readonly ScoredCase[] {
   return comparisons
     .filter((decision) =>
-      decision.decisionId !== target.decisionId && decision.evidenceClass === 'REAL')
+      decision.decisionId !== target.decisionId && decision.dataKind === 'REAL')
     .map((decision) => ({
       decision,
       score: similarityScore(target, decision),
@@ -353,7 +340,7 @@ export function evaluateKnowledgeCandidate(
   const threshold = options.similarityThreshold ?? DEFAULT_SIMILARITY_THRESHOLD
   const target = options.targetDecision
 
-  if (target.evidenceClass !== 'REAL') {
+  if (target.dataKind !== 'REAL') {
     return {
       status: 'NO_ACTION',
       reason: 'TARGET_NOT_REAL',

@@ -14,6 +14,7 @@ import {
 } from '@/lib/services/work-graph'
 import type {
   DecisionCaptureSource,
+  DecisionDataKind,
   DecisionCoreFieldKey,
   DecisionUnsupportedOptionalFieldKey,
 } from '@/lib/types/decision'
@@ -42,6 +43,7 @@ export type DecisionCaptureDownstreamStatus = {
 export type SaveDecisionCaptureInput = {
   fields: DecisionCaptureSaveFields
   source?: DecisionCaptureSource
+  dataKind?: DecisionDataKind
   sourceRefs?: readonly EvidenceRef[]
   now?: Date
 }
@@ -53,6 +55,7 @@ export type SaveDecisionCaptureSuccess = {
   title: string
   savedAt: string
   captureSource: DecisionCaptureSource
+  dataKind: DecisionDataKind
   downstream: DecisionCaptureDownstreamStatus
   warnings: readonly DecisionCaptureSaveWarning[]
   unsupportedFields: readonly DecisionUnsupportedOptionalFieldKey[]
@@ -181,6 +184,7 @@ export async function saveDecisionCapture(
 ): Promise<SaveDecisionCaptureResult> {
   const now = input.now ?? new Date()
   const captureSource = input.source ?? 'UNKNOWN'
+  const dataKind = input.dataKind ?? 'UNKNOWN'
   const unsupportedFields = collectUnsupportedFields(input.fields)
   const warnings: DecisionCaptureSaveWarning[] = [
     ...buildUnsupportedWarnings(unsupportedFields),
@@ -191,6 +195,7 @@ export async function saveDecisionCapture(
   const result = await createDecisionRecord({
     title,
     status: buildStatus(),
+    dataKind,
     values,
   })
 
@@ -213,6 +218,7 @@ export async function saveDecisionCapture(
     values,
     occurredAt: now,
     captureSource,
+    dataKind,
     additionalSourceRefs: input.sourceRefs ?? [],
   }, dispatchDecision)
   const nextObservationDispatch = values.nextObservation
@@ -242,6 +248,7 @@ export async function saveDecisionCapture(
     title,
     savedAt: now.toISOString(),
     captureSource,
+    dataKind,
     downstream,
     warnings,
     unsupportedFields,

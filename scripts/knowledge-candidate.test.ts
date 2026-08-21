@@ -10,14 +10,14 @@ import type { WorkGraphDispatchResult, WorkGraphEvent } from '@/lib/types/ai-ope
 import type {
   KnowledgeCaseValidationState,
   KnowledgeDecisionCase,
-  KnowledgeEvidenceClass,
 } from '@/lib/types/knowledge-candidate'
+import type { DataKind } from '@/lib/types/data-kind'
 
 const now = new Date('2026-08-21T02:30:00.000Z')
 
 function caseInput(input: {
   decisionId: string
-  evidenceClass: KnowledgeEvidenceClass
+  dataKind: DataKind
   consultationConcern?: string
   customerTruth?: string
   chosenDecision?: string
@@ -28,7 +28,7 @@ function caseInput(input: {
 }): KnowledgeDecisionCase {
   return {
     decisionId: input.decisionId,
-    evidenceClass: input.evidenceClass,
+    dataKind: input.dataKind,
     values: {
       consultationConcern: input.consultationConcern ?? 'hair feels wide and heavy',
       customerTruth: input.customerTruth ?? 'dense ends and morning handling concern confirmed',
@@ -73,16 +73,17 @@ function decisionEvent(): WorkGraphEvent {
       },
       containsProfessionalHypothesis: false,
       captureSource: 'API',
+      dataKind: 'UNKNOWN',
     },
   }
 }
 
 async function main() {
-  const target = caseInput({ decisionId: 'real_decision_1', evidenceClass: 'REAL' })
-  const similar = caseInput({ decisionId: 'real_decision_2', evidenceClass: 'REAL' })
+  const target = caseInput({ decisionId: 'real_decision_1', dataKind: 'REAL' })
+  const similar = caseInput({ decisionId: 'real_decision_2', dataKind: 'REAL' })
   const unrelated = caseInput({
     decisionId: 'real_decision_unrelated',
-    evidenceClass: 'REAL',
+    dataKind: 'REAL',
     consultationConcern: 'wants a brighter color',
     customerTruth: 'previous color history confirmed',
     chosenDecision: 'use a soft highlight plan',
@@ -94,21 +95,21 @@ async function main() {
     values: target.values,
   }), 'UNKNOWN')
   assert.equal(classifyKnowledgeDecisionEvidence({
-    explicitEvidenceClass: 'REAL',
+    dataKind: 'REAL',
     title: '2026 Decision',
     values: target.values,
   }), 'REAL')
   assert.equal(classifyKnowledgeDecisionEvidence({
-    explicitEvidenceClass: 'REAL',
+    dataKind: 'REAL',
     values: { consultationConcern: '【TEST】synthetic check' },
   }), 'TEST')
   assert.equal(classifyKnowledgeDecisionEvidence({
-    explicitEvidenceClass: 'REAL',
+    dataKind: 'REAL',
     sourceKind: 'synthetic',
     values: target.values,
   }), 'TEST')
   assert.equal(classifyKnowledgeDecisionEvidence({
-    explicitEvidenceClass: 'SAMPLE',
+    dataKind: 'SAMPLE',
     values: target.values,
   }), 'SAMPLE')
 
@@ -116,6 +117,7 @@ async function main() {
     id: 'rec_airtable_without_real_marker',
     title: '2026-08-21 Decision記録',
     status: '記録済み',
+    dataKind: 'UNKNOWN',
     values: {
       consultationConcern: target.values.consultationConcern ?? null,
       customerTruth: target.values.customerTruth ?? null,
@@ -124,11 +126,11 @@ async function main() {
       nextObservation: target.values.nextObservation ?? null,
     },
   })
-  assert.equal(projected.evidenceClass, 'UNKNOWN')
+  assert.equal(projected.dataKind, 'UNKNOWN')
 
-  ;(['TEST', 'SAMPLE', 'UNKNOWN'] as const).forEach((evidenceClass) => {
+  ;(['TEST', 'SAMPLE', 'UNKNOWN'] as const).forEach((dataKind) => {
     const result = evaluateKnowledgeCandidate({
-      targetDecision: caseInput({ decisionId: `target_${evidenceClass}`, evidenceClass }),
+      targetDecision: caseInput({ decisionId: `target_${dataKind}`, dataKind }),
       comparisonDecisions: [similar],
       now,
     })
@@ -169,11 +171,11 @@ async function main() {
     comparisonDecisions: [
       caseInput({
         decisionId: 'real_decision_supported_2',
-        evidenceClass: 'REAL',
+        dataKind: 'REAL',
         outcome: 'morning handling improved',
         validation: 'SUPPORTED',
       }),
-      caseInput({ decisionId: 'real_decision_supported_3', evidenceClass: 'REAL' }),
+      caseInput({ decisionId: 'real_decision_supported_3', dataKind: 'REAL' }),
     ],
     now,
   })
@@ -187,7 +189,7 @@ async function main() {
       similar,
       caseInput({
         decisionId: 'real_counter_decision',
-        evidenceClass: 'REAL',
+        dataKind: 'REAL',
         chosenDecision: 'full heavy thinning',
         notChosen: 'preserve perimeter and adjust interior weight only',
         validation: 'CONTRADICTED',
@@ -202,14 +204,14 @@ async function main() {
   const piiSafeCandidate = evaluateKnowledgeCandidate({
     targetDecision: caseInput({
       decisionId: 'real_pii_guard_1',
-      evidenceClass: 'REAL',
+      dataKind: 'REAL',
       chosenDecision: 'adjust interior weight only',
       customerTruth: 'private-contact-marker was mentioned in synthetic input',
     }),
     comparisonDecisions: [
       caseInput({
         decisionId: 'real_pii_guard_2',
-        evidenceClass: 'REAL',
+        dataKind: 'REAL',
         chosenDecision: 'adjust interior weight only',
         customerTruth: 'private-contact-marker was mentioned in synthetic input',
       }),

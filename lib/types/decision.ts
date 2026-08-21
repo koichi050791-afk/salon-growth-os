@@ -1,3 +1,5 @@
+import type { DataKind } from '@/lib/types/data-kind'
+
 export type DecisionCaptureFieldKey =
   | 'customerTruth'
   | 'professionalHypothesis'
@@ -24,6 +26,8 @@ export type DecisionFieldState = 'known' | 'unknown'
 export type DecisionCanonicalSource = 'airtable'
 
 export type DecisionCaptureSource = 'DECISION_INPUT' | 'CHATGPT' | 'API' | 'UNKNOWN'
+
+export type DecisionDataKind = DataKind
 
 export type DecisionUnsupportedOptionalFieldKey =
   | 'professionalHypothesis'
