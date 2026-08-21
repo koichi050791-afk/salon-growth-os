@@ -4,8 +4,10 @@ import {
   type DecisionCaptureSaveFields,
   type SaveDecisionCaptureResult,
 } from '@/lib/services/decision-capture-save'
+import { parseDataKind } from '@/lib/types/data-kind'
 import type {
   DecisionCaptureSource,
+  DecisionDataKind,
 } from '@/lib/types/decision'
 import type { EvidenceRef, WorkGraphSource } from '@/lib/types/ai-operations'
 
@@ -27,7 +29,7 @@ const API_FIELDS = [
   'notChosenReason',
 ] as const
 
-const TOP_LEVEL_KEYS = ['source', 'fields', 'sourceRefs'] as const
+const TOP_LEVEL_KEYS = ['source', 'fields', 'sourceRefs', 'dataKind'] as const
 const CAPTURE_SOURCES: readonly DecisionCaptureSource[] = [
   'DECISION_INPUT',
   'CHATGPT',
@@ -55,6 +57,7 @@ const SOURCE_REF_KEYS = [
 type ApiFieldKey = typeof API_FIELDS[number]
 type ApiPayload = {
   source: DecisionCaptureSource
+  dataKind: DecisionDataKind
   fields: DecisionCaptureSaveFields
   sourceRefs: readonly EvidenceRef[]
 }
@@ -124,6 +127,11 @@ function parseSource(value: unknown): DecisionCaptureSource | null {
   return CAPTURE_SOURCES.includes(value as DecisionCaptureSource)
     ? value as DecisionCaptureSource
     : null
+}
+
+function parsePayloadDataKind(value: unknown): DecisionDataKind | null {
+  if (typeof value === 'undefined') return 'UNKNOWN'
+  return parseDataKind(value)
 }
 
 function parseFieldValues(value: unknown): DecisionCaptureSaveFields | null {
@@ -203,9 +211,10 @@ function validatePayload(value: unknown): ApiValidationResult {
   }
 
   const source = parseSource(value.source)
+  const dataKind = parsePayloadDataKind(value.dataKind)
   const fields = parseFieldValues(value.fields)
   const sourceRefs = parseSourceRefs(value.sourceRefs)
-  if (!source || !fields || !sourceRefs) {
+  if (!source || !dataKind || !fields || !sourceRefs) {
     return { ok: false, status: 400, code: 'INVALID_PAYLOAD' }
   }
 
@@ -213,6 +222,7 @@ function validatePayload(value: unknown): ApiValidationResult {
     ok: true,
     payload: {
       source,
+      dataKind,
       fields,
       sourceRefs,
     },
@@ -243,6 +253,7 @@ function successResponse(result: Extract<SaveDecisionCaptureResult, { ok: true }
     saved: true,
     decisionId: result.decisionId,
     savedAt: result.savedAt,
+    dataKind: result.dataKind,
     downstream: result.downstream,
     warnings: result.warnings,
   }, 201)
@@ -272,6 +283,7 @@ export async function handleDecisionCapturePost(
   const save = dependencies.saveDecisionCapture ?? saveDecisionCaptureService
   const result = await save({
     source: parsed.payload.source,
+    dataKind: parsed.payload.dataKind,
     fields: parsed.payload.fields,
     sourceRefs: parsed.payload.sourceRefs,
   })

@@ -76,6 +76,7 @@ function decisionEvent(input: {
       },
       containsProfessionalHypothesis: false,
       captureSource: input.captureSource,
+      dataKind: 'REAL',
     },
   }
 }
@@ -93,11 +94,12 @@ function nextObservationEvent(decisionId: string): WorkGraphEvent {
 
 async function main() {
   const createdInputs: CreateAirtableDecisionInput[] = []
-  const dispatchInputs: Array<{ captureSource?: unknown }> = []
+  const dispatchInputs: Array<{ captureSource?: unknown; dataKind?: unknown }> = []
   const nextObservationInputs: Array<{ decisionId?: unknown }> = []
 
   const result = await saveDecisionCapture({
     source: 'CHATGPT',
+    dataKind: 'REAL',
     fields: {
       ...baseFields,
       professionalHypothesis: 'unsupported hypothesis',
@@ -136,8 +138,10 @@ async function main() {
   ).length, 3)
   assert.equal(createdInputs[0]?.values.consultationConcern, 'shorter and lighter')
   assert.equal(createdInputs[0]?.values.customerTruth, 'confirmed facts only')
+  assert.equal(createdInputs[0]?.dataKind, 'REAL')
   assert.equal('professionalHypothesis' in (createdInputs[0]?.values ?? {}), false)
   assert.equal(dispatchInputs[0]?.captureSource, 'CHATGPT')
+  assert.equal(dispatchInputs[0]?.dataKind, 'REAL')
   assert.equal(nextObservationInputs[0]?.decisionId, 'rec_decision_saved')
 
   const unknownResult = await saveDecisionCapture({
@@ -165,13 +169,37 @@ async function main() {
     },
   })
   assert.equal(unknownResult.ok, true)
+  assert.equal(createdInputs[1]?.dataKind, 'UNKNOWN')
   assert.equal(createdInputs[1]?.values.consultationConcern, null)
   assert.equal(createdInputs[1]?.values.customerTruth, null)
   assert.equal(createdInputs[1]?.values.nextObservation, null)
   assert.equal(unknownResult.downstream.nextObservation, 'skipped')
 
+  const manualInputResult = await saveDecisionCapture({
+    source: 'DECISION_INPUT',
+    fields: baseFields,
+    now,
+  }, {
+    createDecisionRecord: async (input) => {
+      createdInputs.push(input)
+      return { ok: true, error: null, recordId: 'rec_manual_unknown_kind' }
+    },
+    dispatchDecisionCaptured: async (input) =>
+      dispatchResult(decisionEvent({
+        decisionRecordId: 'rec_manual_unknown_kind',
+        title: input.title,
+        captureSource: input.captureSource,
+      })),
+    dispatchNextObservationCreated: async (input) =>
+      dispatchResult(nextObservationEvent(input.decisionId)),
+  })
+  assert.equal(manualInputResult.ok, true)
+  assert.equal(manualInputResult.dataKind, 'UNKNOWN')
+  assert.equal(createdInputs[2]?.dataKind, 'UNKNOWN')
+
   const testDecisionResult = await saveDecisionCapture({
     source: 'CHATGPT',
+    dataKind: 'TEST',
     fields: {
       ...baseFields,
       consultationConcern: '【TEST】synthetic production-readiness check',
@@ -191,8 +219,10 @@ async function main() {
       dispatchResult(nextObservationEvent('rec_test_saved')),
   })
   assert.equal(testDecisionResult.ok, true)
+  assert.equal(testDecisionResult.dataKind, 'TEST')
+  assert.equal(createdInputs[3]?.dataKind, 'TEST')
   assert.equal(
-    createdInputs[2]?.values.consultationConcern,
+    createdInputs[3]?.values.consultationConcern,
     '【TEST】synthetic production-readiness check',
   )
 
@@ -266,6 +296,15 @@ async function main() {
   }))
   assert.equal(invalidPayload.status, 400)
 
+  const invalidDataKind = await handleDecisionCapturePost(request({
+    token: testToken,
+    body: JSON.stringify({
+      dataKind: 'production',
+      fields: baseFields,
+    }),
+  }))
+  assert.equal(invalidDataKind.status, 400)
+
   const oversized = await handleDecisionCapturePost(request({
     token: testToken,
     body: JSON.stringify({ fields: { consultationConcern: 'x'.repeat(16 * 1024) } }),
@@ -276,6 +315,7 @@ async function main() {
     token: testToken,
     body: JSON.stringify({
       source: 'CHATGPT',
+      dataKind: 'REAL',
       fields: {
         ...baseFields,
         professionalHypothesis: 'unsupported hypothesis',
@@ -289,6 +329,7 @@ async function main() {
   }), {
     saveDecisionCapture: async (input): Promise<SaveDecisionCaptureResult> => {
       assert.equal(input.source, 'CHATGPT')
+      assert.equal(input.dataKind, 'REAL')
       assert.equal(input.fields.professionalHypothesis, 'unsupported hypothesis')
       assert.equal(input.sourceRefs?.[0]?.source, 'chatgpt')
       return {
@@ -298,6 +339,7 @@ async function main() {
         title: 'Synthetic title',
         savedAt: now.toISOString(),
         captureSource: 'CHATGPT',
+        dataKind: 'REAL',
         downstream: {
           decisionCaptured: 'dispatched',
           nextObservation: 'dispatched',
@@ -315,7 +357,36 @@ async function main() {
   const validApiText = await validApi.text()
   assert.equal(validApiText.includes(testToken), false)
   assert.equal(validApiText.includes('rec_api_saved'), true)
+  assert.equal(validApiText.includes('"dataKind":"REAL"'), true)
   assert.equal(validApiText.includes('UNSUPPORTED_FIELD_NOT_PERSISTED'), true)
+
+  const missingDataKind = await handleDecisionCapturePost(request({
+    token: testToken,
+    body: JSON.stringify({
+      source: 'CHATGPT',
+      fields: baseFields,
+    }),
+  }), {
+    saveDecisionCapture: async (input): Promise<SaveDecisionCaptureResult> => {
+      assert.equal(input.dataKind, 'UNKNOWN')
+      return {
+        ok: true,
+        saved: true,
+        decisionId: 'rec_api_unknown_kind',
+        title: 'Synthetic title',
+        savedAt: now.toISOString(),
+        captureSource: 'CHATGPT',
+        dataKind: 'UNKNOWN',
+        downstream: {
+          decisionCaptured: 'dispatched',
+          nextObservation: 'dispatched',
+        },
+        warnings: [],
+        unsupportedFields: [],
+      }
+    },
+  })
+  assert.equal(missingDataKind.status, 201)
 
   console.log('Decision capture ingress checks passed')
 }

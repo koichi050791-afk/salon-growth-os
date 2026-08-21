@@ -1,10 +1,13 @@
 import type { DecisionCoreFieldKey } from '@/lib/types/decision'
+import type { DataKind } from '@/lib/types/data-kind'
+import { normalizeDataKind } from '@/lib/types/data-kind'
 
 export type AirtableDecisionCoreValues = Record<DecisionCoreFieldKey, string | null>
 
 export type CreateAirtableDecisionInput = {
   title: string
   status: string
+  dataKind: DataKind
   values: AirtableDecisionCoreValues
 }
 
@@ -18,6 +21,7 @@ export type AirtableDecisionRecord = {
   id: string
   title: string
   status: string
+  dataKind: DataKind
   values: AirtableDecisionCoreValues
 }
 
@@ -43,6 +47,7 @@ const DEFAULT_FIELD_BY_KEY: Record<DecisionCoreFieldKey, string> = {
   notChosen: 'あえてしなかったこと',
   nextObservation: '次回確認',
 }
+const DEFAULT_DATA_KIND_FIELD = 'データ区分'
 
 function readEnv(name: string): string | null {
   const value = process.env[name]?.trim()
@@ -77,10 +82,15 @@ function getStatusFieldName(): string {
   return readEnv('AIRTABLE_DECISION_FIELD_STATUS') ?? '判断状態'
 }
 
+function getDataKindFieldName(): string {
+  return readEnv('AIRTABLE_DECISION_FIELD_DATA_KIND') ?? DEFAULT_DATA_KIND_FIELD
+}
+
 function buildFields(input: CreateAirtableDecisionInput): Record<string, string> {
   const fields: Record<string, string> = {
     [getTitleFieldName()]: input.title,
     [getStatusFieldName()]: input.status,
+    [getDataKindFieldName()]: input.dataKind,
   }
 
   Object.entries(input.values).forEach(([key, value]) => {
@@ -114,6 +124,7 @@ function mapRecord(record: { id?: unknown; fields?: unknown }): AirtableDecision
     id: record.id,
     title: readStringField(fields, getTitleFieldName()),
     status: readStringField(fields, getStatusFieldName()),
+    dataKind: normalizeDataKind(readStringField(fields, getDataKindFieldName())),
     values,
   }
 }

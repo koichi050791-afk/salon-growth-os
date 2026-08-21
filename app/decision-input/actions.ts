@@ -36,6 +36,7 @@ export async function saveDecisionInput(
 
   const result = await saveDecisionCapture({
     source: 'DECISION_INPUT',
+    dataKind: 'UNKNOWN',
     fields: buildFormFields(formData),
   })
 

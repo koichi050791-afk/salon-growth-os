@@ -2,15 +2,9 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { AuthGuard } from '@/lib/components/AuthGuard'
 import { EditorialPage, QuietPanel, SectionLabel } from '@/lib/components/EditorialPage'
-import { listAirtableDecisionRecords, type AirtableDecisionRecord } from '@/lib/repositories/airtable-decisions'
+import { listAirtableDecisionRecords } from '@/lib/repositories/airtable-decisions'
 import { getServerUser } from '@/lib/auth/server-user'
-
-const TEST_PREFIXES = ['【TEST】', '【VERCEL TEST】', '【PRODUCTION TEST】']
-
-function isTestDecision(decision: AirtableDecisionRecord) {
-  const consultation = decision.values.consultationConcern ?? ''
-  return TEST_PREFIXES.some((prefix) => consultation.startsWith(prefix))
-}
+import { shouldShowDecisionInHistory } from '@/lib/services/decision-history-visibility'
 
 function shortText(value: string | null, fallback: string) {
   if (!value) return fallback
@@ -24,7 +18,7 @@ export default async function Home() {
   const recentResult = await listAirtableDecisionRecords(10)
   const recent = {
     ...recentResult,
-    data: recentResult.data.filter((decision) => !isTestDecision(decision)).slice(0, 3),
+    data: recentResult.data.filter(shouldShowDecisionInHistory).slice(0, 3),
   }
 
   return (

@@ -3,7 +3,7 @@ import {
   getCoreAgentsForEvent,
 } from '@/lib/services/agent-registry'
 import type { AirtableDecisionCoreValues } from '@/lib/repositories/airtable-decisions'
-import type { DecisionCaptureSource, DecisionCoreFieldKey } from '@/lib/types/decision'
+import type { DecisionCaptureSource, DecisionCoreFieldKey, DecisionDataKind } from '@/lib/types/decision'
 import type {
   CoreAgentDefinition,
   DecisionCapturedEvent,
@@ -21,6 +21,7 @@ type DispatchDecisionCapturedInput = {
   values: AirtableDecisionCoreValues
   occurredAt?: Date
   captureSource?: DecisionCaptureSource
+  dataKind?: DecisionDataKind
   additionalSourceRefs?: readonly EvidenceRef[]
 }
 
@@ -108,6 +109,7 @@ export function buildDecisionCapturedEvent(input: DispatchDecisionCapturedInput)
       fieldState: buildDecisionFieldState(input.values),
       containsProfessionalHypothesis: false,
       captureSource: input.captureSource,
+      dataKind: input.dataKind ?? 'UNKNOWN',
     },
   }
 }
