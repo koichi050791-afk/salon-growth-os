@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "test": "npm run test:decision-capture",
+    "test:decision-capture": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-alias-loader.mjs scripts/decision-capture-ingress.test.ts",
     "start": "next start",
     "lint": "eslint"
   },

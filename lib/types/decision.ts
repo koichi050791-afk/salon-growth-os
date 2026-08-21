@@ -23,6 +23,13 @@ export type DecisionFieldState = 'known' | 'unknown'
 
 export type DecisionCanonicalSource = 'airtable'
 
+export type DecisionCaptureSource = 'DECISION_INPUT' | 'CHATGPT' | 'API' | 'UNKNOWN'
+
+export type DecisionUnsupportedOptionalFieldKey =
+  | 'professionalHypothesis'
+  | 'treatmentAction'
+  | 'notChosenReason'
+
 export type DecisionCaptureDraft = Record<DecisionCaptureKey, string | null>
 
 export type DecisionFieldDefinition = {
