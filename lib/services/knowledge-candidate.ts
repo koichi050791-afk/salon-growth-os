@@ -119,8 +119,21 @@ export function projectAirtableDecisionToKnowledgeCase(
     values: record.values,
     dataKind,
     sourceKind: 'airtable',
-    outcome: null,
-    validation: 'UNOBSERVED',
+    outcome: record.validation.outcomeObserved,
+    validation: (() => {
+      switch (record.validation.validationState) {
+        case 'CONFIRMED':
+          return 'SUPPORTED'
+        case 'PARTIAL':
+          return 'PARTIALLY_SUPPORTED'
+        case 'CONTRADICTED':
+          return 'CONTRADICTED'
+        case 'INCONCLUSIVE':
+          return 'UNKNOWN'
+        default:
+          return 'UNOBSERVED'
+      }
+    })(),
   }
 }
 

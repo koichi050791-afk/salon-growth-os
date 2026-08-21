@@ -58,6 +58,18 @@ No Supabase migration is required for Issue #12. Adding a Supabase Decision tabl
 ## Extension path
 
 - Issue #13 can attach Outcome / Validation to the existing Next Observation concept after real field validation.
+
+## Outcome / Validation v0.1 boundary — 2026-08-21
+
+- Existing Airtable Decision remains canonical; no Outcome table is added.
+- Only explicit REAL Decisions with an open Next Observation enter the validation queue.
+- `Outcome（次回来店結果）` stores observed facts and actual customer words.
+- `Validationメモ` stores professional interpretation, revisions, and unresolved points.
+- Validation state remains `UNVALIDATED` until a later visit is actually checked.
+- The `/decisions` page provides an authenticated manual fallback.
+- `GET /api/decision-validations` returns the bounded open validation queue for a future dedicated GPT action.
+- `POST /api/decision-validations` appends a validated result to the existing Decision after bearer authentication and an explicit REAL check.
+- No customer PII, automatic Knowledge promotion, or mandatory tracking for every visit is introduced.
 - Issue #14 can retrieve the Airtable Decision by concern/theme, chosen decision, not-chosen tradeoff, and open Next Observation.
 - Past Decision context must be shown as context only, not current Customer Truth.
 
