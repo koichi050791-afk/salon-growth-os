@@ -73,10 +73,10 @@ export default function DecisionInputClient() {
         <header className="flex items-start justify-between gap-4 border-b border-[var(--line)] pb-5">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--muted)]">
-              Decision Capture
+              Manual Fallback
             </p>
-            <h1 className="mt-2 text-[32px] font-medium leading-tight">記録</h1>
-            <p className="mt-2 text-sm text-[var(--muted)]">3分以内で残す</p>
+            <h1 className="mt-2 text-[32px] font-medium leading-tight">予備入力</h1>
+            <p className="mt-2 text-sm text-[var(--muted)]">専用GPTを使えない場合のみ</p>
           </div>
           <Link
             href="/"
@@ -127,7 +127,7 @@ export default function DecisionInputClient() {
             disabled={pending}
             className="min-h-[58px] w-full bg-[var(--charcoal)] px-5 py-4 text-lg font-medium text-[var(--paper-soft)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {pending ? '保存中…' : '保存'}
+            {pending ? '保存中…' : '予備入力を保存'}
           </button>
         </div>
       </form>

@@ -45,7 +45,7 @@ export default async function DecisionsPage() {
             href="/decision-input"
             className="min-h-[44px] shrink-0 bg-[var(--charcoal)] px-4 py-3 text-sm font-medium text-[var(--paper-soft)]"
           >
-            ＋ 記録
+            予備入力
           </Link>
         </header>
 
@@ -60,7 +60,7 @@ export default async function DecisionsPage() {
               href="/decision-input"
               className="mt-5 inline-flex min-h-[44px] items-center bg-[var(--charcoal)] px-5 py-3 text-sm font-medium text-[var(--paper-soft)]"
             >
-              最初のDecisionを残す
+              予備入力を開く
             </Link>
           </div>
         ) : (

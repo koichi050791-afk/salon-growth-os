@@ -42,16 +42,19 @@ export default async function Home() {
         </header>
 
         <QuietPanel className="py-6">
-          <SectionLabel>Primary Action</SectionLabel>
-          <h2 className="mt-3 text-[26px] font-medium leading-snug">Decisionを3分以内で残す</h2>
+          <SectionLabel>Standard Capture</SectionLabel>
+          <h2 className="mt-3 text-[26px] font-medium leading-snug">通常の記録は専用GPTへ</h2>
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-            相談、事実、判断、しなかったこと、次回確認だけを残す。
+            自然文で伝えると、5項目へ整理してAirtableのDecision正本へ保存します。
+          </p>
+          <p className="mt-3 border-l-2 border-[var(--gold)] pl-3 text-xs leading-6 text-[var(--muted)]">
+            池田 → 専用GPT → Decision Capture API → Airtable
           </p>
           <Link
             href="/decision-input"
-            className="mt-6 flex min-h-[58px] w-full items-center justify-between bg-[var(--charcoal)] px-5 text-base font-medium text-[var(--paper-soft)] transition active:scale-[0.99]"
+            className="mt-6 flex min-h-[50px] w-full items-center justify-between border border-[var(--line)] bg-[var(--paper-soft)] px-5 text-sm font-medium text-[var(--ink-soft)] transition active:scale-[0.99]"
           >
-            <span>記録を開く</span>
+            <span>予備の手動入力を開く</span>
             <span aria-hidden="true">→</span>
           </Link>
         </QuietPanel>
@@ -106,7 +109,7 @@ export default async function Home() {
             </div>
           ) : recent.data.length === 0 ? (
             <div className="mt-5 border border-[var(--line)] bg-[var(--paper-soft)] p-4 text-sm leading-7 text-[var(--muted)]">
-              まだDecisionがありません。最初の1件を残してください。
+              まだDecisionがありません。専用GPTから最初の1件を残してください。
             </div>
           ) : (
             <div>

@@ -14,10 +14,18 @@
 
 完成した経営システムを先に作るのではなく、池田航一の場合に何が無理なく成果へつながるかを現場から発見する。
 
+## Decision記録の標準経路
+
+池田 → 専用GPT → Decision Capture API → Airtable Decision
+
+- 通常は専用GPTへ自然文で伝え、Core 5へ整理して保存する
+- `/decision-input` は専用GPTを使えない障害時・管理用の予備入力
+- 同じDecisionをGoogle Sheets等へ重複保存しない
+
 ## 現在の主要画面
 
 - `/` — 池田個人OS HOME
-- `/decision-input` — 5項目・3分以内のDecision記録
+- `/decision-input` — 障害時・管理用の予備入力
 - `/decisions` — AirtableをSource of TruthとするDecision時間軸
 - `/project` — 130万円安定達成プロジェクト
 - `/login` — 個人OS認証
