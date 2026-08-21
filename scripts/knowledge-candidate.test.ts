@@ -1,0 +1,255 @@
+import assert from 'node:assert/strict'
+import { saveDecisionCapture } from '@/lib/services/decision-capture-save'
+import {
+  classifyKnowledgeDecisionEvidence,
+  evaluateKnowledgeCandidate,
+  projectAirtableDecisionToKnowledgeCase,
+} from '@/lib/services/knowledge-candidate'
+import type { CreateAirtableDecisionInput } from '@/lib/repositories/airtable-decisions'
+import type { WorkGraphDispatchResult, WorkGraphEvent } from '@/lib/types/ai-operations'
+import type {
+  KnowledgeCaseValidationState,
+  KnowledgeDecisionCase,
+  KnowledgeEvidenceClass,
+} from '@/lib/types/knowledge-candidate'
+
+const now = new Date('2026-08-21T02:30:00.000Z')
+
+function caseInput(input: {
+  decisionId: string
+  evidenceClass: KnowledgeEvidenceClass
+  consultationConcern?: string
+  customerTruth?: string
+  chosenDecision?: string
+  notChosen?: string
+  nextObservation?: string
+  outcome?: string | null
+  validation?: KnowledgeCaseValidationState | null
+}): KnowledgeDecisionCase {
+  return {
+    decisionId: input.decisionId,
+    evidenceClass: input.evidenceClass,
+    values: {
+      consultationConcern: input.consultationConcern ?? 'hair feels wide and heavy',
+      customerTruth: input.customerTruth ?? 'dense ends and morning handling concern confirmed',
+      chosenDecision: input.chosenDecision ?? 'preserve perimeter and adjust interior weight only',
+      notChosen: input.notChosen ?? 'full heavy thinning',
+      nextObservation: input.nextObservation ?? 'check morning handling at next visit',
+    },
+    outcome: input.outcome ?? null,
+    validation: input.validation ?? 'UNOBSERVED',
+  }
+}
+
+function dispatchResult(event: WorkGraphEvent, ok = true): WorkGraphDispatchResult {
+  return {
+    ok,
+    event,
+    routedAgentIds: [],
+    sharedCapabilityIds: [],
+    agentRuns: [],
+    approvalQueueItems: [],
+    autoWorkCount: 0,
+    error: ok ? null : 'dispatch_failed',
+  }
+}
+
+function decisionEvent(): WorkGraphEvent {
+  return {
+    id: 'event_decision',
+    type: 'DecisionCaptured',
+    occurredAt: now.toISOString(),
+    source: 'airtable',
+    sourceRefs: [],
+    payload: {
+      decisionRecordId: 'rec_saved',
+      title: 'Synthetic',
+      fieldState: {
+        consultationConcern: 'known',
+        customerTruth: 'known',
+        chosenDecision: 'known',
+        notChosen: 'known',
+        nextObservation: 'known',
+      },
+      containsProfessionalHypothesis: false,
+      captureSource: 'API',
+    },
+  }
+}
+
+async function main() {
+  const target = caseInput({ decisionId: 'real_decision_1', evidenceClass: 'REAL' })
+  const similar = caseInput({ decisionId: 'real_decision_2', evidenceClass: 'REAL' })
+  const unrelated = caseInput({
+    decisionId: 'real_decision_unrelated',
+    evidenceClass: 'REAL',
+    consultationConcern: 'wants a brighter color',
+    customerTruth: 'previous color history confirmed',
+    chosenDecision: 'use a soft highlight plan',
+    notChosen: 'single process dark color',
+  })
+
+  assert.equal(classifyKnowledgeDecisionEvidence({
+    title: '2026 Decision',
+    values: target.values,
+  }), 'UNKNOWN')
+  assert.equal(classifyKnowledgeDecisionEvidence({
+    explicitEvidenceClass: 'REAL',
+    title: '2026 Decision',
+    values: target.values,
+  }), 'REAL')
+  assert.equal(classifyKnowledgeDecisionEvidence({
+    explicitEvidenceClass: 'REAL',
+    values: { consultationConcern: '【TEST】synthetic check' },
+  }), 'TEST')
+  assert.equal(classifyKnowledgeDecisionEvidence({
+    explicitEvidenceClass: 'REAL',
+    sourceKind: 'synthetic',
+    values: target.values,
+  }), 'TEST')
+  assert.equal(classifyKnowledgeDecisionEvidence({
+    explicitEvidenceClass: 'SAMPLE',
+    values: target.values,
+  }), 'SAMPLE')
+
+  const projected = projectAirtableDecisionToKnowledgeCase({
+    id: 'rec_airtable_without_real_marker',
+    title: '2026-08-21 Decision記録',
+    status: '記録済み',
+    values: {
+      consultationConcern: target.values.consultationConcern ?? null,
+      customerTruth: target.values.customerTruth ?? null,
+      chosenDecision: target.values.chosenDecision ?? null,
+      notChosen: target.values.notChosen ?? null,
+      nextObservation: target.values.nextObservation ?? null,
+    },
+  })
+  assert.equal(projected.evidenceClass, 'UNKNOWN')
+
+  ;(['TEST', 'SAMPLE', 'UNKNOWN'] as const).forEach((evidenceClass) => {
+    const result = evaluateKnowledgeCandidate({
+      targetDecision: caseInput({ decisionId: `target_${evidenceClass}`, evidenceClass }),
+      comparisonDecisions: [similar],
+      now,
+    })
+    assert.equal(result.status, 'NO_ACTION')
+    assert.equal(result.reason, 'TARGET_NOT_REAL')
+  })
+
+  const singleReal = evaluateKnowledgeCandidate({
+    targetDecision: target,
+    comparisonDecisions: [],
+    now,
+  })
+  assert.equal(singleReal.status, 'NO_ACTION')
+  assert.equal(singleReal.reason, 'INSUFFICIENT_REAL_CASES')
+
+  const insufficientSimilarity = evaluateKnowledgeCandidate({
+    targetDecision: target,
+    comparisonDecisions: [unrelated],
+    now,
+  })
+  assert.equal(insufficientSimilarity.status, 'NO_ACTION')
+  assert.equal(insufficientSimilarity.reason, 'INSUFFICIENT_SIMILARITY')
+
+  const unvalidatedCandidate = evaluateKnowledgeCandidate({
+    targetDecision: target,
+    comparisonDecisions: [similar],
+    now,
+  })
+  assert.equal(unvalidatedCandidate.status, 'CANDIDATE_REVIEW')
+  assert.equal(unvalidatedCandidate.candidate.validationStatus, 'UNVALIDATED')
+  assert.equal(unvalidatedCandidate.candidate.supportingCount, 2)
+  assert.equal(unvalidatedCandidate.candidate.evidenceDecisionIds.includes('real_decision_1'), true)
+  assert.equal(unvalidatedCandidate.candidate.statement.includes('可能性'), true)
+  assert.equal(unvalidatedCandidate.candidate.statement.includes('未検証'), true)
+
+  const supportedCandidate = evaluateKnowledgeCandidate({
+    targetDecision: target,
+    comparisonDecisions: [
+      caseInput({
+        decisionId: 'real_decision_supported_2',
+        evidenceClass: 'REAL',
+        outcome: 'morning handling improved',
+        validation: 'SUPPORTED',
+      }),
+      caseInput({ decisionId: 'real_decision_supported_3', evidenceClass: 'REAL' }),
+    ],
+    now,
+  })
+  assert.equal(supportedCandidate.status, 'CANDIDATE_REVIEW')
+  assert.equal(supportedCandidate.candidate.validationStatus, 'PARTIALLY_VALIDATED')
+  assert.notEqual(supportedCandidate.candidate.validationStatus, 'VALIDATED')
+
+  const counterCandidate = evaluateKnowledgeCandidate({
+    targetDecision: target,
+    comparisonDecisions: [
+      similar,
+      caseInput({
+        decisionId: 'real_counter_decision',
+        evidenceClass: 'REAL',
+        chosenDecision: 'full heavy thinning',
+        notChosen: 'preserve perimeter and adjust interior weight only',
+        validation: 'CONTRADICTED',
+      }),
+    ],
+    now,
+  })
+  assert.equal(counterCandidate.status, 'CANDIDATE_REVIEW')
+  assert.equal(counterCandidate.candidate.counterEvidenceDecisionIds.includes('real_counter_decision'), true)
+  assert.equal(counterCandidate.candidate.confidence, 'LOW')
+
+  const piiSafeCandidate = evaluateKnowledgeCandidate({
+    targetDecision: caseInput({
+      decisionId: 'real_pii_guard_1',
+      evidenceClass: 'REAL',
+      chosenDecision: 'adjust interior weight only',
+      customerTruth: 'private-contact-marker was mentioned in synthetic input',
+    }),
+    comparisonDecisions: [
+      caseInput({
+        decisionId: 'real_pii_guard_2',
+        evidenceClass: 'REAL',
+        chosenDecision: 'adjust interior weight only',
+        customerTruth: 'private-contact-marker was mentioned in synthetic input',
+      }),
+    ],
+    now,
+  })
+  assert.equal(piiSafeCandidate.status, 'CANDIDATE_REVIEW')
+  const serializedPiiSafeCandidate = JSON.stringify(piiSafeCandidate.candidate)
+  assert.equal(serializedPiiSafeCandidate.includes('private-contact-marker'), false)
+
+  const createdInputs: CreateAirtableDecisionInput[] = []
+  const failedDownstream = await saveDecisionCapture({
+    source: 'API',
+    fields: {
+      consultationConcern: 'synthetic downstream check',
+      customerTruth: 'confirmed facts only',
+      chosenDecision: 'small reversible decision',
+      notChosen: 'large irreversible decision',
+      nextObservation: 'check next time',
+    },
+    now,
+  }, {
+    createDecisionRecord: async (input) => {
+      createdInputs.push(input)
+      return { ok: true, error: null, recordId: 'rec_saved_even_when_dispatch_fails' }
+    },
+    dispatchDecisionCaptured: async () => dispatchResult(decisionEvent(), false),
+    dispatchNextObservationCreated: async () => dispatchResult(decisionEvent(), false),
+  })
+  assert.equal(failedDownstream.ok, true)
+  assert.equal(failedDownstream.saved, true)
+  assert.equal(createdInputs.length, 1)
+  assert.equal(failedDownstream.warnings.some((warning) =>
+    warning.code === 'DOWNSTREAM_DISPATCH_FAILED',
+  ), true)
+
+  console.log('Knowledge candidate foundation checks passed')
+}
+
+void main().catch((error) => {
+  console.error(error)
+  process.exitCode = 1
+})
