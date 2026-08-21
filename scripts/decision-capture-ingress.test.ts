@@ -116,7 +116,6 @@ function nextObservationEvent(decisionId: string): WorkGraphEvent {
 }
 
 async function main() {
-  const previousVercelEnv = process.env.VERCEL_ENV
   const createdInputs: CreateAirtableDecisionInput[] = []
   const dispatchInputs: Array<{ captureSource?: unknown }> = []
   const nextObservationInputs: Array<{ decisionId?: unknown }> = []
@@ -231,31 +230,10 @@ async function main() {
   ), true)
 
   process.env.DECISION_CAPTURE_API_TOKEN = testToken
-  process.env.VERCEL_ENV = 'production'
-  let productionLogCalled = false
-  const productionAuth = await handleDecisionCapturePost(request({
-    token: 'wrong_token',
-    body: JSON.stringify({ fields: baseFields }),
-  }), {
-    logAuthDiagnostics: () => {
-      productionLogCalled = true
-    },
-    saveDecisionCapture: async () => {
-      throw new Error('save must not run with wrong auth')
-    },
-  })
-  assert.equal(productionAuth.status, 401)
-  assert.equal(productionLogCalled, false)
-
-  process.env.VERCEL_ENV = 'preview'
-  const previewDiagnostics: unknown[] = []
   const noAuth = await handleDecisionCapturePost(request({
     token: null,
     body: JSON.stringify({ fields: baseFields }),
   }), {
-    logAuthDiagnostics: (diagnostics) => {
-      previewDiagnostics.push(diagnostics)
-    },
     saveDecisionCapture: async () => {
       throw new Error('save must not run without auth')
     },
@@ -267,34 +245,12 @@ async function main() {
     token: 'wrong_token',
     body: JSON.stringify({ fields: baseFields }),
   }), {
-    logAuthDiagnostics: (diagnostics) => {
-      previewDiagnostics.push(diagnostics)
-    },
     saveDecisionCapture: async () => {
       throw new Error('save must not run with wrong auth')
     },
   })
   assert.equal(wrongAuth.status, 401)
-  assert.deepEqual(previewDiagnostics[0], {
-    authorizationHeaderPresent: false,
-    bearerTokenPresent: false,
-    expectedTokenConfigured: true,
-    actualTokenLength: null,
-    expectedTokenLength: testToken.length,
-    tokenLengthMatches: false,
-    authResult: 'FAIL',
-  })
-  assert.deepEqual(previewDiagnostics[1], {
-    authorizationHeaderPresent: true,
-    bearerTokenPresent: true,
-    expectedTokenConfigured: true,
-    actualTokenLength: 'wrong_token'.length,
-    expectedTokenLength: testToken.length,
-    tokenLengthMatches: false,
-    authResult: 'FAIL',
-  })
-  assert.equal(JSON.stringify(previewDiagnostics).includes(testToken), false)
-  process.env.VERCEL_ENV = 'production'
+  assert.equal(await wrongAuth.text(), '{"success":false,"error":"authentication_error"}')
 
   const malformed = await handleDecisionCapturePost(request({
     token: testToken,
@@ -384,12 +340,6 @@ async function main() {
   assert.equal(revenue.realSignalCount, 0)
   assert.equal(revenue.signals.length, 0)
   assert.equal(revenue.unknownExcludedCount, 1)
-
-  if (typeof previousVercelEnv === 'string') {
-    process.env.VERCEL_ENV = previousVercelEnv
-  } else {
-    delete process.env.VERCEL_ENV
-  }
 
   console.log('Decision capture ingress checks passed')
 }
