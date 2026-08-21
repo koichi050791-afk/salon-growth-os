@@ -1,5 +1,3 @@
-import { isRealDataKind } from '@/lib/types/data-kind'
-
 export const CUSTOMER_STATES = ['NEW', 'DEVELOP', 'CORE', 'WATCH', 'DORMANT'] as const
 export type CustomerState = (typeof CUSTOMER_STATES)[number]
 
@@ -99,7 +97,7 @@ function mapRecord(record: { id?: unknown; fields?: unknown }): CustomerGrowthRe
 }
 
 export function isOperationalCustomer(customer: CustomerGrowthRecord): boolean {
-  return isRealDataKind(customer.dataKind)
+  return customer.dataKind?.toLowerCase() !== 'sample'
 }
 
 export async function listCustomerGrowthRecords(limit = 200): Promise<ListCustomerGrowthResult> {

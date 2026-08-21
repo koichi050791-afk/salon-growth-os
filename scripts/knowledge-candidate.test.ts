@@ -1,17 +1,25 @@
 import assert from 'node:assert/strict'
 import { saveDecisionCapture } from '@/lib/services/decision-capture-save'
+import { shouldShowDecisionInHistory } from '@/lib/services/decision-history-visibility'
 import {
   classifyKnowledgeDecisionEvidence,
   evaluateKnowledgeCandidate,
   projectAirtableDecisionToKnowledgeCase,
 } from '@/lib/services/knowledge-candidate'
-import type { CreateAirtableDecisionInput } from '@/lib/repositories/airtable-decisions'
+import {
+  isOperationalCustomer,
+  type CustomerGrowthRecord,
+} from '@/lib/repositories/airtable-customer-growth'
+import type {
+  AirtableDecisionRecord,
+  CreateAirtableDecisionInput,
+} from '@/lib/repositories/airtable-decisions'
 import type { WorkGraphDispatchResult, WorkGraphEvent } from '@/lib/types/ai-operations'
 import type {
   KnowledgeCaseValidationState,
   KnowledgeDecisionCase,
 } from '@/lib/types/knowledge-candidate'
-import type { DataKind } from '@/lib/types/data-kind'
+import { normalizeDataKind, type DataKind } from '@/lib/types/data-kind'
 
 const now = new Date('2026-08-21T02:30:00.000Z')
 
@@ -78,6 +86,40 @@ function decisionEvent(): WorkGraphEvent {
   }
 }
 
+function decisionRecord(input: {
+  id: string
+  dataKind: DataKind
+  consultationConcern?: string | null
+}): AirtableDecisionRecord {
+  return {
+    id: input.id,
+    title: 'Synthetic Decision',
+    status: '記録済み',
+    dataKind: input.dataKind,
+    values: {
+      consultationConcern: input.consultationConcern ?? 'synthetic concern',
+      customerTruth: 'synthetic confirmed facts',
+      chosenDecision: 'synthetic decision',
+      notChosen: 'synthetic not chosen',
+      nextObservation: 'synthetic next observation',
+    },
+  }
+}
+
+function customerRecord(dataKind: string | null): CustomerGrowthRecord {
+  return {
+    id: 'customer_growth_synthetic',
+    name: 'Synthetic Customer',
+    customerId: 'SYNTHETIC',
+    state: null,
+    expectedCycleDays: null,
+    lastVisitDate: null,
+    expectedReturnDate: null,
+    nextPlanStatus: null,
+    dataKind,
+  }
+}
+
 async function main() {
   const target = caseInput({ decisionId: 'real_decision_1', dataKind: 'REAL' })
   const similar = caseInput({ decisionId: 'real_decision_2', dataKind: 'REAL' })
@@ -94,6 +136,7 @@ async function main() {
     title: '2026 Decision',
     values: target.values,
   }), 'UNKNOWN')
+  assert.equal(normalizeDataKind(undefined), 'UNKNOWN')
   assert.equal(classifyKnowledgeDecisionEvidence({
     dataKind: 'REAL',
     title: '2026 Decision',
@@ -127,6 +170,34 @@ async function main() {
     },
   })
   assert.equal(projected.dataKind, 'UNKNOWN')
+
+  assert.equal(shouldShowDecisionInHistory(decisionRecord({
+    id: 'history_real',
+    dataKind: 'REAL',
+  })), true)
+  assert.equal(shouldShowDecisionInHistory(decisionRecord({
+    id: 'history_unknown',
+    dataKind: 'UNKNOWN',
+  })), true)
+  assert.equal(shouldShowDecisionInHistory(decisionRecord({
+    id: 'history_sample',
+    dataKind: 'SAMPLE',
+  })), false)
+  assert.equal(shouldShowDecisionInHistory(decisionRecord({
+    id: 'history_test_kind',
+    dataKind: 'TEST',
+  })), false)
+  assert.equal(shouldShowDecisionInHistory(decisionRecord({
+    id: 'history_test_prefix',
+    dataKind: 'UNKNOWN',
+    consultationConcern: '【TEST】synthetic check',
+  })), false)
+
+  assert.equal(isOperationalCustomer(customerRecord(null)), true)
+  assert.equal(isOperationalCustomer(customerRecord('UNKNOWN')), true)
+  assert.equal(isOperationalCustomer(customerRecord('REAL')), true)
+  assert.equal(isOperationalCustomer(customerRecord('TEST')), true)
+  assert.equal(isOperationalCustomer(customerRecord('sample')), false)
 
   ;(['TEST', 'SAMPLE', 'UNKNOWN'] as const).forEach((dataKind) => {
     const result = evaluateKnowledgeCandidate({
