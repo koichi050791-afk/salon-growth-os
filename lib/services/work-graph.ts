@@ -7,7 +7,11 @@ import {
   type ApprovalQueueCandidate,
 } from '@/lib/services/approval-queue'
 import type { AirtableDecisionCoreValues } from '@/lib/repositories/airtable-decisions'
-import type { DecisionCoreFieldKey, DecisionValidationResult } from '@/lib/types/decision'
+import type {
+  DecisionCaptureSource,
+  DecisionCoreFieldKey,
+  DecisionValidationResult,
+} from '@/lib/types/decision'
 import type {
   ApprovalLevel,
   CandidateWorkGraphEvent,
@@ -28,6 +32,8 @@ type DispatchDecisionCapturedInput = {
   title: string
   values: AirtableDecisionCoreValues
   occurredAt?: Date
+  captureSource?: DecisionCaptureSource
+  additionalSourceRefs?: readonly EvidenceRef[]
 }
 
 type DispatchOutcomeValidationInput = {
@@ -308,12 +314,13 @@ export function buildDecisionCapturedEvent(input: DispatchDecisionCapturedInput)
     type: 'DecisionCaptured',
     occurredAt: occurredAt.toISOString(),
     source: 'airtable',
-    sourceRefs: [sourceRef],
+    sourceRefs: [sourceRef, ...(input.additionalSourceRefs ?? [])],
     payload: {
       decisionRecordId: input.decisionRecordId,
       title: input.title,
       fieldState: buildDecisionFieldState(input.values),
       containsProfessionalHypothesis: false,
+      captureSource: input.captureSource,
     },
   }
 }

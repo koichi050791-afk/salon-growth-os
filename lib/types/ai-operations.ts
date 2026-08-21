@@ -1,4 +1,5 @@
 import type {
+  DecisionCaptureSource,
   DecisionCoreFieldKey,
   DecisionFieldState,
   DecisionValidationResult,
@@ -289,6 +290,7 @@ export type DecisionCapturedEvent = {
     title: string
     fieldState: Record<DecisionCoreFieldKey, DecisionFieldState>
     containsProfessionalHypothesis: false
+    captureSource?: DecisionCaptureSource
   }
 }
 
