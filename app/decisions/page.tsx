@@ -6,6 +6,8 @@ import { EditorialPage, SectionLabel } from '@/lib/components/EditorialPage'
 import { listAirtableDecisionRecords } from '@/lib/repositories/airtable-decisions'
 import { getServerUser } from '@/lib/auth/server-user'
 import { shouldShowDecisionInHistory } from '@/lib/services/decision-history-visibility'
+import type { DecisionValidationState } from '@/lib/types/decision-validation'
+import { DecisionValidationForm } from './DecisionValidationForm'
 
 export const metadata: Metadata = {
   title: 'Decision | 池田航一｜美容師OS',
@@ -21,6 +23,14 @@ function ValueBlock({ label, value, accent = false }: { label: string; value: st
       <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-[var(--ink-soft)]">{value}</p>
     </div>
   )
+}
+
+const VALIDATION_LABELS: Record<DecisionValidationState, string> = {
+  UNVALIDATED: '検証待ち',
+  CONFIRMED: '概ね確認済み',
+  PARTIAL: '一部確認済み',
+  CONTRADICTED: '見直しが必要',
+  INCONCLUSIVE: '今回は判断不能',
 }
 
 export default async function DecisionsPage() {
@@ -69,11 +79,18 @@ export default async function DecisionsPage() {
               <article key={decision.id} className="border-b border-[var(--line)] py-6">
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-xs text-[var(--muted)]">{decision.title || 'Decision記録'}</p>
-                  {decision.status && (
-                    <span className="shrink-0 border border-[var(--line)] px-2.5 py-1 text-[10px] text-[var(--muted)]">
-                      {decision.status}
-                    </span>
-                  )}
+                  <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                    {decision.status && (
+                      <span className="border border-[var(--line)] px-2.5 py-1 text-[10px] text-[var(--muted)]">
+                        {decision.status}
+                      </span>
+                    )}
+                    {decision.dataKind === 'REAL' && decision.values.nextObservation && (
+                      <span className="border border-[var(--line)] px-2.5 py-1 text-[10px] text-[var(--muted)]">
+                        {VALIDATION_LABELS[decision.validation.validationState]}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-4 space-y-5">
@@ -84,6 +101,24 @@ export default async function DecisionsPage() {
                     <ValueBlock label="確認した事実" value={decision.values.customerTruth} />
                     <ValueBlock label="あえてしなかったこと" value={decision.values.notChosen} />
                   </div>
+                  {decision.validation.validationState !== 'UNVALIDATED' && (
+                    <div className="space-y-4 border-t border-[var(--line)] pt-4">
+                      <ValueBlock
+                        label="次回来店で確認できたこと"
+                        value={decision.validation.outcomeObserved}
+                        accent
+                      />
+                      <ValueBlock
+                        label="検証メモ"
+                        value={decision.validation.validationNote}
+                      />
+                    </div>
+                  )}
+                  {decision.dataKind === 'REAL'
+                    && decision.values.nextObservation
+                    && decision.validation.validationState === 'UNVALIDATED' && (
+                    <DecisionValidationForm decisionId={decision.id} />
+                  )}
                 </div>
               </article>
             ))}

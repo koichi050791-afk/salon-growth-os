@@ -90,6 +90,8 @@ function decisionRecord(input: {
   id: string
   dataKind: DataKind
   consultationConcern?: string | null
+  outcome?: string | null
+  validationState?: AirtableDecisionRecord['validation']['validationState']
 }): AirtableDecisionRecord {
   return {
     id: input.id,
@@ -102,6 +104,11 @@ function decisionRecord(input: {
       chosenDecision: 'synthetic decision',
       notChosen: 'synthetic not chosen',
       nextObservation: 'synthetic next observation',
+    },
+    validation: {
+      outcomeObserved: input.outcome ?? null,
+      validationState: input.validationState ?? 'UNVALIDATED',
+      validationNote: null,
     },
   }
 }
@@ -168,8 +175,24 @@ async function main() {
       notChosen: target.values.notChosen ?? null,
       nextObservation: target.values.nextObservation ?? null,
     },
+    validation: {
+      outcomeObserved: null,
+      validationState: 'UNVALIDATED',
+      validationNote: null,
+    },
   })
   assert.equal(projected.dataKind, 'UNKNOWN')
+  assert.equal(projected.outcome, null)
+  assert.equal(projected.validation, 'UNOBSERVED')
+
+  const projectedOutcome = projectAirtableDecisionToKnowledgeCase(decisionRecord({
+    id: 'rec12345678901234',
+    dataKind: 'REAL',
+    outcome: 'home handling improved',
+    validationState: 'CONFIRMED',
+  }))
+  assert.equal(projectedOutcome.outcome, 'home handling improved')
+  assert.equal(projectedOutcome.validation, 'SUPPORTED')
 
   assert.equal(shouldShowDecisionInHistory(decisionRecord({
     id: 'history_real',
