@@ -1,6 +1,11 @@
 import type { DecisionCoreFieldKey } from '@/lib/types/decision'
 import type { DataKind } from '@/lib/types/data-kind'
 import { normalizeDataKind } from '@/lib/types/data-kind'
+import {
+  normalizeDecisionValidationState,
+  type CompletedDecisionValidationState,
+  type DecisionValidationValues,
+} from '@/lib/types/decision-validation'
 
 export type AirtableDecisionCoreValues = Record<DecisionCoreFieldKey, string | null>
 
@@ -23,6 +28,7 @@ export type AirtableDecisionRecord = {
   status: string
   dataKind: DataKind
   values: AirtableDecisionCoreValues
+  validation: DecisionValidationValues
 }
 
 export type ListAirtableDecisionsResult = {
@@ -30,7 +36,25 @@ export type ListAirtableDecisionsResult = {
   error: 'missing_config' | 'request_failed' | null
 }
 
+export type GetAirtableDecisionResult = {
+  data: AirtableDecisionRecord | null
+  error: 'missing_config' | 'invalid_record_id' | 'not_found' | 'request_failed' | null
+}
+
+export type UpdateAirtableDecisionValidationInput = {
+  decisionId: string
+  outcomeObserved: string
+  validationState: CompletedDecisionValidationState
+  validationNote: string | null
+}
+
+export type UpdateAirtableDecisionValidationResult = {
+  ok: boolean
+  error: 'missing_config' | 'invalid_record_id' | 'request_failed' | null
+}
+
 const AIRTABLE_API_ORIGIN = 'https://api.airtable.com/v0'
+const AIRTABLE_RECORD_ID_PATTERN = /^rec[A-Za-z0-9]{14}$/
 
 const FIELD_ENV_BY_KEY: Record<DecisionCoreFieldKey, string> = {
   consultationConcern: 'AIRTABLE_DECISION_FIELD_CONSULTATION',
@@ -47,7 +71,11 @@ const DEFAULT_FIELD_BY_KEY: Record<DecisionCoreFieldKey, string> = {
   notChosen: 'あえてしなかったこと',
   nextObservation: '次回確認',
 }
+
 const DEFAULT_DATA_KIND_FIELD = 'データ区分'
+const DEFAULT_OUTCOME_FIELD = 'Outcome（次回来店結果）'
+const DEFAULT_VALIDATION_STATE_FIELD = 'Validation状態'
+const DEFAULT_VALIDATION_NOTE_FIELD = 'Validationメモ'
 
 function readEnv(name: string): string | null {
   const value = process.env[name]?.trim()
@@ -56,17 +84,13 @@ function readEnv(name: string): string | null {
 
 function readRequiredEnv(name: string): string {
   const value = readEnv(name)
-  if (!value) {
-    throw new Error(`${name} is required`)
-  }
+  if (!value) throw new Error(`${name} is required`)
   return value
 }
 
 function getDecisionTableRef(): string {
   const table = readEnv('AIRTABLE_DECISION_TABLE_ID') ?? readEnv('AIRTABLE_DECISION_TABLE_NAME')
-  if (!table) {
-    throw new Error('AIRTABLE_DECISION_TABLE_ID or AIRTABLE_DECISION_TABLE_NAME is required')
-  }
+  if (!table) throw new Error('AIRTABLE_DECISION_TABLE_ID or AIRTABLE_DECISION_TABLE_NAME is required')
   return encodeURIComponent(table)
 }
 
@@ -86,6 +110,18 @@ function getDataKindFieldName(): string {
   return readEnv('AIRTABLE_DECISION_FIELD_DATA_KIND') ?? DEFAULT_DATA_KIND_FIELD
 }
 
+function getOutcomeFieldName(): string {
+  return readEnv('AIRTABLE_DECISION_FIELD_OUTCOME') ?? DEFAULT_OUTCOME_FIELD
+}
+
+function getValidationStateFieldName(): string {
+  return readEnv('AIRTABLE_DECISION_FIELD_VALIDATION_STATE') ?? DEFAULT_VALIDATION_STATE_FIELD
+}
+
+function getValidationNoteFieldName(): string {
+  return readEnv('AIRTABLE_DECISION_FIELD_VALIDATION_NOTE') ?? DEFAULT_VALIDATION_NOTE_FIELD
+}
+
 function buildFields(input: CreateAirtableDecisionInput): Record<string, string> {
   const fields: Record<string, string> = {
     [getTitleFieldName()]: input.title,
@@ -94,9 +130,7 @@ function buildFields(input: CreateAirtableDecisionInput): Record<string, string>
   }
 
   Object.entries(input.values).forEach(([key, value]) => {
-    if (value) {
-      fields[getFieldName(key as DecisionCoreFieldKey)] = value
-    }
+    if (value) fields[getFieldName(key as DecisionCoreFieldKey)] = value
   })
 
   return fields
@@ -108,9 +142,7 @@ function readStringField(fields: Record<string, unknown>, fieldName: string): st
 }
 
 function mapRecord(record: { id?: unknown; fields?: unknown }): AirtableDecisionRecord | null {
-  if (typeof record.id !== 'string' || !record.fields || typeof record.fields !== 'object') {
-    return null
-  }
+  if (typeof record.id !== 'string' || !record.fields || typeof record.fields !== 'object') return null
 
   const fields = record.fields as Record<string, unknown>
   const values = {} as AirtableDecisionCoreValues
@@ -126,6 +158,11 @@ function mapRecord(record: { id?: unknown; fields?: unknown }): AirtableDecision
     status: readStringField(fields, getStatusFieldName()),
     dataKind: normalizeDataKind(readStringField(fields, getDataKindFieldName())),
     values,
+    validation: {
+      outcomeObserved: readStringField(fields, getOutcomeFieldName()) || null,
+      validationState: normalizeDecisionValidationState(readStringField(fields, getValidationStateFieldName())),
+      validationNote: readStringField(fields, getValidationNoteFieldName()) || null,
+    },
   }
 }
 
@@ -145,9 +182,7 @@ export async function createAirtableDecisionRecord(
   input: CreateAirtableDecisionInput,
 ): Promise<CreateAirtableDecisionResult> {
   const config = readAirtableConfig()
-  if (!config) {
-    return { ok: false, error: 'missing_config', recordId: null }
-  }
+  if (!config) return { ok: false, error: 'missing_config', recordId: null }
 
   try {
     const response = await fetch(`${AIRTABLE_API_ORIGIN}/${config.baseId}/${config.tableRef}`, {
@@ -156,42 +191,74 @@ export async function createAirtableDecisionRecord(
         Authorization: `Bearer ${config.token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        records: [{ fields: buildFields(input) }],
-        typecast: false,
-      }),
+      body: JSON.stringify({ records: [{ fields: buildFields(input) }], typecast: false }),
       cache: 'no-store',
     })
 
-    if (!response.ok) {
-      return { ok: false, error: 'request_failed', recordId: null }
-    }
+    if (!response.ok) return { ok: false, error: 'request_failed', recordId: null }
 
-    const body = await response.json().catch(() => null) as {
-      records?: Array<{ id?: unknown }>
-    } | null
-    if (!body?.records || body.records.length !== 1) {
-      return { ok: false, error: 'request_failed', recordId: null }
-    }
-
-    const recordId = body.records[0]?.id
-    if (typeof recordId !== 'string') {
-      return { ok: false, error: 'request_failed', recordId: null }
-    }
-
-    return { ok: true, error: null, recordId }
+    const body = await response.json().catch(() => null) as { records?: Array<{ id?: unknown }> } | null
+    const recordId = body?.records?.[0]?.id
+    return typeof recordId === 'string'
+      ? { ok: true, error: null, recordId }
+      : { ok: false, error: 'request_failed', recordId: null }
   } catch {
     return { ok: false, error: 'request_failed', recordId: null }
   }
 }
 
-export async function listAirtableDecisionRecords(
-  limit = 12,
-): Promise<ListAirtableDecisionsResult> {
+export async function getAirtableDecisionRecord(decisionId: string): Promise<GetAirtableDecisionResult> {
+  if (!AIRTABLE_RECORD_ID_PATTERN.test(decisionId)) return { data: null, error: 'invalid_record_id' }
   const config = readAirtableConfig()
-  if (!config) {
-    return { data: [], error: 'missing_config' }
+  if (!config) return { data: null, error: 'missing_config' }
+
+  try {
+    const response = await fetch(`${AIRTABLE_API_ORIGIN}/${config.baseId}/${config.tableRef}/${decisionId}`, {
+      headers: { Authorization: `Bearer ${config.token}` },
+      cache: 'no-store',
+    })
+    if (response.status === 404) return { data: null, error: 'not_found' }
+    if (!response.ok) return { data: null, error: 'request_failed' }
+    const body = await response.json().catch(() => null) as { id?: unknown; fields?: unknown } | null
+    const record = body ? mapRecord(body) : null
+    return record ? { data: record, error: null } : { data: null, error: 'request_failed' }
+  } catch {
+    return { data: null, error: 'request_failed' }
   }
+}
+
+export async function updateAirtableDecisionValidation(
+  input: UpdateAirtableDecisionValidationInput,
+): Promise<UpdateAirtableDecisionValidationResult> {
+  if (!AIRTABLE_RECORD_ID_PATTERN.test(input.decisionId)) return { ok: false, error: 'invalid_record_id' }
+  const config = readAirtableConfig()
+  if (!config) return { ok: false, error: 'missing_config' }
+
+  const fields: Record<string, string> = {
+    [getOutcomeFieldName()]: input.outcomeObserved,
+    [getValidationStateFieldName()]: input.validationState,
+  }
+  if (input.validationNote) fields[getValidationNoteFieldName()] = input.validationNote
+
+  try {
+    const response = await fetch(`${AIRTABLE_API_ORIGIN}/${config.baseId}/${config.tableRef}/${input.decisionId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ fields, typecast: false }),
+      cache: 'no-store',
+    })
+    return response.ok ? { ok: true, error: null } : { ok: false, error: 'request_failed' }
+  } catch {
+    return { ok: false, error: 'request_failed' }
+  }
+}
+
+export async function listAirtableDecisionRecords(limit = 12): Promise<ListAirtableDecisionsResult> {
+  const config = readAirtableConfig()
+  if (!config) return { data: [], error: 'missing_config' }
 
   try {
     const params = new URLSearchParams({
@@ -201,27 +268,14 @@ export async function listAirtableDecisionRecords(
     params.set('sort[0][field]', getTitleFieldName())
     params.set('sort[0][direction]', 'desc')
 
-    const response = await fetch(
-      `${AIRTABLE_API_ORIGIN}/${config.baseId}/${config.tableRef}?${params.toString()}`,
-      {
-        headers: {
-          Authorization: `Bearer ${config.token}`,
-        },
-        cache: 'no-store',
-      },
-    )
+    const response = await fetch(`${AIRTABLE_API_ORIGIN}/${config.baseId}/${config.tableRef}?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${config.token}` },
+      cache: 'no-store',
+    })
 
-    if (!response.ok) {
-      return { data: [], error: 'request_failed' }
-    }
-
-    const body = await response.json().catch(() => null) as {
-      records?: Array<{ id?: unknown; fields?: unknown }>
-    } | null
-
-    if (!body?.records) {
-      return { data: [], error: 'request_failed' }
-    }
+    if (!response.ok) return { data: [], error: 'request_failed' }
+    const body = await response.json().catch(() => null) as { records?: Array<{ id?: unknown; fields?: unknown }> } | null
+    if (!body?.records) return { data: [], error: 'request_failed' }
 
     return {
       data: body.records.map(mapRecord).filter((record): record is AirtableDecisionRecord => record !== null),
