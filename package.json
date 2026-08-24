@@ -5,10 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "test": "npm run test:decision-capture && npm run test:knowledge-candidate && npm run test:ai-governance",
+    "test": "npm run test:decision-capture && npm run test:knowledge-candidate && npm run test:ai-governance && npm run test:standard-return",
     "test:decision-capture": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-alias-loader.mjs scripts/decision-capture-ingress.test.ts",
     "test:knowledge-candidate": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-alias-loader.mjs scripts/knowledge-candidate.test.ts",
     "test:ai-governance": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/ai-governance.test.ts",
+    "test:standard-return": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/standard-return.test.ts",
     "start": "next start",
     "lint": "eslint"
   },
