@@ -2,34 +2,58 @@
 
 更新: 2026-08-25
 
-この文書は、AI会社 / IKEDA Personal OSで参照する部署・Value Team・AI社員・共通基盤の組織名称と役割を確認するための正本候補とする。
+この文書は、AI会社 / IKEDA Personal OSで参照する組織構造の正本候補とする。
 
-## 1. 旧来の正式部署
+組織は「会社っぽく見せること」ではなく、池田の実際の仕事をAIへ安全に委譲し、Human Decision Productivityを高めるために存在する。
 
-| 部署 | 主目的 | 現在の扱い |
+## 0. 組織設計原則
+
+- Agentは技術から作らず、実在する仕事から作る
+- 同じ役割を部署・Team・Agentで三重管理しない
+- Value Teamは固定組織ではなく、E2Eの仕事の流れ（Value Stream）として扱う
+- AI社員は実装上のCore Agentを正本とする
+- 横断QA・Evidence・Approval・履歴は社員ではなくShared Capabilityとする
+- 役割が薄い、使われない、重複する名称は増やさない
+- 新組織単位はOutcome、Human Gate、利用頻度を説明できる場合だけ追加する
+
+## 1. 最終組織構成（Lean AI Company）
+
+### Human Executive
+
+| 役割 | 責任 |
+|---|---|
+| 池田航一 / CEO | 現実観察、顧客との関係、価値判断、専門判断、ブランド・価格・重要経営判断、最終承認 |
+
+### AI Executive
+
+| AI | 役割 |
+|---|---|
+| ChatGPT / Chief of Staff | 池田入力の受付、Problem Framing支援、仕事分類、Core Agent選択、並列/逐次ルーティング、標準返却への圧縮、Human Gateへのhandoff |
+
+ChatGPT / Chief of StaffはCore Agent数に含めない。
+
+### 4 Core Agents（AI社員の正本）
+
+| Core Agent | 担当する実在仕事 | 主Outcome |
 |---|---|---|
-| CEO室 | 戦略・全体統括 | 重要判断の統合、全社優先順位、Human Decisionの集約 |
-| 130万円達成室 | 月間技術売上130万円の持続的達成 | Revenue Learning Teamと連携 |
-| ブランド戦略室 | 池田ブランド強化 | Content Intelligence Team / SEO・LLMO室と連携 |
-| サロンワーク研究室 | 施術・技術サポート | Customer Experience Teamと連携 |
-| 顧客体験研究室 | 顧客満足・再来・次回体験 | Customer Experience Teamと連携 |
-| 集客戦略室 | 集客・来店導線 | Content Intelligence Team / Growth Loopと連携 |
-| SEO・LLMO室 | 検索・AI検索最適化 | ホームページ正本・GBP・AI発見を担当 |
-| SNS戦略室 | SNS・発信支援 | Content Intelligence Teamの媒体実装を補助 |
+| Salon & Customer Intelligence | 顧客・来店・観察・Customer Truth・Next Observation整理 | 次回来店まで顧客理解が再利用できる |
+| Decision & Learning Intelligence | Decision / Not Chosen / Hypothesis / Outcome / Validation / Knowledge Candidate | 経験が検証可能な学びへ変わる |
+| Growth & Market Intelligence | 日報・売上・再来・次回予約・capacity・市場・検索・AI検索観察 | 次に検証する小さな成長仮説が明確になる |
+| Content & Product Intelligence | 一次情報の発信変換、OS摩擦検出、Engineering Candidate、Codex handoff | 発信またはOS改善へ必要なものだけ変換される |
 
-旧来部署は削除せず「既存役割資産」として保持する。主構造はValue Teamを優先する。
+この4 Core AgentsはAgent Registry v0.2の実装構造と一致させる。
 
-## 2. Value Team（主構造）
+## 2. Value Streams（旧Value Team）
 
-### Customer Experience Team
+Value Teamは「部署」や「AI社員」として数えず、複数Agentを束ねて一つの価値をE2Eで完結させる仕事の流れとして扱う。
 
-目的: 施術から次回来店までの顧客価値をE2Eでつなぐ。
+### Customer Experience Stream
 
-主な接続先:
-- サロンワーク研究室
-- 顧客体験研究室
-- Knowledge / Learning
-- Evidence Resolver
+目的: 相談 → 観察 → Decision → 施術 → Next Observation → 次回来店Outcomeまでをつなぐ。
+
+主Agent:
+- Salon & Customer Intelligence
+- Decision & Learning Intelligence
 
 Human Gate:
 - 施術方針
@@ -37,32 +61,27 @@ Human Gate:
 - 顧客意図が不明な判断
 - 重要な次回提案
 
-### Revenue Learning Team
+### Revenue Learning Stream
 
 目的: 9:00〜18:00と生活を守りながら、持続的に売上が上がる条件を小さな実験で発見する。
 
-主な接続先:
-- 130万円達成室
-- Growth Loop
-- Sales Ops AI
-- Knowledge / Learning
+主Agent:
+- Growth & Market Intelligence
+- Decision & Learning Intelligence（検証時）
 
 標準出力:
 - 次に検証する小さな仮説を最大1つ
 
-### Content Intelligence Team
+### Content Intelligence Stream
 
-目的: 一次情報から発信・公式情報までをE2Eでつなぐ。
+目的: 一次情報 → 論点 → 媒体変換 → QA → 公開候補 → 反応 → 再利用までをつなぐ。
 
-主な接続先:
-- ブランド戦略室
-- 集客戦略室
-- SEO・LLMO室
-- SNS戦略室
-- Content OS
-- Quality & Brand QA
+主Agent:
+- Content & Product Intelligence
+- Growth & Market Intelligence（需要・検索観察）
+- Decision & Learning Intelligence（一次情報・学び接続）
 
-標準媒体役割:
+媒体役割:
 - Threads = 気づき・問い・思考途中
 - Instagram = 視覚的証拠
 - note = 判断過程の深掘り
@@ -70,71 +89,37 @@ Human Gate:
 - ホームページ = 公式情報の正本
 - Substack = 美容師の経営・AI活用・検証過程
 
-### Personal OS Improvement Team
+### Personal OS Improvement Stream
 
-目的: OSの摩擦発見から改善・統合・削除までをE2Eで担う。
+目的: OS摩擦 → Problem Framing → Build Gate → 最小実装 → QA → 利用 → Outcome → 継続/修正/削除までをつなぐ。
 
-主な接続先:
-- CEO室
-- AI Company OS
-- Engineering Loop
-- Engineer / QA AI
-- Quality & Brand QA
-- Approval Policy
-- Run History
+主Agent:
+- Content & Product Intelligence
+- Chief of Staff / Orchestrator
 
 新機能はBuild Gateを通す。Agent数・機能数を成果KPIにしない。
 
-## 3. AI Company OS上位機能
+## 3. Shared Capabilities（社員ではない横断基盤）
 
-| 機能 | 役割 |
+| Capability | 役割 |
 |---|---|
-| AI Company OS | 全体のAI運用・統合 |
-| Content OS | コンテンツ企画・変換・品質・媒体接続 |
-| Engineering Loop | 実装・検証・修正・運用の循環 |
-| Knowledge / Learning | Decision / Outcome / Caseから再利用可能な学びを育てる |
-| Growth Loop | 顧客価値・収益・発見・再来の学習循環 |
+| Quality & Brand QA | unsupported fact、過剰一般化、ブランド逸脱、架空ケース等を監査 |
+| Approval Policy | AUTO / REVIEW / APPROVAL / STOP等のHuman Gateを制御 |
+| Evidence Resolver | Source of Truth、sourceRefs、UNKNOWN、欠落・古さを判定 |
+| Trigger / Scheduler | 許可済みの定期・条件実行 |
+| Run History | SUCCESS / PARTIAL / FAILED / SKIPPED等の実行履歴・監査 |
 
-## 4. 共通基盤
+Shared CapabilityはAI社員として人数カウントしない。
 
-| 基盤 | 役割 |
-|---|---|
-| Quality & Brand QA | 品質・ブランド整合・公開前確認 |
-| Approval Policy | Human approvalが必要な操作を制御 |
-| Evidence Resolver | Evidence / Source of Truth / UNKNOWNを判定 |
-| Trigger / Scheduler | 許可された定期・条件実行 |
-| Run History | 実行履歴・監査・振り返り |
+## 4. Product / Runtime Layers（組織ではない）
 
-共通基盤はValue Teamの上に立つ部署ではなく、横断的な安全・証拠・監査レイヤーとする。
+以下は部署・Team・社員ではなく、製品またはruntime機能として管理する。
 
-## 5. AI社員グループ
-
-| AI社員 | 主な役割 | 主な所属 / 利用先 |
-|---|---|---|
-| Chief of Staff AI | 全体圧縮・優先順位・handoff | CEO室 / 全Value Team |
-| Knowledge Curator AI | Case / Outcomeから学び候補を整理 | Knowledge / Learning |
-| Research Analyst AI | 外部情報・過去記録・比較・反証 | 全Value Team |
-| Content Editor AI | 媒体変換・文章編集・構成 | Content Intelligence Team |
-| Product Manager AI | Problem Framing / Value / Build Gate支援 | Personal OS Improvement Team |
-| Sales Ops AI | 売上・再来・次回予約・仮説整理 | Revenue Learning Team |
-| Support Concierge AI | 利用支援・問い合わせ整理 | AI Company OS |
-| Engineer / QA AI | 実装・テスト・独立検証 | Engineering Loop / Personal OS Improvement Team |
-| Finance/Admin AI | 管理・費用・事務支援 | CEO室 / 必要部署 |
-
-AI社員は独立部署ではなく、Value Teamが必要に応じて呼び出す職能リソースとして扱う。
-
-## 6. 補助的な職能別AI組織
-
-- リサーチ担当
-- 文章担当
-- SEO担当
-- 分析担当
-- 開発担当
-
-これらは主構造ではなく補助構造。新しい職能Agentを作る前に、既存AI社員またはValue Team内で代替できないか確認する。
-
-## 7. Personal OS内の確認済み機能領域
-
+- AI Company OS
+- Content OS
+- Engineering Loop
+- Knowledge / Learning
+- Growth Loop
 - customer growth
 - editorial work
 - AI operations
@@ -145,22 +130,120 @@ AI社員は独立部署ではなく、Value Teamが必要に応じて呼び出�
 - Decision OS v0.1
 - editorial interface v0.3
 
-これらは組織名称ではなく、製品 / 機能領域として管理する。
+組織図へ混在させない。
 
-## 8. 名称・構造の扱い
+## 5. 断捨離決定
 
-- 旧来部署 = 既存役割資産
-- Value Team = 現在の主構造
-- AI社員 = Value Teamが呼び出す職能リソース
-- 共通基盤 = 横断的な安全・Evidence・監査レイヤー
-- AI Company OS上位機能 = 製品 / 運用アーキテクチャ
-- Personal OS内機能領域 = UI / runtime / product capability
+### A. 旧来8部署 → 固定部署として廃止、Domain Labelへ降格
 
-同じ役割を複数の名称で持たない。役割が重複した場合は、統合・alias化・削除候補として監査する。
+対象:
+- CEO室
+- 130万円達成室
+- ブランド戦略室
+- サロンワーク研究室
+- 顧客体験研究室
+- 集客戦略室
+- SEO・LLMO室
+- SNS戦略室
 
-## 9. 全社handoff原則
+理由:
+- Value Stream / Core Agentと役割が重複する
+- 部署間handoffを増やし、AI会社の管理コストを上げる
+- 一人のHuman CEO＋AI会社では恒常的な部門サイロを持つ価値が低い
 
-Value Team間のhandoffは次の形式へ圧縮する。
+扱い:
+- 過去記録との互換性のため名称はLegacy Domain Labelとして参照可能
+- 新しい仕事のルーティング先には使わない
+- CEO室の機能は「池田 / CEO + ChatGPT / Chief of Staff」へ統合
+
+### B. 9 AI社員案 → 正式社員リストから廃止、4 Core Agentsへ統合
+
+廃止/統合対象:
+- Chief of Staff AI → ChatGPT / Chief of Staffへ一本化
+- Knowledge Curator AI → Decision & Learning Intelligenceへ統合
+- Research Analyst AI → 各Core Agentが必要時に使う横断Research capabilityとして扱う
+- Content Editor AI → Content & Product Intelligenceへ統合
+- Product Manager AI → Chief of Staff + Content & Product IntelligenceのProblem/Build Gate機能へ統合
+- Sales Ops AI → Growth & Market Intelligenceへ統合
+- Support Concierge AI → 現時点では独立社員不要。Chief of Staffが代替
+- Engineer / QA AI → EngineeringはContent & Product Intelligence、QAはShared Capabilityへ分離
+- Finance/Admin AI → 現時点では継続的な実在仕事が不足。正式社員化を保留
+
+### C. 補助的な5職能組織 → 廃止
+
+対象:
+- リサーチ担当
+- 文章担当
+- SEO担当
+- 分析担当
+- 開発担当
+
+理由:
+- Core Agent / Shared Capabilityの内部能力として表現できる
+- 職能単位のAgent乱立につながる
+
+必要時は一時的なsubagent / capabilityとして呼び出すが、恒久組織にはしない。
+
+### D. 4 Value Team → Value Streamへ改称
+
+理由:
+- Teamとして数えるとCore Agentとの二重組織になる
+- 本来の意図は「顧客価値をE2Eで完結する仕事の流れ」である
+
+固定メンバーを持つ部署ではなく、Chief of Staffが案件ごとにCore Agentを束ねるルーティング概念とする。
+
+## 6. 断捨離後の人数・構造
+
+### Before（名称上）
+- 旧来部署: 8
+- Value Team: 4
+- AI社員案: 9
+- AI Company OS上位機能: 5
+- 共通基盤: 5
+- 補助職能: 5
+
+合計36名称（機能・組織・社員が混在）
+
+### After（組織として数えるもの）
+- Human CEO: 1
+- AI Chief of Staff: 1
+- Core AI Employees: 4
+- Value Streams: 4（人数に数えない）
+- Shared Capabilities: 5（人数に数えない）
+- Product / Runtime Layers: 組織図から除外
+
+実質の会社構成は「1 Human CEO + 1 AI Chief of Staff + 4 Core Agents」。
+
+## 7. 新Agent Creation Gate
+
+新しいAI社員を追加する前に、以下を全て確認する。
+
+1. 実際に繰り返している仕事が存在する
+2. その仕事の目的・入力・判断・例外・終了条件を説明できる
+3. 既存4 Core Agentsで処理できない
+4. 一時subagent / capabilityでは足りない
+5. Human Decision Productivityが改善する見込みがある
+6. 追加後の管理・監査コストより価値が大きい
+7. 3〜4週間後に利用頻度とOutcomeを監査できる
+
+一つでも満たさない場合、新Agentは作らない。
+
+## 8. Agent / Capabilityの停止・統合基準
+
+以下に該当したらSTOP / MERGE / DELETE候補とする。
+
+- 3〜4週間ほぼ使われない
+- 他AgentとOutcomeが重複する
+- 人間が直接行う方が速い
+- 出力を毎回大幅修正している
+- Outcomeに接続していない
+- 管理・監査コストの方が大きい
+- 一次情報へ戻らない
+- Level 1〜2の単純作業しかしておらず、一時capabilityで代替できる
+
+## 9. 全社handoff
+
+Chief of Staff / Value Stream間のhandoffは次へ圧縮する。
 
 ```text
 今見るべき3点
@@ -171,16 +254,25 @@ Evidence / Source of Truth
 Outcome確認方法
 ```
 
-CEO室へ上げる情報も原則この形式を使う。
+## 10. 正本優先順位
 
-## 10. 更新ルール
+組織・Agent構成の確認順:
 
-部署・Value Team・AI社員・共通基盤が追加、改称、統合、廃止された場合はこのRegistryを更新する。
+1. runtimeのAgent Registry（実装されている4 Core Agents / Shared Capabilities）
+2. このOrganization Registry
+3. AI Company Operating Standard
+4. 過去の部署名・会話上の名称
 
-新名称を会話上だけで増やさず、正式運用へ採用する場合は以下を確認する。
+過去名称とruntimeが矛盾した場合、過去名称を新規の正式社員・部署へ昇格させず、まず統合可否を確認する。
+
+## 11. 更新ルール
+
+新名称を正式運用へ採用する場合は以下を確認する。
 
 1. 既存名称との重複がない
-2. E2Eの価値単位または明確な横断機能である
+2. 実在する仕事またはE2E Value Streamに対応する
 3. 所有するOutcomeが定義されている
 4. Human Gateが定義されている
 5. 3〜4週間後に利用・価値を監査できる
+
+目的は組織を大きくすることではなく、池田が見るべきもの・判断すべきものを減らしながら、現実からの学習速度を上げることである。
