@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "test": "npm run test:decision-capture && npm run test:knowledge-candidate",
+    "test": "npm run test:decision-capture && npm run test:knowledge-candidate && npm run test:ai-governance",
     "test:decision-capture": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-alias-loader.mjs scripts/decision-capture-ingress.test.ts",
     "test:knowledge-candidate": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-alias-loader.mjs scripts/knowledge-candidate.test.ts",
+    "test:ai-governance": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/ai-governance.test.ts",
     "start": "next start",
     "lint": "eslint"
   },
@@ -22,7 +23,7 @@
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react-dom": "^19.2.4",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
