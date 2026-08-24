@@ -1,6 +1,6 @@
 # 池田航一｜美容師OS 運用ルール
 
-## 更新：2026年8月19日
+## 更新：2026年8月24日
 
 ## 目的
 
@@ -28,9 +28,33 @@ Decision記録は原則3分以内。
 
 Customer TruthとProfessional Hypothesisを分離する。AIの推測を事実へ昇格させない。
 
+分からない情報は無理に埋めず `UNKNOWN` として残す。
+
 ## Knowledge
 
 単一Caseから確定しない。Decision、Outcome、類似Case、反証、成立条件・非成立条件を重ねてKnowledge Candidateを育てる。
+
+## Value Architecture
+
+現場で生まれた判断と結果を、顧客価値と知的資産の両方へ変換する。
+
+基本フロー：
+
+Customer Problem → Professional Decision → Outcome → Value Evidence → Knowledge → Content / Product / Price / Revenue
+
+AIで価値や価格を捏造しない。現場で生まれた価値をEvidenceとして蓄積し、AIで発見・比較・構造化・再利用する。
+
+## AI運用の最上位原則
+
+AIの目的は池田を業務から完全に外すことではない。
+
+池田にしかできない、現場観察、違和感の把握、顧客との関係、選択、最終判断へ時間を集中させるために、探索・比較・整理・変換・監査をAIへ移す。
+
+標準ループ：
+
+AIが大量に処理する → 池田には少量だけ返す → 必要なところだけ池田が判断する → 実行する → 現実の結果を次の一次情報へ戻す
+
+Human Intervention Point、AI停止条件、標準返却形式、AI生産性監査の詳細は `docs/AI_GOVERNANCE_V0.1.md` を正本とする。
 
 ## 130万円プロジェクト
 
