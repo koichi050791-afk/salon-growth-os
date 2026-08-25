@@ -2,9 +2,18 @@
 
 更新: 2026-08-25
 
-## 目的
+## 上位正本
 
-この文書は、IKEDA Personal OS / AI運用を「AI大企業」ではなく「池田航一の個人事務所」として運用するための最小構成を定義する。
+IKEDA Personal Officeは、`IKEDA HUMAN INTELLIGENCE OFFICE` の内部運用モデルである。
+
+会社の名称・理念・Purpose・Mission・社会的存在意義・経営方針は、以下を上位正本とする。
+
+- `docs/IKEDA_HUMAN_INTELLIGENCE_OFFICE_IDENTITY_V1.md`
+- `docs/IKEDA_OFFICE_MANAGEMENT_CHARTER_V1.md`
+
+この文書は、それらを日々のAI運用・Personal OSへ落とすための実務構造を定義する。
+
+## 目的
 
 最上位目的は次の2つだけとする。
 
@@ -238,4 +247,4 @@ Personal OSは最小の実務画面だけを残す。
 
 IKEDA Personal OSはAI会社を再現するシステムではない。
 
-「池田航一という一人の専門家が、少人数の個人事務所のように、必要な専門職をAIで必要な時だけ呼びながら、本業と知的資産形成へ集中するためのOS」とする。
+`IKEDA HUMAN INTELLIGENCE OFFICE` の経営理念「人にしかできない判断へ、人の時間を戻す。」を、日々の実務へ実装するための内部OSである。
