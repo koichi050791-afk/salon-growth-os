@@ -15,6 +15,8 @@ IKEDA OFFICEの恒常事業は2つだけとする。
 
 評価単位は「活動量」ではなく、顧客価値・収益・時間削減・知的資産・再利用性・社会への還元とする。
 
+第二収益エンジンおよび業界向けnoteの詳細戦略は `docs/IKEDA_OFFICE_SECOND_ENGINE_NOTE_STRATEGY_V1.md` を正本とする。
+
 ---
 
 ## 2. 事業1｜Salon & Customer
@@ -63,6 +65,10 @@ IKEDA OFFICEの現在の主収益エンジン。
 ### STATUS: CORE / BUILD FOCUSED
 
 将来の第二収益エンジン。
+
+最上位テーマ:
+
+**美容師の経験を、働く資産に変える。**
 
 ### 目的
 20年以上の現場経験・判断・失敗回避・学びを、労働時間に比例しない知的資産と収益へ変える。
@@ -216,6 +222,7 @@ STATUS: KEEP & GROW / SECOND ENGINE CORE
 原則:
 - 第二収益の中心出版面として扱う
 - 単発記事を乱造せず、商品群へ束ねられるテーマを優先
+- 最上位テーマは「美容師の経験を、働く資産に変える」
 
 ### Substack
 STATUS: MERGE / SECONDARY
@@ -258,33 +265,26 @@ STATUS: HOLD / REPURPOSE ONLY
 STATUS: KEEP
 
 削除せず、既存資産として維持する。
-販売実績・読者反応を次の商品設計のEvidenceとして扱う。
 
-### New paid note / paid series
-STATUS: BUILD SELECTIVELY
+### New paid note
+STATUS: SELECTIVE BUILD
 
-条件:
-- 無料記事や会話で具体的な需要が見える
-- 読者1人を明確に定義できる
-- 無料情報では解決しにくい問題がある
-- 池田の一次経験が価値の中心にある
+無料記事や既存読者反応から、具体的な「やり方」「テンプレ」「導入方法」需要が確認されたテーマだけ作る。
 
-### Templates / checklists / practical guides
-STATUS: EXPERIMENT
+### Template / Starter Kit
+STATUS: EARN THE RIGHT
 
-候補:
-- 美容師の判断記録
-- AI活用の実務設計
-- 個人美容師の知的資産化
-- 発信を現場から作る仕組み
+有料noteで購入需要が確認された部分だけテンプレート化する。
 
-単独で先に作らず、有料記事から需要が確認されたものだけ商品化する。
+### Playbook / Structured Product
+STATUS: HOLD UNTIL VALIDATED
 
-### Course / community / consulting
-STATUS: HOLD
+複数人が個別対応なしで使えた資産だけPlaybook化する。
 
-現在は作らない。
-購入者・読者から繰り返し同じ深い支援ニーズが観測された場合のみ再検討する。
+### Recurring / Software / License
+STATUS: LAST
+
+反復利用が実証されたものだけ継続課金やソフトウェア化を検討する。
 
 ---
 
@@ -293,197 +293,40 @@ STATUS: HOLD
 ### ChatGPT
 STATUS: KEEP / PRIMARY AI INTERFACE
 
-会社のAI入口。
-新しい仕事は原則ChatGPTで処理し、専用GPT / Skill / Agentが本当に必要か後から判断する。
-
 ### Decision Capture GPT
-STATUS: KEEP
+STATUS: KEEP / SINGLE-PURPOSE
 
-理由:
-- 単一目的
-- 現場入力を短縮する
-- REAL一次情報へ直結する
-
-### Editorial / Content GPT
-STATUS: STOP / MERGE INTO CHATGPT
-
-通常ChatGPTで代替可能。
-独立GPTとしての維持価値が弱い。
-
-### Skills
-STATUS: ZERO-BASELINE
-
-新規Skillは原則作らない。
-3〜4週間、同じ手順が繰り返され、Skill化により明確に説明・操作時間が減る場合のみ追加する。
+### Editorial GPT
+STATUS: MERGE INTO CHATGPT
 
 ### Personal OS
-STATUS: KEEP / MINIMAL INFRASTRUCTURE
-
-役割:
-- Decision Capture
-- Decision history
-- Next Observation / Outcome
-- 必要な顧客 / 売上観察
-
-原則:
-- 事業化しない
-- Dashboardを増やさない
-- AI Companyを再現しない
+STATUS: KEEP / MINIMAL
 
 ### GitHub / Codex
-STATUS: KEEP / ON-DEMAND ENGINEERING
-
-役割:
-- 実在する反復作業・不具合の修正
-- 必要な小さな実装
-
-原則:
-- 開発自体を仕事にしない
-- Issue / PR数を成果にしない
+STATUS: ON-DEMAND ENGINEERING
 
 ### Airtable
-STATUS: KEEP / OPERATIONAL DATA
+STATUS: KEEP / PRIMARY RELATIONAL DATA
 
-役割:
-- Customer / Visit / Decision等の関係性
-
-新しいテーブルは実在する運用ギャップが証明されるまで増やさない。
-
-### Notion / Google Drive
-STATUS: KEEP / REDUCE
-
-役割:
-- 正本資料・知的資産の保管
-
-旧事業推進・旧AI Company資料は運用から外し、現行正本と混在させない。
-
-### Canva
-STATUS: KEEP / ON-DEMAND CREATIVE TOOL
-
-必要な画像・資料制作時だけ使用する。
-常設制作Workflowを増やさない。
+### Notion / Drive
+STATUS: KEEP ONLY WHERE CANONICAL
 
 ### Intelligence Radar
 STATUS: ON-DEMAND
 
-毎日のニュース収集事業にしない。
-判断・記事・開発に外部情報が必要な時だけ起動する。
-
 ### Automation
 STATUS: MINIMAL
 
-常時稼働はMorning Secretary Briefを基本上限とする。
-新しいAutomationは、繰り返し作業を明確に減らす場合のみ追加する。
+常設自動化を増やさない。
 
 ---
 
-## 7. Stop / Archive Portfolio
+## 7. Portfolio rule
 
-### 旧事業推進業務
-STATUS: STOP / ARCHIVE
+新しい恒久項目を追加する時は、経営憲章の経営判断フィルターとOne In, One Outを適用する。
 
-対象:
-- 全店統括
-- 他店舗HPB改善
-- 他店舗Google Maps施策
-- 全社DX推進
-- 店舗別ブランド戦略
-- 旧特命プロジェクト
+「作れる」「流行っている」「AIで自動化できる」は採用理由にならない。
 
-現在のIKEDA OFFICEの通常業務には含めない。
-会社から明示的に新しい正式依頼が来た場合のみ、別案件として判断する。
+IKEDA OFFICEは、媒体数・商品数・AI数を増やす会社ではない。
 
-### AI Company大企業型構想
-STATUS: STOP
-
-対象:
-- 多数Agent
-- 部署別AI社員
-- Agent Registry
-- Work Graph
-- Approval Queue専用UI
-- AI Company Health
-- autonomous patrol
-- 部署別Dashboard
-- AI会議体
-
-得られた原則のみ経営憲章へ統合し、仕組み自体は追わない。
-
-### My Hair OS / customer SaaS
-STATUS: HOLD
-
-顧客が繰り返し困っている具体的問題が証明され、既存手段で解決できない場合のみ再開する。
-Lovable等で作れること自体を再開理由にしない。
-
----
-
-## 8. 2026年後半の集中対象
-
-### Priority 1
-Salon & Customerの安定化
-- 顧客体験
-- Decision記録
-- Next Observation
-- 再来
-- 次回予約
-- 紹介
-- 月130万円への持続的な構造
-
-### Priority 2
-Second Engineの需要検証
-- 無料記事
-- 業界向けnote
-- 新しい有料記事
-- 読者反応
-- 購入理由 / 非購入理由
-
-### Priority 3
-REALな現場経験の資産化率を高める
-
-新しいテーマを外から探すより、現場で生まれた一つの経験を複数用途へ使う。
-
-### Priority 4
-不要な仕組みを増やさない
-
-Personal OSやAIはPriority 1〜3を支える必要が出た時だけ更新する。
-
----
-
-## 9. 経営資源配分の目安
-
-池田本人の追加時間を使う場合の優先順位は以下とする。
-
-1. 顧客・サロンワーク
-2. 家族・生活を守るための余白
-3. 第二収益につながる知的資産
-4. 発信
-5. システム改善
-6. 外部情報収集
-
-AIが代替できる4〜6は原則AIへ渡す。
-
----
-
-## 10. ポートフォリオ判断ルール
-
-毎月または大きな追加提案時に各項目を次で判定する。
-
-- KEEP: 現在価値があり、維持コストが低い
-- GROW: Outcomeが見えており、追加投資価値がある
-- MERGE: 他の活動と統合できる
-- HOLD: 将来性はあるが今やる根拠が弱い
-- STOP: 現在の2事業に不要
-
-「過去に時間を使ったから」はKEEP理由にしない。
-「将来使うかもしれない」はHOLD理由としても弱い。
-再開には新しいEvidenceを必要とする。
-
-## 結論
-
-IKEDA OFFICEは多数の事業・媒体・AIプロジェクトを持つ会社ではない。
-
-現場で価値を生み、その経験を資産に変える。
-
-**Salon & Customer → Intellectual Asset & Second Engine**
-
-この一本の循環を、必要最小限のDistributionとAI Infrastructureで支える会社とする。
+**本業の顧客価値と、働く知的資産の総量を増やす会社である。**
