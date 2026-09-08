@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/contexts/AuthContext'
 
 const NAV_ITEMS = [
   { href: '/', icon: '⌂', label: 'ホーム' },
+  { href: '/company-os', icon: '▦', label: 'Company' },
   { href: '/decision-input', icon: '＋', label: '記録' },
   { href: '/decisions', icon: '◎', label: 'Decision' },
   { href: '/project', icon: '↗', label: '130万' },
@@ -26,14 +27,14 @@ export default function PersonalNavigation() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--line)] bg-[var(--paper-soft)]/95 backdrop-blur-md">
-      <div className="mx-auto flex max-w-lg items-stretch px-2 pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto flex max-w-2xl items-stretch px-2 pb-[env(safe-area-inset-bottom)]">
         {NAV_ITEMS.map((item) => {
           const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex min-h-[64px] flex-1 flex-col items-center justify-center gap-1 rounded-sm text-[11px] transition ${
+              className={`flex min-h-[64px] flex-1 flex-col items-center justify-center gap-1 rounded-sm text-[10px] transition ${
                 active ? 'text-[var(--ink)]' : 'text-[var(--muted)]'
               }`}
               aria-current={active ? 'page' : undefined}
@@ -52,7 +53,7 @@ export default function PersonalNavigation() {
         <button
           type="button"
           onClick={handleSignOut}
-          className="flex min-h-[64px] flex-1 flex-col items-center justify-center gap-1 rounded-sm text-[11px] text-[var(--muted)] transition active:text-[var(--ink)]"
+          className="flex min-h-[64px] flex-1 flex-col items-center justify-center gap-1 rounded-sm text-[10px] text-[var(--muted)] transition active:text-[var(--ink)]"
         >
           <span className="text-lg leading-none">↪</span>
           <span>ログアウト</span>
