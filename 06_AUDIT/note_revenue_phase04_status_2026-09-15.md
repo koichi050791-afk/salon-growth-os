@@ -70,6 +70,29 @@ Workブラウザ接続不能のため販売件数、売上、購入発生、複�
 9. ただし将来商品候補の一次情報は蓄積する
 10. 制作時間も記録し、売上÷運用時間で評価する
 
+## note直接操作なしで作成済みの販売資産
+
+- `06_AUDIT/note_revenue_phase04_buyer_map_2026-09-15.md`
+  - 100円・500円・1,500円それぞれの購入直前の状態、買う可能性が高い人、買わない方がいい人、次商品との関係を整理
+- `06_AUDIT/note_revenue_phase04_execution_queue_2026-09-15.md`
+  - P500 / P1500 / NO_PRODUCT / P100 / 30日結果記事の実行順を固定
+- `06_AUDIT/note_phase04_draft_p500_2026-09-15.md`
+  - P500接続の無料記事完成原稿
+- `06_AUDIT/note_phase04_draft_p1500_2026-09-15.md`
+  - P1500接続の無料記事完成原稿
+- `06_AUDIT/note_phase04_draft_noproduct_2026-09-15.md`
+  - 販売しない一次情報記事の完成原稿
+- `06_AUDIT/note_phase04_threads_funnel_2026-09-15.md`
+  - Threads本文3行＋コメント①＋コメント②の導線原稿
+- `06_AUDIT/note_phase04_future_product_blueprint_2026-09-15.md`
+  - 2,980〜4,980円候補と9,800円以上候補の仮設計・昇格条件
+- `06_AUDIT/note_phase04_30day_gate_2026-09-15.md`
+  - 2026-10-15の判定ルール
+- `06_AUDIT/note_work_browser_recovery_runbook_2026-09-15.md`
+  - Workブラウザ復旧時の修復・売上取得手順
+
+これにより、Workブラウザ復旧後は戦略・原稿設計からやり直さず、修復・公開・計測へ直接進める。
+
 ## 現行3商品
 
 ### P100
