@@ -1,0 +1,6 @@
+date,stage,asset,url,status,observed_value,notes
+2026-09-15,認知,Threads投稿,https://www.threads.com/@sanda_layercut_ikeda/post/DdTwdQdDoBC,PUBLISHED,1投稿,本文3行＋コメント2件。無料noteへのリンクのみ
+2026-09-15,検討,無料note,https://note.com/ikeda_dx/n/nc0825c29ad31?app_launch=false,PUBLISHED,公開確認済み,無料記事。100円商品CTAは1つ
+2026-09-15,検討,100円CTA,https://note.com/ikeda_dx/n/n32daf2fbb2a2,VERIFIED,1リンク,無料note公開ページでリンクとタイトルを確認
+2026-09-15,行動,100円商品販売,https://note.com/ikeda_dx/n/n32daf2fbb2a2,BASELINE,0円,総売上0円。販売件数は管理画面で再確認予定
+2026-09-15,認知,X投稿,https://x.com/koichi_salon_ai,BLOCKED_LOGIN,NOT_AVAILABLE,X側でログインを一時的に制限されたため投稿未実施
