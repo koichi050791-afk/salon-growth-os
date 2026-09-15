@@ -1,5 +1,5 @@
 baseline_date,product,price_jpy,url,sales_count,gross_sales_jpy,purchase_observed,multi_product_buyers,average_purchase_value_jpy,data_source,captured_at,status,notes
-2026-09-15,P100,100,https://note.com/ikeda_dx/n/n32daf2fbb2a2,0,0,NO,0,NOT_APPLICABLE,note売上管理画面,2026-09-15T20:36+09:00,OBSERVED,"池田航一がnote売上画面で売上0を確認。個人情報は保存していない"
-2026-09-15,P500,500,https://note.com/ikeda_dx/n/n2181c7875fa1,0,0,NO,0,NOT_APPLICABLE,note売上管理画面,2026-09-15T20:36+09:00,OBSERVED,"池田航一がnote売上画面で売上0を確認。個人情報は保存していない"
-2026-09-15,P1500,1500,https://note.com/ikeda_dx/n/nb4e5373b26b4,0,0,NO,0,NOT_APPLICABLE,note売上管理画面,2026-09-15T20:36+09:00,OBSERVED,"池田航一がnote売上画面で売上0を確認。個人情報は保存していない"
-2026-09-15,TOTAL,NOT_APPLICABLE,NOT_APPLICABLE,0,0,NO,0,NOT_APPLICABLE,note売上管理画面,2026-09-15T20:36+09:00,OBSERVED,"初期3商品の販売基準値。現時点では購入0件・売上0円"
+2026-09-15,P100,100,https://note.com/ikeda_dx/n/n32daf2fbb2a2,NOT_CONFIRMED,0,NOT_CONFIRMED,NOT_CONFIRMED,NOT_APPLICABLE,note売上管理画面,2026-09-15T20:36+09:00,DERIVED_FROM_TOTAL_ZERO,"池田航一が売上0円を確認。商品別販売件数は未確認のため推測しない"
+2026-09-15,P500,500,https://note.com/ikeda_dx/n/n2181c7875fa1,NOT_CONFIRMED,0,NOT_CONFIRMED,NOT_CONFIRMED,NOT_APPLICABLE,note売上管理画面,2026-09-15T20:36+09:00,DERIVED_FROM_TOTAL_ZERO,"池田航一が売上0円を確認。商品別販売件数は未確認のため推測しない"
+2026-09-15,P1500,1500,https://note.com/ikeda_dx/n/nb4e5373b26b4,NOT_CONFIRMED,0,NOT_CONFIRMED,NOT_CONFIRMED,NOT_APPLICABLE,note売上管理画面,2026-09-15T20:36+09:00,DERIVED_FROM_TOTAL_ZERO,"池田航一が売上0円を確認。商品別販売件数は未確認のため推測しない"
+2026-09-15,TOTAL,NOT_APPLICABLE,NOT_APPLICABLE,NOT_CONFIRMED,0,NOT_CONFIRMED,NOT_CONFIRMED,NOT_APPLICABLE,note売上管理画面,2026-09-15T20:36+09:00,HUMAN_CONFIRMED,"2026-09-15時点で池田航一が売上0円を確認。購入者個人情報は保存していない"
