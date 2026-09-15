@@ -6,15 +6,16 @@
 
 - 新規無料noteを公開済み。
 - 無料noteから100円商品へのCTAは1つだけで、公開ページで正常表示を確認済み。
-- Threadsの業界向けアカウント（@sanda_layercut_ikeda）で、本文3行＋コメント2件を公開済み。
-- Threadsから無料noteへのリンクを確認済み。
-- X（@koichi_salon_ai）は、ログイン時に「ログインを一時的に制限しました」と表示されたため投稿未実施。
+- 無料noteへの認知導線はX（@koichi_salon_ai）を主入口として固定する。
+- Threadsの業界向けアカウント（@sanda_layercut_ikeda）の既存投稿は削除せず、補助・記録として維持する。本番の主入口にはしない。
+- X（@koichi_salon_ai）は、ログイン時に「ログインを一時的に制限しました」と表示されたため、主入口としての投稿は未実施。解除後に公開する。
 - 500円・1,500円商品は待機。新商品は作成していない。
 
 ## URL
 
 無料note：https://note.com/ikeda_dx/n/nc0825c29ad31?app_launch=false  
-Threads：https://www.threads.com/@sanda_layercut_ikeda/post/DdTwdQdDoBC  
+X主入口：https://x.com/koichi_salon_ai  
+Threads（補助・既存）：https://www.threads.com/@sanda_layercut_ikeda/post/DdTwdQdDoBC  
 100円商品：https://note.com/ikeda_dx/n/n32daf2fbb2a2
 
 ## 100円販売
@@ -31,4 +32,4 @@ Threads：https://www.threads.com/@sanda_layercut_ikeda/post/DdTwdQdDoBC
 
 ## 未解決
 
-Xのログイン制限解除後の投稿、note売上管理画面からの販売件数確認。ログイン情報や購入者個人情報は保存しない。
+Xのログイン制限解除後の主入口投稿、note売上管理画面からの販売件数確認。ログイン情報や購入者個人情報は保存しない。
