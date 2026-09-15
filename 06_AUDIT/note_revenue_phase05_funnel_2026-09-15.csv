@@ -1,6 +1,6 @@
 date,stage,asset,url,status,observed_value,notes
-2026-09-15,認知,Threads投稿（補助・既存）,https://www.threads.com/@sanda_layercut_ikeda/post/DdTwdQdDoBC,AUXILIARY,1投稿,本番の主入口からは外し、公開済み投稿は記録として維持。無料noteへのリンクあり
+2026-09-15,認知,Threads投稿,https://www.threads.com/@sanda_layercut_ikeda/post/DdTwdQdDoBC,ACTIVE,1投稿,Phase05の現在利用可能な認知入口。無料noteへのリンクあり
 2026-09-15,検討,無料note,https://note.com/ikeda_dx/n/nc0825c29ad31?app_launch=false,PUBLISHED,公開確認済み,無料記事。100円商品CTAは1つ
 2026-09-15,検討,100円CTA,https://note.com/ikeda_dx/n/n32daf2fbb2a2,VERIFIED,1リンク,無料note公開ページでリンクとタイトルを確認
-2026-09-15,行動,100円商品販売,https://note.com/ikeda_dx/n/n32daf2fbb2a2,BASELINE,0円,総売上0円。販売件数は管理画面で再確認予定
-2026-09-15,認知,X投稿（主入口）,https://x.com/koichi_salon_ai,PRIMARY_PENDING_LOGIN,NOT_AVAILABLE,無料noteへの認知導線はXに固定。X側のログイン一時制限解除後に投稿する。プロフィールURLであり投稿URLは未取得
+2026-09-15,行動,100円商品販売,https://note.com/ikeda_dx/n/n32daf2fbb2a2,OBSERVING,0円,2026-09-15共有済み総売上基準値。商品別販売件数は確認できるまで推測しない
+2026-09-15,認知,X投稿（追加経路候補）,https://x.com/koichi_salon_ai,PENDING_LOGIN,NOT_AVAILABLE,ログイン一時制限中。解除後に追加するがPhase05の進行条件にはしない
