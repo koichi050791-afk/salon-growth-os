@@ -1,14 +1,13 @@
-﻿priority,article_id,status,before,after,public_verification,dashboard_metrics,notes
-P1,n5ffb8e639541,PENDING,old LINE hX5uJxc and age-anxiety related anchor,current LINE rG3y2px and concern-centered anchor,NOT_RUN,dashboard unavailable,Editor opened; no publish action completed in this run
-P1,n65308cfb33d5,PENDING,no confirmed reciprocal recovery link,add clean reciprocal link to nc618049c3261,NOT_RUN,dashboard unavailable,Editor/public verification pending
-P1,nc618049c3261,PENDING,no confirmed reciprocal cause link; internal UTM review,add clean cause link and remove internal UTM,NOT_RUN,dashboard unavailable,Editor/public verification pending
-P1,n4e9335e91aff,PENDING,ambiguous consultation anchor,自然な相談アンカー,NOT_RUN,dashboard unavailable,Editor/public verification pending
-P1,n857bdffbf113,PENDING,old LINE hX5uJxc,current LINE rG3y2px,NOT_RUN,dashboard unavailable,Editor/public verification pending
-P1,n7abf88d82b87,PENDING,old LINE hX5uJxc,current LINE rG3y2px,NOT_RUN,dashboard unavailable,Editor/public verification pending
-P1,nff5536b5d028,PENDING,old LINE hX5uJxc,current LINE rG3y2px,NOT_RUN,dashboard unavailable,Editor/public verification pending
-P1,nf2e9b36aa277,PENDING,old LINE hX5uJxc,current LINE rG3y2px,NOT_RUN,dashboard unavailable,Editor/public verification pending
-P1,nacbe18cfbbc2,PENDING,old LINE hX5uJxc,current LINE rG3y2px,NOT_RUN,dashboard unavailable,Editor/public verification pending
-P1,na91fee9fb319,PENDING,old LINE hX5uJxc,current LINE rG3y2px,NOT_RUN,dashboard unavailable,Editor/public verification pending
-P1,n282cb4929242,PENDING,old LINE hX5uJxc,current LINE rG3y2px,NOT_RUN,dashboard unavailable,Editor/public verification pending
-P1,n5c2fec4b2172,PENDING,old LINE hX5uJxc,current LINE rG3y2px,NOT_RUN,dashboard unavailable,Editor/public verification pending
-P2,nc52beb9469d1,HUMAN_REVIEW,search exposure with no action path,select one natural verified theme CTA,NOT_RUN,dashboard unavailable,Do not add unconditional reservation CTA without evidence
+﻿article_id,change_type,before,after,public_verification,old_line_remaining,internal_link_verified,utm_verified,work_status,verified_at
+n5ffb8e639541,LINE_AND_ANCHOR,old LINE and age-anxiety anchor,current LINE and concern-centered anchor,BLOCKED,UNKNOWN,UNKNOWN,UNKNOWN,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
+n857bdffbf113,OLD_LINE,hX5uJxc,rG3y2px,BLOCKED,UNKNOWN,NA,NA,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
+n7abf88d82b87,OLD_LINE,hX5uJxc,rG3y2px,BLOCKED,UNKNOWN,NA,NA,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
+nff5536b5d028,OLD_LINE,hX5uJxc,rG3y2px,BLOCKED,UNKNOWN,NA,NA,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
+nf2e9b36aa277,OLD_LINE,hX5uJxc,rG3y2px,BLOCKED,UNKNOWN,NA,NA,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
+nacbe18cfbbc2,OLD_LINE,hX5uJxc,rG3y2px,BLOCKED,UNKNOWN,NA,NA,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
+na91fee9fb319,OLD_LINE,hX5uJxc,rG3y2px,BLOCKED,UNKNOWN,NA,NA,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
+n282cb4929242,OLD_LINE,hX5uJxc,rG3y2px,BLOCKED,UNKNOWN,NA,NA,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
+n5c2fec4b2172,OLD_LINE,hX5uJxc,rG3y2px,BLOCKED,UNKNOWN,NA,NA,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
+n65308cfb33d5,RECIPROCAL_LINK,missing reciprocal link,clean link to nc618049c3261,BLOCKED,UNKNOWN,UNKNOWN,UNKNOWN,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
+nc618049c3261,RECIPROCAL_LINK_AND_UTM,missing reciprocal link and internal UTM,clean link to n65308cfb33d5,BLOCKED,UNKNOWN,UNKNOWN,UNKNOWN,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
+n4e9335e91aff,ANCHOR_TEXT,ambiguous ということです。,髪や頭皮の悩みを整理して相談する,BLOCKED,UNKNOWN,UNKNOWN,UNKNOWN,BLOCKED_EDITOR_INTERACTION,2026-09-16T15:30:00+09:00
