@@ -1,0 +1,250 @@
+{
+  "schema_version": "2.0",
+  "as_of_jst": "2026-09-16",
+  "creator": "koichi_ikeda",
+  "inventory_policy": {
+    "content_source_of_truth": "public_note_api",
+    "phase01_reported_count": 72,
+    "phase02_live_count_expected_at_audit": 74,
+    "count_drift_policy": "Do not fail merely because daily publishing changed the count. Record the live count and compare unique IDs.",
+    "unknown_policy": "UNKNOWN is not zero, false, or no. Do not infer visits, reactions, decisions, or causality."
+  },
+  "thresholds": {
+    "near_title": 0.72,
+    "intent_overlap": 0.66,
+    "hub_share_review": 0.35
+  },
+  "utm": {
+    "source": "note",
+    "medium": "article",
+    "campaigns": {
+      "CEP1_CHANGE_WITHOUT_FAILURE": "change_without_failure",
+      "CEP2_GRAY_HAIR_NOT_DARK": "gray_hair_not_dark",
+      "CEP3_FRIZZ_DECISION": "frizz_decision",
+      "CEP4_SHORT_HAIR_ANXIETY": "short_hair_anxiety",
+      "CEP5_LIGHT_NOT_THIN": "light_not_thin",
+      "CEP6_COLOR_DECISION_CANDIDATE": "color_decision",
+      "CEP7_CARE_SCALP_CANDIDATE": "care_scalp",
+      "CROSS_THEME_BRIDGE": "preconsult_bridge",
+      "OTHER": "other_review_required"
+    },
+    "internal_note_links": "Remove tracking parameters. note-to-note links must be clean canonical URLs.",
+    "compatibility": "Do not rewrite historical campaign values automatically. Flag non-standard values for human review."
+  },
+  "brand_patterns": {
+    "AGE_ANXIETY": [
+      "マイナス\\s*[0-9０-９]+\\s*歳",
+      "若返",
+      "若見え",
+      "老け(?:て)?見え"
+    ],
+    "OVERCLAIM": [
+      "絶対",
+      "必ず",
+      "誰でも",
+      "一回で改善"
+    ],
+    "MEDICAL_ASSERTION_CANDIDATE": [
+      "治る(?:と|です|ます)",
+      "治療(?:できます|します)",
+      "診断(?:できます|します)"
+    ],
+    "CUSTOMER_PSYCHOLOGY_ASSERTION_CANDIDATE": [
+      "お客様は必ず",
+      "女性はみんな"
+    ]
+  },
+  "old_line_ids": [
+    "hX5uJxc"
+  ],
+  "article_overrides": {
+    "n7ca7c0b0b3be": {
+      "primary_theme": "CEP1_CHANGE_WITHOUT_FAILURE",
+      "primary_role": "B_JUDGMENT",
+      "search_intent": "カウンセリングの長さではなく確認事項と判断の整理方法を知る"
+    },
+    "n34713b0fb6e9": {
+      "primary_theme": "CROSS_THEME_BRIDGE",
+      "primary_role": "D_BRIDGE",
+      "search_intent": "予約メニューが決まらない状態から来店前相談へ進む"
+    },
+    "n0568e0cfeddc": {
+      "primary_theme": "CEP7_CARE_SCALP_CANDIDATE",
+      "primary_role": "B_JUDGMENT",
+      "search_intent": "頭皮の乾燥とべたつきからシャンプー選択基準を整理する"
+    },
+    "neb06cc9beb25": {
+      "primary_theme": "CEP6_COLOR_DECISION_CANDIDATE",
+      "primary_role": "B_JUDGMENT",
+      "search_intent": "ブリーチなしの透明感カラーで色より先に確認する条件を知る"
+    },
+    "nc618049c3261": {
+      "search_intent": "すでに軽くしすぎて広がる状態からこれ以上減らさず整える"
+    },
+    "n65308cfb33d5": {
+      "search_intent": "軽くした後になぜ髪が広がるのか原因を理解する"
+    }
+  },
+  "search_exposure": {
+    "n58cc043f5fa4": "CONFIRMED",
+    "nff5536b5d028": "CONFIRMED",
+    "n874020106a81": "CONFIRMED",
+    "na5434691367f": "CONFIRMED",
+    "nec839cc36cac": "CONFIRMED",
+    "n4be16ad0595a": "CONFIRMED",
+    "n47ad7c3d95fe": "CONFIRMED",
+    "nb6a456406182": "CONFIRMED",
+    "nc52beb9469d1": "CONFIRMED",
+    "n65308cfb33d5": "CONFIRMED",
+    "nc618049c3261": "PARTIAL_STALE_TITLE_CACHE",
+    "nb789bf9f1294": "CONFIRMED",
+    "nad0642382885": "CONFIRMED",
+    "nacbe18cfbbc2": "CONFIRMED"
+  },
+  "cannibal_review_overrides": {
+    "n65308cfb33d5|nc618049c3261": "KEEP_DISTINCT_CAUSE_VS_RECOVERY"
+  },
+  "theme_paths": [
+    {
+      "theme": "CEP1_CHANGE_WITHOUT_FAILURE",
+      "entry": "n2e003f966836",
+      "judgment": "n69986ccf2398",
+      "case": "UNKNOWN",
+      "bridge": "n34713b0fb6e9"
+    },
+    {
+      "theme": "CEP2_GRAY_HAIR_NOT_DARK",
+      "entry": "n341eb4c05451",
+      "judgment": "n43ae09beab1b",
+      "case": "UNKNOWN",
+      "bridge": "n34713b0fb6e9"
+    },
+    {
+      "theme": "CEP3_FRIZZ_DECISION",
+      "entry": "n775b67a5339c",
+      "judgment": "n47ad7c3d95fe",
+      "case": "n670a62197b88",
+      "bridge": "n34713b0fb6e9"
+    },
+    {
+      "theme": "CEP4_SHORT_HAIR_ANXIETY",
+      "entry": "nc947fab7f07e",
+      "judgment": "nc947fab7f07e",
+      "case": "UNKNOWN",
+      "bridge": "n34713b0fb6e9"
+    },
+    {
+      "theme": "CEP5_LIGHT_NOT_THIN",
+      "entry": "n74441a2a58a7",
+      "judgment": "n4a9b55a64e75",
+      "case": "n670a62197b88",
+      "bridge": "n34713b0fb6e9"
+    }
+  ],
+  "theme_gap_matrix": [
+    {
+      "theme": "CEP1_CHANGE_WITHOUT_FAILURE",
+      "search_before": "n2e003f966836",
+      "consideration": "n69986ccf2398",
+      "failure_anxiety": "ne967d43b585d",
+      "method_comparison": "n74239930a96d",
+      "actual_judgment": "n6c2f0da8b713",
+      "post_treatment_change": "UNKNOWN",
+      "next_consultation": "n34713b0fb6e9"
+    },
+    {
+      "theme": "CEP2_GRAY_HAIR_NOT_DARK",
+      "search_before": "n91415ed02262",
+      "consideration": "n341eb4c05451",
+      "failure_anxiety": "n7abf88d82b87",
+      "method_comparison": "n341eb4c05451",
+      "actual_judgment": "n43ae09beab1b",
+      "post_treatment_change": "n857bdffbf113",
+      "next_consultation": "n34713b0fb6e9"
+    },
+    {
+      "theme": "CEP3_FRIZZ_DECISION",
+      "search_before": "n775b67a5339c",
+      "consideration": "n47ad7c3d95fe",
+      "failure_anxiety": "nc52beb9469d1",
+      "method_comparison": "n4be16ad0595a",
+      "actual_judgment": "n47ad7c3d95fe",
+      "post_treatment_change": "n282cb4929242",
+      "next_consultation": "n34713b0fb6e9"
+    },
+    {
+      "theme": "CEP4_SHORT_HAIR_ANXIETY",
+      "search_before": "nc947fab7f07e",
+      "consideration": "nc947fab7f07e",
+      "failure_anxiety": "nc947fab7f07e",
+      "method_comparison": "UNKNOWN",
+      "actual_judgment": "nc947fab7f07e",
+      "post_treatment_change": "UNKNOWN",
+      "next_consultation": "n34713b0fb6e9"
+    },
+    {
+      "theme": "CEP5_LIGHT_NOT_THIN",
+      "search_before": "n74441a2a58a7",
+      "consideration": "n4a9b55a64e75",
+      "failure_anxiety": "nfdf0ed53461c",
+      "method_comparison": "n30cbb2b95d88",
+      "actual_judgment": "n874020106a81",
+      "post_treatment_change": "nc618049c3261",
+      "next_consultation": "n34713b0fb6e9"
+    }
+  ],
+  "p1_work_items": [
+    {
+      "article_id": "n5ffb8e639541",
+      "current_state": "Old LINE identifier and an age-anxiety related-link label were observed in the Phase01 post-work audit.",
+      "problem": "OLD_LINE_AND_AGE_ANXIETY_LINK_TEXT",
+      "change_location": "related links and article LINE CTA",
+      "change_candidate": "Replace hX5uJxc with rG3y2px and describe the related article by the hair concern, without age-anxiety wording.",
+      "link_source": "n5ffb8e639541",
+      "link_target": "https://lin.ee/rG3y2px",
+      "anchor_candidate": "顔まわりと髪の動きを整える考え方を相談する",
+      "utm": "NONE",
+      "reason": "Use the current LINE route and remove unnecessary age anxiety.",
+      "verification": "Re-fetch the public article; old LINE count=0 and flagged related-link text count=0."
+    },
+    {
+      "article_id": "n65308cfb33d5",
+      "current_state": "Cause article; no confirmed reciprocal link to the recovery article.",
+      "problem": "CAUSE_RECOVERY_CONNECTION_MISSING",
+      "change_location": "after the cause explanation",
+      "change_candidate": "Add one clean note link to nc618049c3261 for readers already in an over-thinned state.",
+      "link_source": "n65308cfb33d5",
+      "link_target": "https://note.com/koichi_ikeda/n/nc618049c3261",
+      "anchor_candidate": "すでに軽くしすぎて広がっている時の整え方を見る",
+      "utm": "NONE",
+      "reason": "Separate cause understanding from recovery intent without merging the articles.",
+      "verification": "Public body contains the clean canonical target URL and no utm_source=chatgpt.com on note links."
+    },
+    {
+      "article_id": "nc618049c3261",
+      "current_state": "Recovery article; no confirmed reciprocal link to the cause article and historical note links contain chatgpt.com UTM.",
+      "problem": "RECOVERY_CAUSE_CONNECTION_AND_INTERNAL_UTM",
+      "change_location": "introductory or closing related-reading section",
+      "change_candidate": "Add one clean note link to n65308cfb33d5 and remove tracking parameters from every note-to-note link.",
+      "link_source": "nc618049c3261",
+      "link_target": "https://note.com/koichi_ikeda/n/n65308cfb33d5",
+      "anchor_candidate": "軽くした後に広がる原因から確認する",
+      "utm": "NONE",
+      "reason": "Make recovery and cause articles complementary and keep internal links canonical.",
+      "verification": "Public body contains the reciprocal clean URL; internal UTM violation count=0."
+    },
+    {
+      "article_id": "n4e9335e91aff",
+      "current_state": "The anchor text 'ということです。' links to the consultation site.",
+      "problem": "AMBIGUOUS_CONSULTATION_ANCHOR",
+      "change_location": "opening section after the explanation of selection criteria",
+      "change_candidate": "Replace the linked phrase with a reason to click, without changing the surrounding factual content.",
+      "link_source": "n4e9335e91aff",
+      "link_target": "https://ikeda-hair-consultation.ikedakoichi7326.chatgpt.site/",
+      "anchor_candidate": "髪や頭皮の悩みを整理して相談する",
+      "utm": "NONE",
+      "reason": "The reader should understand the destination before clicking.",
+      "verification": "Re-fetch the public body; ambiguous linked phrase count=0 and destination unchanged."
+    }
+  ]
+}

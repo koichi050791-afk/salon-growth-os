@@ -1,0 +1,96 @@
+{
+  "exact": [],
+  "near": [],
+  "intent": [
+    {
+      "left": "n857bdffbf113",
+      "right": "n7abf88d82b87",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "n857bdffbf113",
+      "right": "n05d7c58db245",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "n857bdffbf113",
+      "right": "n43ae09beab1b",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "n7abf88d82b87",
+      "right": "n05d7c58db245",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "n7abf88d82b87",
+      "right": "n43ae09beab1b",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "nfdc25e93418f",
+      "right": "nadbc274ac777",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "n05d7c58db245",
+      "right": "n43ae09beab1b",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "n65308cfb33d5",
+      "right": "n874020106a81",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "n65308cfb33d5",
+      "right": "nc618049c3261",
+      "score": 0.75,
+      "disposition": "KEEP_DISTINCT_CAUSE_VS_RECOVERY"
+    },
+    {
+      "left": "n65308cfb33d5",
+      "right": "n3472fcb1978a",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "n874020106a81",
+      "right": "nc618049c3261",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "n874020106a81",
+      "right": "n3472fcb1978a",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "n61dedbe2b8f9",
+      "right": "n1c6cf39c7715",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "nc618049c3261",
+      "right": "n3472fcb1978a",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    },
+    {
+      "left": "n282cb4929242",
+      "right": "n4e9335e91aff",
+      "score": 0.75,
+      "disposition": "HUMAN_REVIEW_REQUIRED"
+    }
+  ]
+}

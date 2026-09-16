@@ -1,0 +1,562 @@
+{
+  "articles": 74,
+  "edges": 387,
+  "duplicates": {
+    "exact": [],
+    "near": [],
+    "intent": [
+      {
+        "left": "n857bdffbf113",
+        "right": "n7abf88d82b87",
+        "score": 0.75
+      },
+      {
+        "left": "n857bdffbf113",
+        "right": "n05d7c58db245",
+        "score": 0.75
+      },
+      {
+        "left": "n857bdffbf113",
+        "right": "n43ae09beab1b",
+        "score": 0.75
+      },
+      {
+        "left": "n7abf88d82b87",
+        "right": "n05d7c58db245",
+        "score": 0.75
+      },
+      {
+        "left": "n7abf88d82b87",
+        "right": "n43ae09beab1b",
+        "score": 0.75
+      },
+      {
+        "left": "nfdc25e93418f",
+        "right": "nadbc274ac777",
+        "score": 0.75
+      },
+      {
+        "left": "n05d7c58db245",
+        "right": "n43ae09beab1b",
+        "score": 0.75
+      },
+      {
+        "left": "n65308cfb33d5",
+        "right": "n874020106a81",
+        "score": 0.75
+      },
+      {
+        "left": "n65308cfb33d5",
+        "right": "nc618049c3261",
+        "score": 0.75
+      },
+      {
+        "left": "n65308cfb33d5",
+        "right": "n3472fcb1978a",
+        "score": 0.75
+      },
+      {
+        "left": "n874020106a81",
+        "right": "nc618049c3261",
+        "score": 0.75
+      },
+      {
+        "left": "n874020106a81",
+        "right": "n3472fcb1978a",
+        "score": 0.75
+      },
+      {
+        "left": "n61dedbe2b8f9",
+        "right": "n1c6cf39c7715",
+        "score": 0.75
+      },
+      {
+        "left": "nc618049c3261",
+        "right": "n3472fcb1978a",
+        "score": 0.75
+      },
+      {
+        "left": "n282cb4929242",
+        "right": "n4e9335e91aff",
+        "score": 0.75
+      }
+    ]
+  },
+  "issues": {
+    "P0": [],
+    "P1": [
+      {
+        "article_id": "n857bdffbf113",
+        "code": "OLD_LINE",
+        "detail": "old LINE identifier observed"
+      },
+      {
+        "article_id": "n7abf88d82b87",
+        "code": "OLD_LINE",
+        "detail": "old LINE identifier observed"
+      },
+      {
+        "article_id": "nff5536b5d028",
+        "code": "OLD_LINE",
+        "detail": "old LINE identifier observed"
+      },
+      {
+        "article_id": "nf2e9b36aa277",
+        "code": "OLD_LINE",
+        "detail": "old LINE identifier observed"
+      },
+      {
+        "article_id": "n5ffb8e639541",
+        "code": "OLD_LINE",
+        "detail": "old LINE identifier observed"
+      },
+      {
+        "article_id": "nc52beb9469d1",
+        "code": "SEARCH_EXPOSURE_WITHOUT_ACTION",
+        "detail": "observed exposure and no action path"
+      },
+      {
+        "article_id": "nacbe18cfbbc2",
+        "code": "OLD_LINE",
+        "detail": "old LINE identifier observed"
+      },
+      {
+        "article_id": "na91fee9fb319",
+        "code": "OLD_LINE",
+        "detail": "old LINE identifier observed"
+      },
+      {
+        "article_id": "n282cb4929242",
+        "code": "OLD_LINE",
+        "detail": "old LINE identifier observed"
+      },
+      {
+        "article_id": "n5c2fec4b2172",
+        "code": "OLD_LINE",
+        "detail": "old LINE identifier observed"
+      },
+      {
+        "article_id": "n4e9335e91aff",
+        "code": "AMBIGUOUS_ANCHOR",
+        "detail": "1"
+      }
+    ],
+    "P2": [
+      {
+        "article_id": "n857bdffbf113/n7abf88d82b87",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n857bdffbf113/n05d7c58db245",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n857bdffbf113/n43ae09beab1b",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n7abf88d82b87/n05d7c58db245",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n7abf88d82b87/n43ae09beab1b",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "nfdc25e93418f/nadbc274ac777",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n05d7c58db245/n43ae09beab1b",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n65308cfb33d5/n874020106a81",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n65308cfb33d5/nc618049c3261",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n65308cfb33d5/n3472fcb1978a",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n874020106a81/nc618049c3261",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n874020106a81/n3472fcb1978a",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n61dedbe2b8f9/n1c6cf39c7715",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "nc618049c3261/n3472fcb1978a",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n282cb4929242/n4e9335e91aff",
+        "code": "SEARCH_INTENT_OVERLAP_CANDIDATE",
+        "detail": "score=0.75"
+      },
+      {
+        "article_id": "n857bdffbf113",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "3"
+      },
+      {
+        "article_id": "nfdc25e93418f",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "4"
+      },
+      {
+        "article_id": "nf29ebc26bd76",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "4"
+      },
+      {
+        "article_id": "n820d578c951d",
+        "code": "BRAND_REVIEW",
+        "detail": "AGE_ANXIETY:若見え"
+      },
+      {
+        "article_id": "n820d578c951d",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "4"
+      },
+      {
+        "article_id": "n26cb6103892a",
+        "code": "BRAND_REVIEW",
+        "detail": "AGE_ANXIETY:若見え;OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "n26cb6103892a",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "7"
+      },
+      {
+        "article_id": "nff5536b5d028",
+        "code": "BRAND_REVIEW",
+        "detail": "AGE_ANXIETY:老け(?:て)?見え;OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "n8ee093a81681",
+        "code": "BRAND_REVIEW",
+        "detail": "AGE_ANXIETY:若見え"
+      },
+      {
+        "article_id": "n8ee093a81681",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "12"
+      },
+      {
+        "article_id": "nac40e158ff77",
+        "code": "BRAND_REVIEW",
+        "detail": "AGE_ANXIETY:若見え"
+      },
+      {
+        "article_id": "nac40e158ff77",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "3"
+      },
+      {
+        "article_id": "n1a8cc1194751",
+        "code": "BRAND_REVIEW",
+        "detail": "AGE_ANXIETY:若見え"
+      },
+      {
+        "article_id": "n1a8cc1194751",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "5"
+      },
+      {
+        "article_id": "nadbc274ac777",
+        "code": "BRAND_REVIEW",
+        "detail": "OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "nadbc274ac777",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "4"
+      },
+      {
+        "article_id": "nb3c7b330fdad",
+        "code": "BRAND_REVIEW",
+        "detail": "AGE_ANXIETY:若見え"
+      },
+      {
+        "article_id": "nb3c7b330fdad",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "3"
+      },
+      {
+        "article_id": "n775b67a5339c",
+        "code": "BRAND_REVIEW",
+        "detail": "OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "n775b67a5339c",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "6"
+      },
+      {
+        "article_id": "nf2e9b36aa277",
+        "code": "BRAND_REVIEW",
+        "detail": "AGE_ANXIETY:老け(?:て)?見え;AGE_ANXIETY:若見え"
+      },
+      {
+        "article_id": "n5ffb8e639541",
+        "code": "BRAND_REVIEW",
+        "detail": "AGE_ANXIETY:老け(?:て)?見え"
+      },
+      {
+        "article_id": "n65308cfb33d5",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "4"
+      },
+      {
+        "article_id": "n5ae43e607ee7",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "4"
+      },
+      {
+        "article_id": "n874020106a81",
+        "code": "BRAND_REVIEW",
+        "detail": "OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "n874020106a81",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "8"
+      },
+      {
+        "article_id": "nc618049c3261",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "6"
+      },
+      {
+        "article_id": "n670a62197b88",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "4"
+      },
+      {
+        "article_id": "n341eb4c05451",
+        "code": "BRAND_REVIEW",
+        "detail": "AGE_ANXIETY:老け(?:て)?見え"
+      },
+      {
+        "article_id": "n2604158e10ac",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "5"
+      },
+      {
+        "article_id": "nb6a456406182",
+        "code": "BRAND_REVIEW",
+        "detail": "OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "nb6a456406182",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "6"
+      },
+      {
+        "article_id": "n91415ed02262",
+        "code": "BRAND_REVIEW",
+        "detail": "OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "n91415ed02262",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "4"
+      },
+      {
+        "article_id": "nec839cc36cac",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "6"
+      },
+      {
+        "article_id": "n4be16ad0595a",
+        "code": "BRAND_REVIEW",
+        "detail": "OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "n4be16ad0595a",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "7"
+      },
+      {
+        "article_id": "nfdf0ed53461c",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "9"
+      },
+      {
+        "article_id": "n41589cc5b539",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "4"
+      },
+      {
+        "article_id": "n7874cb42b364",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "4"
+      },
+      {
+        "article_id": "nc81e32727f40",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "5"
+      },
+      {
+        "article_id": "n4e5d74d50a8e",
+        "code": "INTERNAL_UTM_CONTAMINATION",
+        "detail": "4"
+      },
+      {
+        "article_id": "n30cbb2b95d88",
+        "code": "BRAND_REVIEW",
+        "detail": "OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "nc79600829941",
+        "code": "BRAND_REVIEW",
+        "detail": "OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "na5434691367f",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "na96e09757a47",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n3096ada15a21",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n74239930a96d",
+        "code": "BRAND_REVIEW",
+        "detail": "AGE_ANXIETY:老け(?:て)?見え;OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "n74239930a96d",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n2e003f966836",
+        "code": "BRAND_REVIEW",
+        "detail": "OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "n2e003f966836",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n7d4999c84b5a",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n8ce1135b5cbe",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n69986ccf2398",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "ne967d43b585d",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n1c8d4e7ffc3d",
+        "code": "OFFICIAL_UTM_REVIEW",
+        "detail": "1"
+      },
+      {
+        "article_id": "n1c8d4e7ffc3d",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n0b76b2c773dc",
+        "code": "BRAND_REVIEW",
+        "detail": "OVERCLAIM:必ず"
+      },
+      {
+        "article_id": "n0b76b2c773dc",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n4e9335e91aff",
+        "code": "OFFICIAL_UTM_REVIEW",
+        "detail": "1"
+      },
+      {
+        "article_id": "n4e9335e91aff",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n1c6cf39c7715",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n7ca7c0b0b3be",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n34713b0fb6e9",
+        "code": "OFFICIAL_UTM_REVIEW",
+        "detail": "1"
+      },
+      {
+        "article_id": "n34713b0fb6e9",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "n0568e0cfeddc",
+        "code": "OFFICIAL_UTM_REVIEW",
+        "detail": "1"
+      },
+      {
+        "article_id": "n0568e0cfeddc",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      },
+      {
+        "article_id": "neb06cc9beb25",
+        "code": "ISOLATED",
+        "detail": "incoming=0 and outgoing=0"
+      }
+    ]
+  }
+}
