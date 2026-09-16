@@ -1,0 +1,19 @@
+{
+  "source": "note_dashboard",
+  "account": "koichi_ikeda",
+  "collected_at": "2026-09-16",
+  "status": "UNAVAILABLE",
+  "reason": "Dashboard returned note service incident page: 申し訳ありません、ただ今障害が発生しております。",
+  "requested_metrics": [
+    "views",
+    "likes",
+    "comments",
+    "other_note_metrics"
+  ],
+  "metric_periods": [],
+  "articles_collected": 0,
+  "total_articles_expected": 74,
+  "unavailable_scope": "all article-level dashboard metrics",
+  "public_article_access": "AVAILABLE",
+  "login_state": "LOGGED_IN"
+}
