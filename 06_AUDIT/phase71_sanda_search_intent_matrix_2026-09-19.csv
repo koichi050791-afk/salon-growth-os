@@ -1,0 +1,13 @@
+intent_id,search_intent,discovery_strength,official_receiver,real_decision_evidence,real_case_status,conversion_status,priority,next_action,human_gate
+I01,"短くしたい。でも似合わなかったら怖い",strong,"/concerns/short-hair-anxiety/;/decision-room/;/first-visit/","dataKind空欄の近似Decisionあり","none","ready","observe","次のREAL Decision待ち。新規記事不要","公開Case採用時のみ"
+I02,"毛量が多く広がる。でもスカスカにはしたくない",strong,"/concerns/light-without-thinning/;/cases/light-without-thinning/;/questions/","REAL Case相当あり","published Case01","ready","active_focus","Phase70 L2→L3の相談/予約/来店確認","L3判定に重要判断が必要な場合のみ"
+I03,"長さを変えたくない。でも雰囲気は変えたい",strong,"/questions/;/decision-room/","dataKind空欄の高一致Decisionあり","none","ready","observe","同型REALが出た時だけCase候補","公開Case採用時のみ"
+I04,"レイヤーを入れたい。でも自分の髪質に合うか分からない",strong,"/questions/;/decision-room/;/concerns/light-without-thinning/","直接REAL不足","none","ready","observe","記事追加せずREAL Decision待ち","公開Case採用時のみ"
+I05,"40代・50代で今までの髪型が似合わなくなった気がする",strong,"/about/;/decision-room/;/first-visit/","年代固有で一般化しない","none","ready","observe","年代ではなく迷い構造で分類","原則不要"
+I06,"白髪は隠したい。でも暗く重くしたくない",strong,"/concerns/gray-hair-without-darkening/;/decision-room/;/questions/","REAL 2026-08-19あり・UNVALIDATED","none","ready","observe_outcome","次回Outcome確認。新規記事不要","公開Case採用時のみ"
+I07,"白髪ぼかしが気になる。でもハイライトが本当に必要か分からない",strong,"/concerns/gray-hair-without-darkening/;/decision-room/","ハイライト選択REALはあるが非選択REAL不足","none","ready","evidence_gap_high","ハイライトをしない理由を含むREALが出たらCase候補","公開Case採用時のみ"
+I08,"うねり・広がりは何とかしたい。でも不自然な縮毛矯正は嫌",strong,"/decision-room/;/questions/;/menu/","10代REALはあるが大人女性ターゲット代表には不使用","none","ready","observe","大人女性REAL待ち","公開Case採用時のみ"
+I09,"艶はほしい。でも髪質改善・TR・縮毛矯正のどれが必要か分からない",strong,"/decision-room/;/questions/;/menu/","比較REAL不足","none","ready","evidence_gap_high","既存Decision入力の比較/非選択理由を活用。入力項目は増やさない","公開Case採用時のみ"
+I10,"前髪・顔周りだけ変えたい。でも何が似合うか分からない",strong,"/questions/;/decision-room/","dataKind空欄の高一致Decisionあり","none","ready","observe","同型REAL待ち","公開Case採用時のみ"
+I11,"白髪・うねり・ボリュームなど複数の悩みをまとめて相談したい",strong,"/concerns/what-to-book/;/decision-room/;/first-visit/;/about/","ブランド/判断構造で対応","not_required","strong","route_to_consult","専用ページを増やさずwhat-to-book/previsitへ統合","原則不要"
+I12,"髪型やメニューを決めず、まず相談してから予約したい",strong,"home previsit;/concerns/what-to-book/;/first-visit/;/questions/;consultation site;/consult/complete/","Decision evidenceよりConversion観測が重要","not_required","strong","conversion_high","利用→予約/LINE→来店を観測。新規記事不要","予約内部操作はしない"
