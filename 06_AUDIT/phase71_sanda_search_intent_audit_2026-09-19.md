@@ -369,8 +369,8 @@ https://note.com/koichi_ikeda/n/n857bdffbf113
 正しいリンク先を公開確認済み:
 https://note.com/koichi_ikeda/n/n7abf88d82b87
 
-2026-09-19、ブラウザ自動修正を試行したがnote認証情報が利用できず、変更せず停止。
-ここだけ外部認証Human Gate。
+2026-09-20、池田が手動修正を完了。公開記事を再取得し、プレースホルダー消失と関連記事 n7abf88d82b87 へのリンク存在を確認済み。
+P0-1完了。Human Gate解消。
 
 ### P0-2 BeautyMerit導線
 
