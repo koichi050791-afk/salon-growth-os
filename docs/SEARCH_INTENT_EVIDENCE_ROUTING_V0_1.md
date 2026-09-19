@@ -4,6 +4,19 @@
 地域美容集客で「検索語を取る」のではなく、顧客の迷いを既存Evidence・Decision・相談導線へ接続する。
 三田で検証し、2028年の尼崎でも同じ方法を再利用する。
 
+
+## 0. 実装境界
+
+この文書はRouting protocolの正本であり、2026-09-19時点でSearch Intent分類器がサーバー上で自動実行されていることを意味しない。
+
+既存Salon Growth OSにはDecisionCaptured / NextObservationCreatedのWork GraphとKnowledge Candidate判定があるが、Work GraphのAgent runは現在AUTO metadataのみで、Decision本文を読んでSearch Intentを分類する実行器はない。
+
+利用先がない状態で新しいruntime classifierを追加すると複雑性だけが増えるため、Phase71では実装しない。
+
+当面はChat / Codex / WorkがDecisionを扱う際に本protocolを適用する。
+今後、同じ分類が反復的な手作業になり、既存Work Graphの実処理先ができた時だけ自動実装を検討する。
+
+
 ## 1. 入力
 
 検索意図を次の4要素へ分解する。
