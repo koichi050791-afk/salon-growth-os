@@ -54,6 +54,8 @@ Threads・noteは別プロジェクトとして増やさず、この美容師OS�
 - `docs/threads-os/review.md` — 検品担当
 - `docs/threads-os/note-title-rules.md` — 有料noteタイトル設計
 - `docs/threads-os/baseline-2026-09-28.md` — 比較開始点
+- `docs/threads-os/manual-publish-policy.md` — Threads全アカウント手動公開ルール
+- `docs/threads-os/posting-pack-format.md` — AIからHuman Gateへ渡す投稿パック形式
 
 目的は表示数や投稿量を増やすことではない。
 
